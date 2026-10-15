@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tcc-tower",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "@tanstack/react-start/server-entry",
+  "d1_databases": [
+    {
+      "binding": "DATABASE",
+      "database_name": "tcc-tower",
+      "database_id": "aecabc48-8c27-4b9b-9916-fdacfec56510",
+      "migrations_dir": "drizzle",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PROJECT_DOCS",
+      "bucket_name": "tcc-tower-project-docs",
+      "preview_bucket_name": "tcc-tower-project-docs-dev"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+  },
+}

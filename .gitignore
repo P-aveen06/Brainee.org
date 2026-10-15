@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+dist/
+.output/
+.vinxi/
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!.env.example
+!.dev.vars.example
+.DS_Store
+outputs/
+~$*

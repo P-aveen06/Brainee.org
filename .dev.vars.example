@@ -1,0 +1,14 @@
+# Local test authentication (temporary; do not enable on a public deployment).
+# Copy this file to .dev.vars, then generate a secret with: openssl rand -hex 32
+TEST_AUTH_ENABLED=true
+SESSION_SECRET=
+
+# Sample administrator: test@example.com / TestLogin123!
+# The first login creates the test user; complete the normal profile onboarding.
+
+# Optional AI providers. Empty values use the built-in stub provider.
+OPENROUTER_API_KEY=
+DEEPSEEK_API_KEY=
+AZURE_DEEPSEEK_API_KEY=
+AZURE_DEEPSEEK_ENDPOINT=https://open-model-resource.openai.azure.com/openai/v1
+AZURE_DEEPSEEK_MODEL=DeepSeek-V4-Flash
