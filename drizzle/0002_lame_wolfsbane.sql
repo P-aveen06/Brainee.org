@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `user_leave_type_cycle_unique` ON `leave_balances` (`user_id`,`leave_type`,`cycle_start`);

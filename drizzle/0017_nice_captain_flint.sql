@@ -1,0 +1,1 @@
+ALTER TABLE `ai_messages` ADD `tool_call_id` text;

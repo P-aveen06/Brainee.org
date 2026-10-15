@@ -1,0 +1,1 @@
+ALTER TABLE `project_checklist_items` ADD `created_by_id` text REFERENCES users(id);
