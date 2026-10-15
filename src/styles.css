@@ -1,0 +1,965 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+    /* Motion: Corporate personality (signature easing) */
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.3, 0.64, 1);
+    @keyframes accordion-down {
+        from {
+            height: 0;
+        }
+        to {
+            height: var(
+                --radix-accordion-content-height,
+                var(--accordion-panel-height, auto)
+            );
+        }
+    }
+
+    @keyframes accordion-up {
+        from {
+            height: var(
+                --radix-accordion-content-height,
+                var(--accordion-panel-height, auto)
+            );
+        }
+        to {
+            height: 0;
+        }
+    }
+}
+
+@custom-variant data-open {
+    &:where([data-state="open"]),
+    &:where([data-open]:not([data-open="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-closed {
+    &:where([data-state="closed"]),
+    &:where([data-closed]:not([data-closed="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-checked {
+    &:where([data-state="checked"]),
+    &:where([data-checked]:not([data-checked="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-unchecked {
+    &:where([data-state="unchecked"]),
+    &:where([data-unchecked]:not([data-unchecked="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-selected {
+    &:where([data-selected="true"]) {
+        @slot;
+    }
+}
+
+@custom-variant data-disabled {
+    &:where([data-disabled="true"]),
+    &:where([data-disabled]:not([data-disabled="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-active {
+    &:where([data-state="active"]),
+    &:where([data-active]:not([data-active="false"])) {
+        @slot;
+    }
+}
+
+@custom-variant data-horizontal {
+    &:where([data-orientation="horizontal"]) {
+        @slot;
+    }
+}
+
+@custom-variant data-vertical {
+    &:where([data-orientation="vertical"]) {
+        @slot;
+    }
+}
+
+@utility no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Lightweight elegant scrollbars */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* ────────────────────────────────────────────────────────────
+   Light mode tokens — ClickUp Design System Identity
+   ──────────────────────────────────────────────────────────── */
+:root {
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "Sometype Mono", monospace;
+    --font-handwritten: "Shantell Sans", "Plus Jakarta Sans", sans-serif;
+
+    /* Accent & Electric Blue Gradient (Light Mode: crisp luminous electric blue, high contrast, WCAG compliant) */
+    --accent: #0055ff;
+    --accent-hover: #0047e1;
+    --accent-pressed: #0038b8;
+    --accent-foreground: #ffffff;
+    --accent-from: #0066ff;
+    --accent-to: #0040e5;
+    --accent-gradient: linear-gradient(135deg, #0066ff 0%, #0040e5 100%);
+    --accent-gradient-hover: linear-gradient(135deg, #1a75ff 0%, #0038cc 100%);
+    --accent-subtle: color-mix(in srgb, var(--accent) 10%, transparent);
+    --accent-subtle-foreground: #0052e6;
+    --accent-subtle-border: color-mix(in srgb, var(--accent) 22%, transparent);
+    --accent-glow: 0 4px 14px 0 rgba(0, 85, 255, 0.35);
+
+    /* Core Action & Text — wired to accent for unified theme & future accent switching */
+    --primary: var(--accent);
+    --primary-foreground: var(--accent-foreground);
+    --on-primary: var(--accent-foreground);
+    --ring: var(--accent);
+
+    --ink: #090c1d;
+    --body: #202020;
+    --muted: #eef0f4;
+    --muted-foreground: #646464;
+
+    /* Surfaces */
+    --canvas: #f5f6f8;
+    --background: #f5f6f8;
+    --foreground: #202020;
+    --card: #ffffff;
+    --card-foreground: #202020;
+    --popover: #ffffff;
+    --popover-foreground: #202020;
+    --surface: #ffffff;
+    --surface-alt: #f0f1f4;
+    --secondary: #f0f1f4;
+    --secondary-foreground: var(--accent);
+    --deep-panel: #1e1e1e;
+    --dark-footer: #111111;
+
+    /* Borders & Outlines */
+    --border: #e2e4e9;
+    --border-strong: #cbd0d8;
+    --input: #e2e4e9;
+
+    /* Brand-Specific Signatures */
+    --logo-purple: #6647f0;
+    --logo-blue: #0091ff;
+    --logo-pink: #ff02f0;
+    --logo-orange: #f76808;
+
+    /* AI & Super Agent */
+    --ai-pink: #fa12e3;
+    --ai-cyan: #12d0fa;
+
+    /* Product Module Colors */
+    --product-teal: #12a594;
+    --product-yellow: #ffc800;
+    --product-violet-soft: #b38cff;
+    --app-navy: #101f52;
+
+    /* Tinted Soft Surfaces */
+    --pale-purple: #edf3ff;
+    --pale-pink: #fff1fe;
+    --pale-blue: #e9e9f6;
+    --pale-orange: #ffece5;
+
+    /* Semantics */
+    --link: #0091ff;
+    --success: #30a46c;
+    --success-foreground: #ffffff;
+    --warning: #ffc53d;
+    --warning-foreground: #202020;
+    --destructive: #e5484d;
+    --destructive-foreground: #ffffff;
+    --error: #e5484d;
+    --info: #0091ff;
+    --info-foreground: #ffffff;
+
+    /* Radius Scale */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+    --radius-2xl: 20px;
+    --radius-section: 32px;
+    --radius-pill: 9999px;
+    --radius: 14px;
+    --avatar-radius: 9999px;
+
+    /* Weekend & Asset categories */
+    --weekend: #fafbfc;
+    --asset-capital: #0055ff;
+    --asset-peripheral: #12a594;
+    --asset-digital: #ff02f0;
+
+    --overlay: rgba(0, 0, 0, 0.2);
+    --surface-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --sidebar-surface: #ffffff;
+    --sidebar-gradient: #f5f6f8;
+
+    --chart-1: #202020;
+    --chart-2: #0055ff;
+    --chart-3: #0091ff;
+    --chart-4: #f76808;
+    --chart-5: #ff02f0;
+
+    /* Preserved tokens mapped to ClickUp palette */
+    --coral: #f76808;
+    --coral-soft: #ffece5;
+    --action-blue: #0055ff;
+    --deep-green: #12a594;
+    --dark-navy: #101f52;
+    --soft-stone: #f0f1f4;
+    --pale-green: #e9fbf0;
+    --pale-blue: #ebf2ff;
+    --slate: #646464;
+    --hairline: #e2e4e9;
+    --card-border: #e2e4e9;
+
+    /* Status tokens */
+    --status-logged: #e9fbf0;
+    --status-logged-foreground: #1c7c4b;
+    --status-leave: #fff1fe;
+    --status-leave-foreground: #ba03b0;
+    --status-sick: #fff1fe;
+    --status-sick-foreground: #ba03b0;
+    --status-personal: #fff1fe;
+    --status-personal-foreground: #ba03b0;
+    --status-festival: #fff1fe;
+    --status-festival-foreground: #ba03b0;
+    --status-wfh: #ebf2ff;
+    --status-wfh-foreground: #0055ff;
+    --status-holiday: #ebf2ff;
+    --status-holiday-foreground: #0055ff;
+    --status-pending: #fff9e6;
+    --status-pending-foreground: #997300;
+    --status-reentry: #ffece5;
+    --status-reentry-foreground: #c24b00;
+
+    /* Sidebar tokens — wired to accent */
+    --sidebar: #ffffff;
+    --sidebar-foreground: #202020;
+    --sidebar-primary: var(--accent);
+    --sidebar-primary-foreground: var(--accent-foreground);
+    --sidebar-accent: color-mix(in srgb, var(--accent) 9%, transparent);
+    --sidebar-accent-foreground: var(--accent);
+    --sidebar-border: #e9ebf0;
+    --sidebar-ring: var(--accent);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Dark mode tokens — ClickUp Dark Palette
+   ──────────────────────────────────────────────────────────── */
+.dark {
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "Sometype Mono", monospace;
+    --font-handwritten: "Shantell Sans", "Plus Jakarta Sans", sans-serif;
+
+    --background: #111111;
+    --foreground: #ffffff;
+
+    --card: #1e1e1e;
+    --card-foreground: #ffffff;
+
+    --popover: #1e1e1e;
+    --popover-foreground: #ffffff;
+
+    /* Accent & Electric Blue Gradient (Dark Mode: vivid glowing electric blue tuned for dark surfaces) */
+    --accent: #2b7fff;
+    --accent-hover: #4c91ff;
+    --accent-pressed: #1a68e5;
+    --accent-foreground: #ffffff;
+    --accent-from: #3b82f6;
+    --accent-to: #1d4ed8;
+    --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    --accent-gradient-hover: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+    --accent-subtle: color-mix(in srgb, var(--accent) 15%, transparent);
+    --accent-subtle-foreground: #60a5fa;
+    --accent-subtle-border: color-mix(in srgb, var(--accent) 30%, transparent);
+    --accent-glow: 0 4px 18px 0 rgba(43, 127, 255, 0.45);
+
+    /* Core Action & Text — wired to accent */
+    --primary: var(--accent);
+    --primary-foreground: var(--accent-foreground);
+    --on-primary: var(--accent-foreground);
+    --ring: var(--accent);
+
+    --secondary: #1a2238;
+    --secondary-foreground: #60a5fa;
+
+    /* Muted: Fixed from #1e1e1e (which matched --card) to distinct slate for visible tracks/slots */
+    --muted: #27272e;
+    --muted-foreground: #a0a0a0;
+
+    --ink: #ffffff;
+    --body: #ffffff;
+
+    --canvas: #111111;
+    --surface: #1e1e1e;
+    --surface-alt: #2a2a34;
+    --deep-panel: #1e1e1e;
+    --dark-footer: #0a0a0a;
+
+    --border: #2e2e2e;
+    --border-strong: #404040;
+    --input: #2e2e2e;
+
+    --weekend: #161616;
+
+    --avatar-radius: 9999px;
+
+    --link: #38bdf8;
+    --success: #34d399;
+    --success-foreground: #111111;
+
+    --warning: #ffc53d;
+    --warning-foreground: #111111;
+
+    --destructive: #e5484d;
+    --destructive-foreground: #ffffff;
+    --error: #e5484d;
+
+    --info: #38bdf8;
+    --info-foreground: #111111;
+
+    --asset-capital: #4d82ff;
+    --asset-peripheral: #2dd4bf;
+    --asset-digital: #f472b6;
+
+    --overlay: rgba(0, 0, 0, 0.5);
+    --surface-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --sidebar-surface: #141414;
+    --sidebar-gradient: #1e1e1e;
+
+    --chart-1: #ffffff;
+    --chart-2: #3370ff;
+    --chart-3: #38bdf8;
+    --chart-4: #f76808;
+    --chart-5: #ff02f0;
+
+    /* Brand tokens (dark) */
+    --coral: #f76808;
+    --coral-soft: rgba(247, 104, 8, 0.15);
+    --action-blue: #38bdf8;
+    --deep-green: #12a594;
+    --dark-navy: #101f52;
+    --soft-stone: #2a2a34;
+    --pale-green: rgba(52, 211, 153, 0.12);
+    --pale-blue: rgba(1, 53, 222, 0.15);
+    --pale-purple: rgba(1, 53, 222, 0.15);
+    --pale-pink: rgba(255, 2, 240, 0.15);
+    --pale-orange: rgba(247, 104, 8, 0.15);
+    --slate: #a0a0a0;
+    --hairline: #2e2e2e;
+    --card-border: #2e2e2e;
+
+    /* Status tokens (dark) */
+    --status-logged: rgba(52, 211, 153, 0.15);
+    --status-logged-foreground: #6ee7b7;
+    --status-leave: rgba(255, 2, 240, 0.15);
+    --status-leave-foreground: #f472b6;
+    --status-sick: rgba(255, 2, 240, 0.15);
+    --status-sick-foreground: #f472b6;
+    --status-personal: rgba(255, 2, 240, 0.15);
+    --status-personal-foreground: #f472b6;
+    --status-festival: rgba(255, 2, 240, 0.15);
+    --status-festival-foreground: #f472b6;
+    --status-wfh: rgba(1, 53, 222, 0.15);
+    --status-wfh-foreground: #4d82ff;
+    --status-holiday: rgba(1, 53, 222, 0.15);
+    --status-holiday-foreground: #60a5fa;
+    --status-pending: rgba(255, 197, 61, 0.15);
+    --status-pending-foreground: #fde68a;
+    --status-reentry: rgba(247, 104, 8, 0.15);
+    --status-reentry-foreground: #fdba74;
+
+    --sidebar: #141414;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: var(--accent);
+    --sidebar-primary-foreground: var(--accent-foreground);
+    --sidebar-accent: color-mix(in srgb, var(--accent) 18%, transparent);
+    --sidebar-accent-foreground: #60a5fa;
+    --sidebar-border: #2e2e2e;
+    --sidebar-ring: var(--accent);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Tailwind v4 theme bridge — ClickUp Design System
+   ──────────────────────────────────────────────────────────── */
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent-gradient: var(--accent-gradient);
+    --color-accent-subtle: var(--accent-subtle);
+    --color-accent-subtle-foreground: var(--accent-subtle-foreground);
+    --color-accent-subtle-border: var(--accent-subtle-border);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-canvas: var(--canvas);
+    --color-surface: var(--surface);
+    --color-surface-alt: var(--surface-alt);
+    --color-deep-panel: var(--deep-panel);
+    --color-dark-footer: var(--dark-footer);
+    --color-link: var(--link);
+    --color-weekend: var(--weekend);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-asset-capital: var(--asset-capital);
+    --color-asset-peripheral: var(--asset-peripheral);
+    --color-asset-digital: var(--asset-digital);
+    --color-overlay: var(--overlay);
+    --color-sidebar-surface: var(--sidebar-surface);
+
+    /* ClickUp Signature Colors */
+    --color-logo-purple: var(--logo-purple);
+    --color-logo-blue: var(--logo-blue);
+    --color-logo-pink: var(--logo-pink);
+    --color-logo-orange: var(--logo-orange);
+    --color-ai-pink: var(--ai-pink);
+    --color-ai-cyan: var(--ai-cyan);
+    --color-product-teal: var(--product-teal);
+    --color-product-yellow: var(--product-yellow);
+    --color-product-violet-soft: var(--product-violet-soft);
+    --color-app-navy: var(--app-navy);
+    --color-pale-purple: var(--pale-purple);
+    --color-pale-pink: var(--pale-pink);
+    --color-pale-blue: var(--pale-blue);
+    --color-pale-orange: var(--pale-orange);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-coral: var(--coral);
+    --color-coral-soft: var(--coral-soft);
+    --color-action-blue: var(--action-blue);
+    --color-deep-green: var(--deep-green);
+    --color-dark-navy: var(--dark-navy);
+    --color-soft-stone: var(--soft-stone);
+    --color-pale-green: var(--pale-green);
+    --color-slate-muted: var(--slate);
+    --color-ink: var(--ink);
+    --color-hairline: var(--hairline);
+    --color-status-logged: var(--status-logged);
+    --color-status-logged-foreground: var(--status-logged-foreground);
+    --color-status-leave: var(--status-leave);
+    --color-status-leave-foreground: var(--status-leave-foreground);
+    --color-status-sick: var(--status-sick);
+    --color-status-sick-foreground: var(--status-sick-foreground);
+    --color-status-personal: var(--status-personal);
+    --color-status-personal-foreground: var(--status-personal-foreground);
+    --color-status-festival: var(--status-festival);
+    --color-status-festival-foreground: var(--status-festival-foreground);
+    --color-status-wfh: var(--status-wfh);
+    --color-status-wfh-foreground: var(--status-wfh-foreground);
+    --color-status-holiday: var(--status-holiday);
+    --color-status-holiday-foreground: var(--status-holiday-foreground);
+    --color-status-pending: var(--status-pending);
+    --color-status-pending-foreground: var(--status-pending-foreground);
+    --color-status-reentry: var(--status-reentry);
+    --color-status-reentry-foreground: var(--status-reentry-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* ClickUp Rounded Scale */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 14px;
+    --radius-2xl: 20px;
+    --radius-section: 32px;
+    --radius-full: 9999px;
+    --radius-pill: 9999px;
+
+    /* ClickUp Typography */
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "Sometype Mono", monospace;
+    --font-handwritten: "Shantell Sans", "Plus Jakarta Sans", sans-serif;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Base layer — ClickUp Rounded & Clean Foundations
+   ──────────────────────────────────────────────────────────── */
+@layer base {
+    *,
+    ::before,
+    ::after {
+        @apply border-border outline-ring/50;
+    }
+
+    /* ────────────────────────────────────────────────────────────
+     Avatar corner radius
+     ──────────────────────────────────────────────────────────── */
+    [data-slot="avatar"],
+    [data-slot="avatar"] *,
+    [data-slot="avatar"]::before,
+    [data-slot="avatar"]::after,
+    [data-slot="avatar-fallback"],
+    [data-slot="avatar-fallback"] *,
+    [data-slot="avatar-fallback"]::before,
+    [data-slot="avatar-fallback"]::after,
+    [data-slot="avatar-image"],
+    [data-slot="avatar-image"] *,
+    [data-slot="avatar-image"]::before,
+    [data-slot="avatar-image"]::after,
+    [data-slot="avatar-group-count"],
+    [data-slot="avatar-group-count"] *,
+    [data-slot="avatar-group-count"]::before,
+    [data-slot="avatar-group-count"]::after {
+        border-radius: var(--avatar-radius, 9999px);
+    }
+
+    [data-slot="avatar-badge"] {
+        border-radius: 9999px;
+    }
+
+    /* ────────────────────────────────────────────────────────────
+     Chat bubble corner radius (AI Assistant thread)
+     ──────────────────────────────────────────────────────────── */
+    [data-slot="chat-bubble"],
+    [data-slot="chat-bubble"] * {
+        border-radius: 14px;
+    }
+
+    /* ────────────────────────────────────────────────────────────
+     Premium Button Hover & Active States
+     ──────────────────────────────────────────────────────────── */
+    [data-slot="button"] {
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-slot="button"]:hover:not(:disabled) {
+        transform: translateY(-0.5px);
+    }
+
+    [data-slot="button"]:active:not(:disabled) {
+        transform: translateY(0.5px);
+    }
+
+    html {
+        @apply font-sans;
+        font-optical-sizing: auto;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .font-heading {
+        font-family: var(--font-heading);
+        letter-spacing: -0.035em;
+    }
+}
+
+/* ────────────────────────────────────────────────────────────
+   Surface utilities
+   ──────────────────────────────────────────────────────────── */
+.glass {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl, 14px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.glass-subtle {
+    background-color: var(--sidebar-surface);
+}
+
+/* ────────────────────────────────────────────────────────────
+   ClickUp Brand Signatures & Components
+   ──────────────────────────────────────────────────────────── */
+.clickup-logo-gradient-lower {
+    background: linear-gradient(135deg, #6647f0 0%, #0091ff 100%);
+}
+
+.clickup-logo-gradient-upper {
+    background: linear-gradient(135deg, #ff02f0 0%, #f76808 100%);
+}
+
+.clickup-gradient-brand {
+    background: linear-gradient(135deg, #6647f0 0%, #ff02f0 50%, #f76808 100%);
+}
+
+.clickup-gradient-ai {
+    background: linear-gradient(135deg, #fa12e3 0%, #12d0fa 100%);
+}
+
+.hero-card {
+    background-color: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-section, 32px);
+    box-shadow: 0 4px 10px rgba(13, 21, 48, 0.05);
+}
+
+.feature-card {
+    background-color: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl, 14px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+.agent-card {
+    background-color: var(--pale-purple);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl, 20px);
+    box-shadow: 0 10px 25px rgba(18, 43, 165, 0.10);
+}
+
+.pricing-card {
+    background-color: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl, 20px);
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.27), 0 1px 3px rgba(0, 0, 0, 0.10);
+}
+
+.pricing-card-highlight {
+    background-color: var(--canvas);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-2xl, 20px);
+    box-shadow: inset 0 0 0 1px var(--accent), inset 0 6px 11px var(--pale-blue);
+}
+
+.app-chip {
+    background-color: var(--surface);
+    color: var(--body);
+    font-family: var(--font-mono);
+    border-radius: var(--radius-pill, 9999px);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Floating controls — solid surfaces above forms/dialogs
+   ──────────────────────────────────────────────────────────── */
+[data-floating-ui-portal] {
+    position: relative;
+    z-index: 1000 !important;
+}
+
+[data-slot="popover-content"],
+[data-slot="select-content"],
+[data-slot="dropdown-menu-content"] {
+    position: relative;
+    z-index: 1000 !important;
+    background: var(--popover) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg, 12px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Sidebar interactive states — ClickUp rounded pill/card rhythm
+   ──────────────────────────────────────────────────────────── */
+[data-slot="sidebar-menu-button"] {
+    border-radius: var(--radius-lg, 12px) !important;
+    transition: all 0.15s ease;
+}
+
+[data-slot="sidebar-menu-button"]:hover,
+[data-slot="sidebar-menu-button"]:active,
+[data-slot="sidebar-menu-button"][data-active] {
+    background: var(--sidebar-accent) !important;
+    color: var(--sidebar-accent-foreground) !important;
+}
+
+/* Tabs — rounded with clean surface */
+[data-slot="tabs-list"] {
+    background: var(--surface-alt) !important;
+    border-radius: var(--radius-lg, 12px);
+    padding: 3px;
+}
+
+[data-slot="tabs-trigger"] {
+    border-radius: var(--radius-md, 8px);
+    transition: all 0.15s ease;
+}
+
+[data-slot="tabs-trigger"][data-active] {
+    background: var(--background) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Card footer */
+[data-slot="card-footer"] {
+    background: var(--surface-alt);
+    border-bottom-left-radius: var(--radius-xl, 14px);
+    border-bottom-right-radius: var(--radius-xl, 14px);
+}
+
+@layer base {
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+/* Assistant UI Markdown Typography & Indentation */
+.assistant-prose {
+    color: var(--foreground);
+    font-size: 0.875rem;
+    line-height: 1.625;
+}
+
+.assistant-prose p {
+    margin-top: 0.625rem;
+    margin-bottom: 0.625rem;
+    line-height: 1.625;
+}
+
+.assistant-prose h1,
+.assistant-prose h2,
+.assistant-prose h3,
+.assistant-prose h4 {
+    color: var(--foreground);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.assistant-prose h3 {
+    font-size: 0.875rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(226, 228, 233, 0.5);
+}
+
+.dark .assistant-prose h3 {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.assistant-prose ul {
+    list-style-type: disc;
+    padding-left: 1.35rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.assistant-prose ol {
+    list-style-type: decimal;
+    padding-left: 1.35rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.assistant-prose li {
+    margin-top: 0.35rem;
+    margin-bottom: 0.35rem;
+    padding-left: 0.2rem;
+    line-height: 1.6;
+}
+
+.assistant-prose li > ul,
+.assistant-prose li > ol {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    padding-left: 1.25rem;
+    list-style-type: circle;
+}
+
+.assistant-prose strong {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.assistant-prose code {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8em;
+    background-color: var(--surface-alt);
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.assistant-prose pre {
+    background-color: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    overflow-x: auto;
+}
+
+/* Sidebar collapsible chevron animation & accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-group-chevron {
+        transition: none !important;
+    }
+}
+
+
+
+/* Skeleton shimmer */
+@keyframes skeleton-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--background) 60%, transparent),
+        transparent
+    );
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer::after {
+        animation: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Diagonal hatching for "used" / "off" areas in charts. Colour comes from
+   the element's text colour, so one class works for any hue.
+   Subtle, lighter diagonal stripes with a soft background wash. */
+.hatch {
+    background-image: repeating-linear-gradient(
+        135deg,
+        color-mix(in srgb, currentColor 30%, transparent) 0,
+        color-mix(in srgb, currentColor 30%, transparent) 1px,
+        transparent 1px,
+        transparent 6px
+    );
+}
+
+.hatch-fill {
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+    background-image: repeating-linear-gradient(
+        135deg,
+        color-mix(in srgb, currentColor 30%, transparent) 0,
+        color-mix(in srgb, currentColor 30%, transparent) 1px,
+        transparent 1px,
+        transparent 6px
+    );
+}
+
+/* Electric blue gradient utilities */
+.bg-accent-gradient {
+    background-image: var(--accent-gradient) !important;
+    background-color: var(--accent) !important;
+}
+
+.bg-accent-gradient-hover:hover {
+    background-image: var(--accent-gradient-hover) !important;
+}
+
+.accent-glow {
+    box-shadow: var(--accent-glow) !important;
+}

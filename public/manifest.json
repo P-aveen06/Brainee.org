@@ -1,0 +1,15 @@
+{
+  "short_name": "Brainee.org",
+  "name": "Brainee.org",
+  "icons": [
+    {
+      "src": "brainee-logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6647F0",
+  "background_color": "#ffffff"
+}
