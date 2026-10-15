@@ -1,0 +1,25 @@
+import type { ChatMessage } from "./provider";
+
+const LEAVE_WORDS =
+	/\b(leave|sick|personal|casual|festival|vacation|pto|time off)\b/i;
+const APPLY_WORDS = /\b(apply|request|take|book|submit)\b/i;
+const CANCEL_WORDS = /\b(cancel|withdraw|remove|revoke)\b/i;
+
+export function getForcedToolForIntent(
+	userMessage: string,
+	history: ChatMessage[],
+): string | undefined {
+	if (APPLY_WORDS.test(userMessage) && LEAVE_WORDS.test(userMessage)) {
+		return "propose_leave_request";
+	}
+	if (!CANCEL_WORDS.test(userMessage)) return undefined;
+	if (LEAVE_WORDS.test(userMessage)) return "propose_leave_cancellation";
+
+	const recentContext = history
+		.slice(-8)
+		.map((message) => message.content || "")
+		.join(" ");
+	return LEAVE_WORDS.test(recentContext)
+		? "propose_leave_cancellation"
+		: undefined;
+}
