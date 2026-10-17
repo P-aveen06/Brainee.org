@@ -1,5 +1,7 @@
 **
 !services/
+!services/falkordb/
+!services/falkordb/**
 !services/graph/
 !services/graph/package.json
 !services/graph/package-lock.json
@@ -14,5 +16,8 @@
 !shared/delivery-knowledge.ts
 !services/graphrag/
 !services/graphrag/**
+!infra/
+!infra/falkordb/
+!infra/falkordb/redis.conf
 **/__pycache__/
 **/*.pyc
