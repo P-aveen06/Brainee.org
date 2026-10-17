@@ -50,26 +50,31 @@ export function AssistantComposer() {
 	return (
 		<div className="shrink-0 w-full bg-transparent px-4 pb-4 pt-1">
 			<div className="mx-auto w-full max-w-4xl">
-				<ComposerPrimitive.Root className="relative flex min-h-12 items-end gap-2 rounded-3xl border border-border/80 bg-card/90 px-6 py-3 shadow-sm backdrop-blur-xl transition-[border-color,box-shadow] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10 dark:bg-card/75">
-					{/* Voice Listening Active Banner (Overlaid inside capsule) */}
-					{isListening && (
-						<div className="absolute -top-9 left-2 right-2 flex items-center justify-between rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1 text-xs text-red-600 dark:text-red-400 backdrop-blur-md shadow-xs animate-pulse">
-							<div className="flex items-center gap-1.5">
-								<span className="size-1.5 rounded-full bg-red-500 animate-ping" />
-								<span className="font-medium text-[11px]">
-									Listening… speak clearly
-								</span>
-							</div>
-							<Button
-								type="button"
-								onClick={stopListening}
-								className="text-[11px] font-semibold underline hover:no-underline cursor-pointer"
-							>
-								Done
-							</Button>
+				{isListening && (
+					<div
+						role="status"
+						aria-live="polite"
+						className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive shadow-xs"
+					>
+						<div className="flex min-w-0 items-center gap-2">
+							<span className="relative flex size-2 shrink-0" aria-hidden="true">
+								<span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-50" />
+								<span className="relative size-2 rounded-full bg-destructive" />
+							</span>
+							<span className="truncate">Listening… speak clearly</span>
 						</div>
-					)}
-
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={stopListening}
+							className="h-7 shrink-0 rounded-lg px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+						>
+							Stop
+						</Button>
+					</div>
+				)}
+				<ComposerPrimitive.Root className="relative flex min-h-12 items-end gap-2 rounded-3xl border border-border/80 bg-card/90 px-6 py-3 shadow-sm backdrop-blur-xl transition-[border-color,box-shadow] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10 dark:bg-card/75">
 					{/* Textarea grows with longer prompts, then becomes scrollable. */}
 					<ComposerPrimitive.Input
 						ref={textareaRef}
