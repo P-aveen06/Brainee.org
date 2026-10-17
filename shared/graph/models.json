@@ -1,0 +1,3464 @@
+[
+  {
+    "exportName": "aiConversations",
+    "table": "ai_conversations",
+    "label": "Conversation",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "lastMessageAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "aiMessages",
+    "table": "ai_messages",
+    "label": "Message",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "conversationId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "turnId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "sequence": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "toolRound": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "role": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "content": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "toolCalls": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "toolCallId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "citations": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "modelId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "tokensIn": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "tokensOut": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "latencyMs": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "conversationId"
+        ],
+        "target": "ai_conversations",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "turnId"
+        ],
+        "target": "ai_turns",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "set null"
+      }
+    ]
+  },
+  {
+    "exportName": "aiProposedActions",
+    "table": "ai_proposed_actions",
+    "label": "ProposedAction",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "messageId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "actionType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "targetEntityType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "targetEntityId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "payload": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "pending"
+      },
+      "confirmedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "expiresAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "aiToolInvocations",
+    "table": "ai_tool_invocations",
+    "label": "ToolInvocation",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "messageId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "turnId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "toolRound": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "toolName": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "args": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "resultRowCount": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "resultBytes": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "durationMs": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "success": {
+        "type": "boolean",
+        "required": false,
+        "primary": false
+      },
+      "deniedReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "turnId"
+        ],
+        "target": "ai_turns",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "set null"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "aiTurns",
+    "table": "ai_turns",
+    "label": "AssistantTurn",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "conversationId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "running"
+      },
+      "modelId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "toolRounds": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "toolCalls": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "promptTokens": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "completionTokens": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "totalTokens": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "toolResultBytes": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "failureCode": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "startedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "completedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "conversationId"
+        ],
+        "target": "ai_conversations",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "assetAssignments",
+    "table": "asset_assignments",
+    "label": "AssetAssignment",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "assetId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "clientDeploymentId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "assignedDate": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "returnedDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "conditionOut": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "good"
+      },
+      "conditionIn": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "returnDestination": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "returnNotes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "assignedByUserId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "receivedByUserId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "acknowledgedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "issueReportedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "issueDescription": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "issueStatus": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isCurrent": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "assetId"
+        ],
+        "target": "assets",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "clientDeploymentId"
+        ],
+        "target": "client_deployments",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "assignedByUserId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "receivedByUserId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "assetHistory",
+    "table": "asset_history",
+    "label": "AssetEvent",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "assetId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "eventType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "actorId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "targetUserId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "details": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "assetId"
+        ],
+        "target": "assets",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "actorId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "targetUserId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "assets",
+    "table": "assets",
+    "label": "Asset",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "assetTag": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "category": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "assetType": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "capital_asset"
+      },
+      "ownerCompanyId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "serialNumber": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "model": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "specs": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "purchaseDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "purchaseCost": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "warrantyExpiry": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "accountExpiry": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "renewalDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "in_inventory"
+      },
+      "defectReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "disposalReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "disposalDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "replacedByAssetId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "assetTag"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "ownerCompanyId"
+        ],
+        "target": "companies",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "replacedByAssetId"
+        ],
+        "target": "assets",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "auditLogs",
+    "table": "audit_logs",
+    "label": "AuditEvent",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "actorId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "action": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "entityType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "entityId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "oldData": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "newData": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "actorId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "clientContacts",
+    "table": "client_contacts",
+    "label": "ClientContact",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "companyId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "email": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "phone": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "role": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "other"
+      },
+      "isPrimary": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isActive": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "companyId"
+        ],
+        "target": "companies",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "clientDeployments",
+    "table": "client_deployments",
+    "label": "ClientDeployment",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "primaryClientId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "endClientId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "roleTitle": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "startDate": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "endDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "active"
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "primaryClientId"
+        ],
+        "target": "companies",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "endClientId"
+        ],
+        "target": "companies",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "companies",
+    "table": "companies",
+    "label": "Company",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "code": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "isInternal": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "contactEmail": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "code"
+      ]
+    ],
+    "references": []
+  },
+  {
+    "exportName": "companyPolicyDocuments",
+    "table": "company_policy_documents",
+    "label": "CompanyPolicyDocument",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "r2Key": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "fileName": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "mimeType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "sizeBytes": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "uploadedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": true,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "r2Key"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "uploadedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "dashboardLayouts",
+    "table": "dashboard_layouts",
+    "label": "DashboardLayout",
+    "fields": {
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "layout": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "leaveBalances",
+    "table": "leave_balances",
+    "label": "LeaveBalance",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "leaveType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "totalLimit": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "used": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "cycleStart": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "cycleEnd": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "userId",
+        "leaveType",
+        "cycleStart"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "leaveRequests",
+    "table": "leave_requests",
+    "label": "LeaveRequest",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "leaveType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "startDate": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "endDate": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "isHalfDayStart": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "halfDayStartPeriod": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isHalfDayEnd": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "halfDayEndPeriod": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "totalDays": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "pending"
+      },
+      "approvedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "rejectedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "rejectionReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "revokedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "revokeReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reEntryNote": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "approvedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "rejectedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "revokedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "notifications",
+    "table": "notifications",
+    "label": "Notification",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "type": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "body": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "isRead": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "relatedId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "relatedType": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "actionUrl": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "projectChecklistItems",
+    "table": "project_checklist_items",
+    "label": "ChecklistItem",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "stageKey": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "templateId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isRequired": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "pending"
+      },
+      "assignedToId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "dueDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "completedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "completedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "sequence": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "assignedToId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "createdById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "completedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectChecklistTemplates",
+    "table": "project_checklist_templates",
+    "label": "ChecklistTemplate",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "stageKey": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isRequired": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "sequence": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "isActive": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": []
+  },
+  {
+    "exportName": "projectComments",
+    "table": "project_comments",
+    "label": "Comment",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "stageKey": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "taskId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "documentId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "parentId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "authorId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "body": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "isDecision": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "isPinned": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "editedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "parentId"
+        ],
+        "target": "project_comments",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "authorId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectDailyUpdateItems",
+    "table": "project_daily_update_items",
+    "label": "DailyUpdateItem",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "updateId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "taskId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "note": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "progressNote": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "updateId"
+        ],
+        "target": "project_daily_updates",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "projectDailyUpdates",
+    "table": "project_daily_updates",
+    "label": "DailyUpdate",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "date": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "summary": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "blockers": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "hoursSpent": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "draft"
+      },
+      "submittedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "projectId",
+        "userId",
+        "date"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      }
+    ]
+  },
+  {
+    "exportName": "projectDocuments",
+    "table": "project_documents",
+    "label": "DocumentVersion",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "stageKey": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "category": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "other"
+      },
+      "r2Key": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "fileName": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "mimeType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "sizeBytes": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "version": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 1
+      },
+      "supersedesDocumentId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "final"
+      },
+      "uploadedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "checksum": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "r2Key"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "supersedesDocumentId"
+        ],
+        "target": "project_documents",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "uploadedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectEodReports",
+    "table": "project_eod_reports",
+    "label": "EodReport",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "date": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "generatedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "contentDraft": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "contentFinal": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "draft"
+      },
+      "missingSubmitters": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "finalisedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "projectId",
+        "date"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "generatedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectEvents",
+    "table": "project_events",
+    "label": "ProjectEvent",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "eventType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "actorId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "entityType": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "entityId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "details": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "actorId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectMembers",
+    "table": "project_members",
+    "label": "ProjectMembership",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "role": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "contributor"
+      },
+      "allocationPercent": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "billableRate": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "joinedAt": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "leftAt": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "leaveReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "replacedByUserId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "addedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isCurrent": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "replacedByUserId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "addedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectStageProgress",
+    "table": "project_stage_progress",
+    "label": "StageProgress",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "stageKey": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "pending"
+      },
+      "startedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "completedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "completedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "notes": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "projectId",
+        "stageKey"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "completedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projectStages",
+    "table": "project_stages",
+    "label": "StageDefinition",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "key": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "sequence": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "appliesToType": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isActive": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "key"
+      ]
+    ],
+    "references": []
+  },
+  {
+    "exportName": "projectTasks",
+    "table": "project_tasks",
+    "label": "Task",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "stageKey": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "parentTaskId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "taskNumber": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "todo"
+      },
+      "priority": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "medium"
+      },
+      "assigneeId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "startDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "dueDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "completedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false
+      },
+      "estimateHours": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "actualHours": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "blockedReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "sequence": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "projectId",
+        "taskNumber"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "parentTaskId"
+        ],
+        "target": "project_tasks",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "assigneeId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "createdById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "projects",
+    "table": "projects",
+    "label": "Project",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "code": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "projectType": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "client"
+      },
+      "clientCompanyId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "clientProjectName": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "engagementModel": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "contractValue": {
+        "type": "number",
+        "required": false,
+        "primary": false
+      },
+      "currency": {
+        "type": "string",
+        "required": false,
+        "primary": false,
+        "default": "INR"
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "draft"
+      },
+      "priority": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "medium"
+      },
+      "healthOverride": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "currentStageKey": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "startDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "targetEndDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "actualEndDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "ownerId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "createdById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "code"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "clientCompanyId"
+        ],
+        "target": "companies",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "ownerId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "createdById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "publicHolidays",
+    "table": "public_holidays",
+    "label": "Holiday",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "date": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "year": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "date"
+      ]
+    ],
+    "references": []
+  },
+  {
+    "exportName": "systemLeaveTypes",
+    "table": "system_leave_types",
+    "label": "LeaveType",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "slug": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "description": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "defaultDays": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "accrualPerYear": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "applyBeforeDays": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "applyBeforeDaysExtended": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "extendedLimitTrigger": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 0
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "slug"
+      ]
+    ],
+    "references": []
+  },
+  {
+    "exportName": "timesheets",
+    "table": "timesheets",
+    "label": "Timesheet",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "date": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "hours": {
+        "type": "number",
+        "required": true,
+        "primary": false
+      },
+      "isOvertime": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "isWeekend": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "logged"
+      },
+      "reEntryNote": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reEntryFlaggedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "userId",
+        "date"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "reEntryFlaggedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "users",
+    "table": "users",
+    "label": "Employee",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "authId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "email": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "birthday": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "role": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "user"
+      },
+      "standardHours": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 8
+      },
+      "joinDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "peerLeadId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "avatarUrl": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "isOnboarded": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "isActive": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": true
+      },
+      "exitDate": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "exitReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "deactivatedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "authId"
+      ],
+      [
+        "email"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "peerLeadId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "deactivatedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "wfhPolicy",
+    "table": "wfh_policy",
+    "label": "WfhPolicy",
+    "fields": {
+      "id": {
+        "type": "number",
+        "required": true,
+        "primary": true,
+        "default": 1
+      },
+      "annualAllowance": {
+        "type": "number",
+        "required": true,
+        "primary": false,
+        "default": 12
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": []
+  },
+  {
+    "exportName": "wfhRequests",
+    "table": "wfh_requests",
+    "label": "WfhRequest",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "userId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "date": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "isHalfDay": {
+        "type": "boolean",
+        "required": true,
+        "primary": false,
+        "default": false
+      },
+      "halfDayPeriod": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "pending"
+      },
+      "approvedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "rejectedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "rejectionReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "revokedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "revokeReason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reEntryNote": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reEntryFlaggedBy": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "reason": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [
+      [
+        "userId",
+        "date"
+      ]
+    ],
+    "references": [
+      {
+        "fields": [
+          "userId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "approvedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "rejectedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "revokedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "reEntryFlaggedBy"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  },
+  {
+    "exportName": "workFlags",
+    "table": "work_flags",
+    "label": "WorkFlag",
+    "fields": {
+      "id": {
+        "type": "string",
+        "required": true,
+        "primary": true
+      },
+      "projectId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "entityType": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "entityId": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "flagCode": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "severity": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "info"
+      },
+      "message": {
+        "type": "string",
+        "required": true,
+        "primary": false
+      },
+      "evidence": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "source": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "rule"
+      },
+      "status": {
+        "type": "string",
+        "required": true,
+        "primary": false,
+        "default": "open"
+      },
+      "raisedForUserId": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "resolvedById": {
+        "type": "string",
+        "required": false,
+        "primary": false
+      },
+      "createdAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      },
+      "updatedAt": {
+        "type": "date",
+        "required": false,
+        "primary": false,
+        "default": "$now"
+      }
+    },
+    "unique": [],
+    "references": [
+      {
+        "fields": [
+          "projectId"
+        ],
+        "target": "projects",
+        "targetFields": [
+          "id"
+        ],
+        "onDelete": "cascade"
+      },
+      {
+        "fields": [
+          "raisedForUserId"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      },
+      {
+        "fields": [
+          "resolvedById"
+        ],
+        "target": "users",
+        "targetFields": [
+          "id"
+        ]
+      }
+    ]
+  }
+]

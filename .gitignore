@@ -12,3 +12,6 @@ dist/
 .DS_Store
 outputs/
 ~$*
+
+# Local graph credentials and offline backups
+.local/

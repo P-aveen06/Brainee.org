@@ -1044,3 +1044,4 @@ export const dashboardLayouts = sqliteTable("dashboard_layouts", {
 		sql`(unixepoch())`,
 	),
 });
+export { companyPolicyDocuments } from "./company-policy-documents";

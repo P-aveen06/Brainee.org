@@ -21,7 +21,19 @@
     "db:seed": "bun run scripts/seed-projects.ts",
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "graph:setup": "bun run scripts/graph.ts setup",
+    "graph:up": "bun run scripts/graph.ts up",
+    "graph:down": "bun run scripts/graph.ts down",
+    "graph:status": "bun run scripts/graph.ts status",
+    "graph:migrate": "bun run scripts/graph.ts migrate",
+    "graph:health": "bun run scripts/graph.ts health",
+    "graph:test": "bun run scripts/graph.ts test",
+    "graph:backup": "bun run scripts/graph.ts backup",
+    "graph:restore-check": "bun run scripts/graph.ts restore-check",
+    "graph:typecheck": "bun run --cwd services/graph typecheck",
+    "graph:test:unit": "bun run --cwd services/graph test",
+    "graph:test:recovery": "bun run scripts/graph.ts test:recovery"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.17",

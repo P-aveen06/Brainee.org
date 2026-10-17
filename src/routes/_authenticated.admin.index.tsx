@@ -2,6 +2,8 @@ import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { desc, eq, or } from "drizzle-orm";
+import { getCompanyPolicyDocuments } from "@/api/company-policy-documents";
+import { CompanyPoliciesPanel } from "@/components/admin/CompanyPoliciesPanel";
 import { AdminConsoleTabs } from "../components/admin/AdminConsoleTabs";
 import { AuditLogTable } from "../components/admin/AuditLogTable";
 import { EmployeeTable } from "../components/admin/EmployeeTable";
@@ -194,27 +196,30 @@ import { z } from "zod";
 
 const adminSearchSchema = z.object({
 	tab: z
-		.enum(["employees", "holidays", "leave-config", "wfh", "audit"])
+		.enum(["employees", "holidays", "leave-config", "wfh", "policies", "audit"])
 		.optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/admin/")({
 	validateSearch: (search) => adminSearchSchema.parse(search),
 	loader: async () => {
-		const adminData = await getAdminPageData();
-		return { adminData };
+		const [adminData, policyDocuments] = await Promise.all([
+			getAdminPageData(),
+			getCompanyPolicyDocuments(),
+		]);
+		return { adminData, policyDocuments };
 	},
 	component: AdminConsolePage,
 });
 
 function AdminConsolePage() {
-	const { adminData } = Route.useLoaderData();
+	const { adminData, policyDocuments } = Route.useLoaderData();
 
 	return (
 		<Page>
 			<PageHeader
 				title="Admin Console"
-				description="Manage employees, holidays, leave policies, and audit logs."
+				description="Manage employees, holidays, company policies, and audit logs."
 			/>
 
 			<AdminConsoleTabs
@@ -239,6 +244,7 @@ function AdminConsolePage() {
 					</div>
 				}
 				auditContent={<AuditLogTable logs={adminData.logs} />}
+				policiesContent={<CompanyPoliciesPanel documents={policyDocuments} />}
 			/>
 		</Page>
 	);

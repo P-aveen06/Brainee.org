@@ -1,5 +1,12 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { FileText, House, Palmtree, Settings, Users } from "lucide-react";
+import {
+	FileText,
+	House,
+	Palmtree,
+	ScrollText,
+	Settings,
+	Users,
+} from "lucide-react";
 import { PageTabs } from "@/components/ui/page-tabs";
 
 const ADMIN_TABS = [
@@ -11,6 +18,7 @@ const ADMIN_TABS = [
 		icon: Settings,
 	},
 	{ value: "wfh", label: "WFH", icon: House },
+	{ value: "policies", label: "Policies", icon: ScrollText },
 	{ value: "audit", label: "Audit", icon: FileText },
 ] as const;
 
@@ -21,6 +29,7 @@ interface AdminConsoleTabsProps {
 	holidaysContent: React.ReactNode;
 	leaveConfigContent: React.ReactNode;
 	wfhContent: React.ReactNode;
+	policiesContent: React.ReactNode;
 	auditContent: React.ReactNode;
 }
 
@@ -29,6 +38,7 @@ export function AdminConsoleTabs({
 	holidaysContent,
 	leaveConfigContent,
 	wfhContent,
+	policiesContent,
 	auditContent,
 }: AdminConsoleTabsProps) {
 	const navigate = useNavigate();
@@ -50,6 +60,7 @@ export function AdminConsoleTabs({
 		holidays: holidaysContent,
 		"leave-config": leaveConfigContent,
 		wfh: wfhContent,
+		policies: policiesContent,
 		audit: auditContent,
 	};
 
