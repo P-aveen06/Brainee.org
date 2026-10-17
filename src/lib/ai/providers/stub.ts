@@ -1,4 +1,5 @@
 import type {
+	ChatCompletionRequest,
 	ChatCompletionResult,
 	ChatMessage,
 	ChatProvider,
@@ -59,5 +60,19 @@ export class StubProvider implements ChatProvider {
 			modelId: "stub-deterministic-v1",
 			latencyMs: 5,
 		};
+	}
+
+	async stream(
+		req: ChatCompletionRequest,
+		onTextDelta: (delta: string) => void,
+	): Promise<ChatCompletionResult> {
+		const result = await this.complete(req);
+		const chunks = result.text?.match(/\S+\s*/g) || [];
+		for (let index = 0; index < chunks.length; index += 3) {
+			if (req.signal?.aborted) throw req.signal.reason;
+			onTextDelta(chunks.slice(index, index + 3).join(""));
+			await new Promise((resolve) => setTimeout(resolve, 18));
+		}
+		return result;
 	}
 }

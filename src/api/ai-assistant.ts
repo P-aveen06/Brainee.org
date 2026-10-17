@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte } from "@/db/graph-query";
+import { RawStream } from "@tanstack/router-core";
 import { createDb } from "@/db";
+import { and, eq, gte } from "@/db/graph-query";
 import { aiConversations, aiMessages } from "@/db/schema";
 import { classifyAssistantFailure } from "@/lib/ai/ai-errors";
 import { runAssistantTurn } from "@/lib/ai/assistant-turn";
@@ -104,66 +105,102 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 			await recoverStaleAssistantTurns(db, conversationId, context.user.id);
 		}
 
-		// 3. Execute turn
+		// 3. Return a byte stream so the assistant UI can render answer text as it arrives.
 		const turnId = crypto.randomUUID();
 		const assistantMessageId = `msg-ast-${crypto.randomUUID()}`;
 		const turnStartedAt = Date.now();
-		try {
-			const pageContext = await verifyAssistantPageContext(
-				db,
-				context.user,
-				data.pageContext,
-			);
-			const turnResult = await runAssistantTurn(
-				{
-					conversationId,
-					userMessage: data.message,
-					customModelId: data.modelId,
-					pageContext,
-					turnId,
-					assistantMessageId,
-				},
-				{ user: context.user, db },
-			);
+		const abortController = new AbortController();
+		const encoder = new TextEncoder();
+		let cancelled = false;
+		const stream = new ReadableStream<Uint8Array>({
+			start(streamController) {
+				const emit = (event: Record<string, unknown>) => {
+					if (!cancelled) {
+						streamController.enqueue(
+							encoder.encode(`${JSON.stringify(event)}\n`),
+						);
+					}
+				};
+				void (async () => {
+					try {
+						const pageContext = await verifyAssistantPageContext(
+							db,
+							context.user,
+							data.pageContext,
+						);
+						const turnResult = await runAssistantTurn(
+							{
+								conversationId,
+								userMessage: data.message,
+								customModelId: data.modelId,
+								pageContext,
+								turnId,
+								assistantMessageId,
+								signal: abortController.signal,
+								onTextDelta: (text) => emit({ type: "delta", text }),
+							},
+							{ user: context.user, db },
+						);
+						emit({
+							type: "result",
+							result: { conversationId, ...turnResult },
+						});
+					} catch (err: unknown) {
+						console.error("AI assistant turn failed", err);
+						const failure = classifyAssistantFailure(err);
+						let proposals: Awaited<ReturnType<typeof persistTurnFailure>> = [];
+						try {
+							proposals = await persistTurnFailure({
+								db,
+								turnId,
+								conversationId,
+								assistantMessageId,
+								code: failure.code,
+								label: failure.label,
+								publicMessage: failure.publicMessage,
+								latencyMs: Date.now() - turnStartedAt,
+							});
+						} catch (persistenceError) {
+							console.error(
+								"Failed to persist assistant failure",
+								persistenceError,
+							);
+						}
+						emit({
+							type: "result",
+							result: {
+								conversationId,
+								messageId: assistantMessageId,
+								content: `⚠️ ${failure.label}: ${failure.publicMessage}`,
+								citations: [],
+								proposedActions: proposals.map((proposal) => ({
+									id: proposal.id,
+									actionType: proposal.actionType,
+									targetEntityType: proposal.targetEntityType,
+									targetEntityId: proposal.targetEntityId,
+									payload: proposal.payload || "{}",
+									status: proposal.status,
+								})),
+								errorCode: failure.code,
+								tokens: { in: 0, out: 0 },
+								latencyMs: Date.now() - turnStartedAt,
+							},
+						});
+					} finally {
+						if (!cancelled) streamController.close();
+					}
+				})();
+			},
+			cancel(reason) {
+				cancelled = true;
+				abortController.abort(reason);
+			},
+		});
 
-			return {
-				conversationId,
-				...turnResult,
-			};
-		} catch (err: unknown) {
-			console.error("AI assistant turn failed", err);
-			const failure = classifyAssistantFailure(err);
-			let proposals: Awaited<ReturnType<typeof persistTurnFailure>> = [];
-			try {
-				proposals = await persistTurnFailure({
-					db,
-					turnId,
-					conversationId,
-					assistantMessageId,
-					code: failure.code,
-					label: failure.label,
-					publicMessage: failure.publicMessage,
-					latencyMs: Date.now() - turnStartedAt,
-				});
-			} catch (persistenceError) {
-				console.error("Failed to persist assistant failure", persistenceError);
-			}
-			return {
-				conversationId,
-				messageId: assistantMessageId,
-				content: `⚠️ ${failure.label}: ${failure.publicMessage}`,
-				citations: [],
-				proposedActions: proposals.map((proposal) => ({
-					id: proposal.id,
-					actionType: proposal.actionType,
-					targetEntityType: proposal.targetEntityType,
-					targetEntityId: proposal.targetEntityId,
-					payload: proposal.payload || "{}",
-					status: proposal.status,
-				})),
-				errorCode: failure.code,
-				tokens: { in: 0, out: 0 },
-				latencyMs: Date.now() - turnStartedAt,
-			};
-		}
+		return {
+			conversationId,
+			stream: new RawStream(stream, {
+				hint: "text",
+			}) as unknown as ReadableStream<Uint8Array>,
+		};
 	});

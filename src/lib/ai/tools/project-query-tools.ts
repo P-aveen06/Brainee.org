@@ -286,7 +286,7 @@ export const getProjectTasksTool: ToolHandler = {
 			.leftJoin(users, eq(projectTasks.assigneeId, users.id))
 			.where(and(...conditions))
 			.orderBy(projectTasks.taskNumber)
-			.limit(60);
+			.limit(100);
 
 		// Group subtasks under their parent tasks
 		type RawTask = (typeof rawTasks)[number];
@@ -437,7 +437,7 @@ export const getMyTasksTool: ToolHandler = {
 			.innerJoin(projects, eq(projectTasks.projectId, projects.id))
 			.where(and(...conditions))
 			.orderBy(projectTasks.dueDate)
-			.limit(50);
+			.limit(100);
 
 		return {
 			success: true,

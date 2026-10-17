@@ -1,4 +1,6 @@
+import type { GroundedLabel } from "./citations";
 import { aiMessages, aiProposedActions, aiToolInvocations } from "@/db/schema";
+import type { AssistantChartSpec } from "./chart-types";
 import type { ChatMessage, ToolCall } from "./provider";
 import { executeToolCalls } from "./tool-invoker";
 import type { ToolContext } from "./tools/tool-types";
@@ -50,8 +52,9 @@ export async function executeAndPersistToolRound(input: {
 }): Promise<{
 	historyMessages: ChatMessage[];
 	groundedIds: Set<string>;
-	groundedLabels: Array<{ id: string; label: string }>;
+	groundedLabels: GroundedLabel[];
 	proposals: CreatedProposal[];
+	charts: AssistantChartSpec[];
 	nextSequence: number;
 	resultBytes: number;
 }> {
@@ -73,6 +76,7 @@ export async function executeAndPersistToolRound(input: {
 		{ turnId: input.turnId, toolRound: input.toolRound },
 	);
 	const proposals: CreatedProposal[] = [];
+	const charts: AssistantChartSpec[] = [];
 	for (const proposal of results.proposedActions) {
 		const actionId = newId("act");
 		const payload = JSON.stringify(proposal.payload);
@@ -104,6 +108,7 @@ export async function executeAndPersistToolRound(input: {
 	let resultBytes = 0;
 	for (const output of results.toolOutputs) {
 		const resultPayload = output.result.data ?? { error: output.result.error };
+		if (output.result.chart) charts.push(output.result.chart.chart);
 		const call = input.calls.find(
 			(candidate) => candidate.id === output.toolCallId,
 		);
@@ -122,7 +127,10 @@ export async function executeAndPersistToolRound(input: {
 			role: "tool",
 			toolCallId: output.toolCallId,
 			content: JSON.stringify({
+				knowledgeScope: output.result.knowledgeScope,
 				scopeProjectId,
+				scopeProjectIds: output.result.chart?.scopeProjectIds,
+				scopeUserIds: output.result.chart?.scopeUserIds,
 				result: resultPayload,
 			} satisfies StoredToolPayload),
 		});
@@ -139,6 +147,7 @@ export async function executeAndPersistToolRound(input: {
 		groundedIds: results.allGroundedIds,
 		groundedLabels: results.allGroundedLabels,
 		proposals,
+		charts,
 		nextSequence: sequence,
 		resultBytes,
 	};

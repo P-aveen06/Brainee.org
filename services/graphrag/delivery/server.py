@@ -1,7 +1,6 @@
 import asyncio
 import hmac
 import logging
-import os
 
 from aiohttp import web
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -24,7 +23,6 @@ class Payload(BaseModel):
     section: str = Field(default="all", max_length=20)
     offset: int = Field(default=0, ge=0, le=10000)
     limit: int = Field(default=25, ge=1, le=100)
-    contentBase64: str = Field(default="", max_length=35_000_000)
 
 
 class Envelope(BaseModel):
@@ -37,9 +35,9 @@ class Envelope(BaseModel):
 def create_app(settings, graph=None):
     connection = FalkorDBConnection(settings.connection) if graph is None else None
     graph = graph or DeliveryGraph(connection)
-    app = web.Application(client_max_size=36 * 1024 * 1024)
+    app = web.Application(client_max_size=25 * 1024 * 1024)
     handlers = {"delivery.search": search_delivery, "delivery.context": implementation_context,
-                "delivery.passages": document_passages, "delivery.index": index_document}
+                "delivery.passages": document_passages}
 
     async def operation(request):
         supplied = request.headers.get("authorization", "")
@@ -53,7 +51,7 @@ def create_app(settings, graph=None):
             payload = envelope.payload.model_dump()
             if any(not isinstance(term, str) or len(term) > 120 for term in payload["concepts"]):
                 raise ValueError("Search concepts must be at most 120 characters each.")
-            async with asyncio.timeout(25 if envelope.operation == "delivery.index" else 10):
+            async with asyncio.timeout(10):
                 await graph.authenticate(envelope.actorId)
                 data = await handler(graph, envelope.actorId, payload)
             return web.json_response({"data": data})
@@ -61,6 +59,23 @@ def create_app(settings, graph=None):
             return web.json_response({"error": "Invalid or unavailable delivery source. Check the query and source IDs."}, status=400)
         except Exception:
             return web.json_response({"error": "Delivery retrieval is unavailable. Retry shortly."}, status=503)
+
+    async def index(request):
+        if not hmac.compare_digest(request.headers.get("authorization", ""), f"Bearer {settings.token}"):
+            return web.json_response({"error": "Unauthorized."}, status=401)
+        actor_id = request.headers.get("x-graph-actor", "")
+        if not actor_id or len(actor_id) > 200:
+            return web.json_response({"error": "Invalid actor."}, status=400)
+        try:
+            async with asyncio.timeout(25):
+                await graph.authenticate(actor_id)
+                content = await request.read()
+                data = await index_document(graph, actor_id, request.match_info["id"], content)
+            return web.json_response({"data": data})
+        except web.HTTPRequestEntityTooLarge:
+            return web.json_response({"error": "Document exceeds 25 MB."}, status=413)
+        except Exception:
+            return web.json_response({"error": "Document could not be indexed. Verify its format and checksum."}, status=400)
 
     async def ready(request):
         if not hmac.compare_digest(request.headers.get("authorization", ""), f"Bearer {settings.token}"):
@@ -76,6 +91,7 @@ def create_app(settings, graph=None):
             await connection.close()
 
     app.router.add_post("/operations", operation)
+    app.router.add_post("/documents/{id}/index", index)
     app.router.add_get("/ready", ready)
     app.on_cleanup.append(close)
     return app

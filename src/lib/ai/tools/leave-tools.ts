@@ -96,13 +96,13 @@ export const getMyLeaveRequestsTool: ToolHandler = {
 				)
 				.where(and(...conditions))
 				.orderBy(desc(leaveRequests.createdAt))
-				.limit(10),
+				.limit(20),
 			ctx.db
 				.select()
 				.from(wfhRequests)
 				.where(eq(wfhRequests.userId, ctx.user.id))
 				.orderBy(desc(wfhRequests.createdAt))
-				.limit(10),
+				.limit(20),
 		]);
 
 		return {

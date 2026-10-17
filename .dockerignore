@@ -11,3 +11,8 @@
 !shared/
 !shared/graph/
 !shared/graph/**
+!shared/delivery-knowledge.ts
+!services/graphrag/
+!services/graphrag/**
+**/__pycache__/
+**/*.pyc

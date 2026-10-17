@@ -48,6 +48,10 @@ export interface ChatCompletionRequest {
 
 export interface ChatProvider {
 	complete(req: ChatCompletionRequest): Promise<ChatCompletionResult>;
+	stream?(
+		req: ChatCompletionRequest,
+		onTextDelta: (delta: string) => void,
+	): Promise<ChatCompletionResult>;
 }
 
 /** Models a caller may request from OpenCode. Anything else silently falls back to the provider default. */

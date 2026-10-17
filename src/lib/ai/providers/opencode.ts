@@ -3,6 +3,7 @@ import type {
 	ChatCompletionResult,
 	ChatProvider,
 } from "../provider";
+import { streamOpenCodeCompletion } from "./opencode-stream";
 
 /**
  * OpenCode inference endpoint provider.
@@ -81,6 +82,20 @@ export class OpenCodeProvider implements ChatProvider {
 		}
 
 		throw lastError || new Error("OpenCode: all retry attempts exhausted");
+	}
+
+	async stream(
+		req: ChatCompletionRequest,
+		onTextDelta: (delta: string) => void,
+	): Promise<ChatCompletionResult> {
+		return streamOpenCodeCompletion({
+			apiKey: this.apiKey,
+			baseUrl: this.baseUrl,
+			sessionId: this.sessionId,
+			model: req.modelId || this.defaultModel,
+			request: req,
+			onTextDelta,
+		});
 	}
 
 	private async callResponsesApi(

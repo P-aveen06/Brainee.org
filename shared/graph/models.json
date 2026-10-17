@@ -1918,6 +1918,9 @@
 				"required": false,
 				"primary": false
 			},
+			"deliveryText": {"type": "string", "required": false, "primary": false},
+			"deliveryTextChecksum": {"type": "string", "required": false, "primary": false},
+			"deliveryIndexStatus": {"type": "string", "required": false, "primary": false},
 			"createdAt": {
 				"type": "date",
 				"required": false,

@@ -3,6 +3,7 @@ import { readConfig } from "./config.ts";
 import { connect } from "./connection.ts";
 import { createGraphServer } from "./http.ts";
 import { checkReady } from "./migrations.ts";
+import { indexDeliveryStream } from "./delivery-retrieval.ts";
 
 const config = readConfig(process.env);
 const client = await connect(config);
@@ -12,6 +13,7 @@ const server = createGraphServer(
 	config.serviceToken,
 	() => checkReady(graph),
 	operations(graph),
+	(subject, id, request) => indexDeliveryStream(graph, subject, id, request),
 );
 client.once("error", () => {
 	// Restart with a fresh connection rather than queue requests after a disconnect.

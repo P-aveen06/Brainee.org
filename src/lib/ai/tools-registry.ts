@@ -1,3 +1,10 @@
+import { DELIVERY_KNOWLEDGE_PROMPT } from "./delivery-knowledge-prompt";
+import {
+	searchDeliveryKnowledgeTool,
+	indexDeliveryDocumentsTool,
+	getImplementationContextTool,
+	readDocumentPassagesTool,
+} from "./tools/delivery-knowledge-tools";
 import { getTodayIsoDate } from "@/lib/leave-policy";
 import type { AppUser } from "@/lib/server-fn";
 import type { AssistantPageContext } from "./page-context";
@@ -9,6 +16,7 @@ import {
 	getMyTimesheetsTool,
 	proposeAssetIssueReportTool,
 } from "./tools/asset-tools";
+import { getChartTool } from "./tools/chart-tool";
 import { proposeLeaveCancellationTool } from "./tools/leave-mutation-tools";
 import {
 	getMyLeaveBalancesTool,
@@ -45,7 +53,12 @@ import { compareProjectTranscriptTool } from "./tools/transcript-tools";
 import { getWorkBriefTool } from "./tools/work-brief-tool";
 
 const ALL_TOOLS: ToolHandler[] = [
+	indexDeliveryDocumentsTool,
+	searchDeliveryKnowledgeTool,
+	getImplementationContextTool,
+	readDocumentPassagesTool,
 	getWorkBriefTool,
+	getChartTool,
 	// Projects, Tasks & Discussions
 	listProjectsTool,
 	getProjectTool,
@@ -106,6 +119,7 @@ export function getAssistantSystemPrompt(
 		? `\n\nVERIFIED CURRENT SCREEN CONTEXT: ${JSON.stringify(pageContext)}\nUse this as the default scope when the user's wording refers to "this", "here", or the current record. It never grants additional access.`
 		: "";
 	return `${ASSISTANT_SYSTEM_PROMPT_BASE}
+${DELIVERY_KNOWLEDGE_PROMPT}
 
 ${user ? getCallerPrompt(user) : ""}
 
@@ -119,6 +133,17 @@ CORE OPERATIONAL MANDATE (ZERO HESITATION & ZERO EXCUSES):
 - NEVER ask permission to do a lookup or say "I would need to filter and count manually".
 - NEVER say "I can only list by X, not Y". If a user mentions a brand, person, project, date, or keyword, IMMEDIATELY call the appropriate tool, process the data, and deliver the final answer directly in that first response!
 - Never answer an unrelated greeting by repeating that an earlier action was drafted. Treat prior assistant claims as unverified history until a current-turn tool confirms them.
+
+COMPANY WORK SCOPE & POLITE REDIRECT:
+- Company Brain is for Brainee.org workspace questions: projects, tasks, teammates, decisions, documents, delivery, attendance, leave, approvals, and equipment that this caller is allowed to see.
+- If a request is unrelated to company work or requires live external information (for example, sports fixtures, general trivia, news, or weather), do not answer it and do not ask clarifying questions that continue that unrelated topic. Briefly and warmly explain that Company Brain is focused on the caller's work and cannot verify that external information.
+- Then invite the caller back with a useful, role-appropriate workspace question. Keep the redirect concise and natural; the interface will also show clickable suggestions tailored to the caller.
+
+VISUAL-FIRST ANSWERS:
+- Decide whether a visual would make retrieved workspace information materially clearer. Do not wait for the user to ask for a chart, and do not add one just to decorate an isolated number.
+- Prefer get_chart for portfolio distributions and comparisons, including project health, project stages, client project counts, delivery risks by project, and approved leave/WFH patterns over the next seven days.
+- When a chart makes the pattern easier to understand, call get_chart and include it with a concise takeaway and its scope. The tool computes values from the caller's permitted records; never invent, adjust, or recalculate chart values.
+- If the question calls for a single fact, action list, unsupported chart view, or incomplete data, answer in text instead. Do not chart external information.
 
 UNIVERSAL RESOLUTION MATRIX ACROSS ALL SCREENS & SCENARIOS:
 1. Equipment & IT Assets (Any brand, model, status, or assignment):

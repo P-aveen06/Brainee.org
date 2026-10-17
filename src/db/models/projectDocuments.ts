@@ -16,6 +16,9 @@ export type DocumentVersionRow = {
 	status: string;
 	uploadedById: string | null;
 	checksum: string | null;
+	deliveryText: string | null;
+	deliveryTextChecksum: string | null;
+	deliveryIndexStatus: string | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
 };

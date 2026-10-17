@@ -21,7 +21,7 @@ export function AssistantSuggestions({
 		return null;
 	const prompts = welcome
 		? getStarterPrompts(user)
-		: getFollowUpSuggestions(messages).map((prompt) => ({
+		: getFollowUpSuggestions(messages, user).map((prompt) => ({
 				title: prompt,
 				label: "",
 				prompt,
@@ -34,7 +34,9 @@ export function AssistantSuggestions({
 			className={welcome ? "w-full text-left" : "pl-8"}
 		>
 			{!welcome && (
-				<p className="mb-2 text-xs text-muted-foreground">Continue exploring</p>
+				<p className="mb-2 text-xs text-muted-foreground">
+					Explore your workspace
+				</p>
 			)}
 			<div
 				className={
@@ -55,21 +57,41 @@ export function AssistantSuggestions({
 							variant={welcome ? "outline" : "ghost"}
 							className={
 								welcome
-									? "h-auto justify-between gap-3 whitespace-normal p-3 text-left"
+									? "group relative h-auto justify-between gap-3 whitespace-normal rounded-xl border border-border/80 bg-card/75 dark:bg-card/50 backdrop-blur-md p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:bg-card/95 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
 									: "h-auto max-w-full gap-1.5 whitespace-normal rounded-full border border-border px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground"
 							}
 						>
-							<span className="min-w-0">
-								<span className={welcome ? "block text-sm font-semibold" : ""}>
+							<span className="min-w-0 flex-1">
+								<span
+									className={
+										welcome
+											? "block text-xs sm:text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+											: ""
+									}
+								>
 									{item.title}
 								</span>
 								{item.label && (
-									<span className="mt-1 block text-xs font-normal text-muted-foreground">
+									<span
+										className={
+											welcome
+												? "mt-1 block text-[11px] sm:text-xs font-normal text-muted-foreground line-clamp-1"
+												: "mt-1 block text-xs font-normal text-muted-foreground"
+										}
+									>
 										{item.label}
 									</span>
 								)}
 							</span>
-							<ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" />
+							<div
+								className={
+									welcome
+										? "flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-alt/80 dark:bg-surface-alt/40 text-muted-foreground transition-all duration-200 group-hover:bg-blue-500/10 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+										: "shrink-0"
+								}
+							>
+								<ArrowUpRight className="size-3.5" />
+							</div>
 						</Button>
 					</ThreadPrimitive.Suggestion>
 				))}

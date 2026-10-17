@@ -38,6 +38,11 @@ export function createGraphServer(
 	token: string,
 	ready: () => Promise<void>,
 	execute?: Execute,
+	indexDocument?: (
+		subject: string,
+		id: string,
+		request: IncomingMessage,
+	) => Promise<unknown>,
 ) {
 	const expected = Buffer.from(`Bearer ${token}`);
 	const server = createServer(async (request, response) => {
@@ -54,6 +59,31 @@ export function createGraphServer(
 			!timingSafeEqual(supplied, expected)
 		)
 			return send(401, { error: "Unauthorized." });
+		const documentRoute = request.url?.match(
+			/^\/delivery\/documents\/([^/]+)\/index$/,
+		);
+		if (documentRoute && indexDocument) {
+			if (request.method !== "POST")
+				return send(405, { error: "Method not allowed." });
+			const subject = request.headers["x-graph-subject"];
+			if (typeof subject !== "string" || !subject || subject.length > 200)
+				return send(400, { error: "Invalid subject." });
+			if (Number(request.headers["content-length"] ?? 0) > 25 * 1024 * 1024)
+				return send(413, { error: "Document too large." });
+			try {
+				return send(200, {
+					data: await indexDocument(
+						subject,
+						decodeURIComponent(documentRoute[1]),
+						request,
+					),
+				});
+			} catch {
+				return send(400, {
+					error: "Document indexing is unavailable. Retry later.",
+				});
+			}
+		}
 		if (request.url === "/ready") {
 			if (request.method !== "GET")
 				return send(405, { error: "Method not allowed." });
@@ -80,7 +110,7 @@ export function createGraphServer(
 			});
 		}
 	});
-	server.requestTimeout = 10000;
+	server.requestTimeout = 30000;
 	server.headersTimeout = 5000;
 	server.keepAliveTimeout = 2000;
 	server.maxHeadersCount = 30;

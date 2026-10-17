@@ -1,6 +1,8 @@
 import { type ChatModelAdapter, useLocalRuntime } from "@assistant-ui/react";
 import { toast } from "sonner";
 import { sendAiMessage } from "@/api/ai-assistant";
+import type { AssistantChartSpec } from "@/lib/ai/chart-types";
+import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import type { CitationRef } from "@/lib/ai/citations";
 import { CLIENT_TIMEOUT_MS } from "@/lib/ai/completion-timeout";
 import type { AssistantPageContext } from "@/lib/ai/page-context";
@@ -10,6 +12,7 @@ import type { ProposedActionItem } from "./ProposedActionCard";
 export interface MessageCustomData {
 	citations: CitationRef[];
 	proposals: ProposedActionItem[];
+	charts: AssistantChartSpec[];
 	modelId?: string;
 	latencyMs?: number;
 }
@@ -20,6 +23,7 @@ export interface InitialAssistantMessage {
 	content: string | null;
 	citations?: CitationRef[];
 	proposals?: ProposedActionItem[];
+	charts?: AssistantChartSpec[];
 	modelId?: string | null;
 	latencyMs?: number | null;
 	createdAt?: string | Date | null;
@@ -53,7 +57,7 @@ export function useAssistantUiBridge(
 	pageContext?: AssistantPageContext,
 ) {
 	const adapter: ChatModelAdapter = {
-		async run({ messages, abortSignal }) {
+		async *run({ messages, abortSignal }) {
 			const lastMessage = messages[messages.length - 1];
 			let userText = "";
 
@@ -64,7 +68,8 @@ export function useAssistantUiBridge(
 			}
 
 			if (!userText.trim()) {
-				return { content: [{ type: "text", text: "" }] };
+				yield { content: [{ type: "text", text: "" }] };
+				return;
 			}
 
 			const requestController = new AbortController();
@@ -75,6 +80,7 @@ export function useAssistantUiBridge(
 				timedOut = true;
 				requestController.abort();
 			}, CLIENT_TIMEOUT_MS);
+			let accumulatedText = "";
 
 			try {
 				const res = await sendAiMessage({
@@ -88,7 +94,7 @@ export function useAssistantUiBridge(
 
 				if ("error" in res && res.error) {
 					toast.error(String(res.error));
-					return {
+					yield {
 						content: [
 							{
 								type: "text",
@@ -96,50 +102,117 @@ export function useAssistantUiBridge(
 							},
 						],
 					};
+					return;
 				}
 
-				if (!conversationId && "conversationId" in res && res.conversationId) {
-					onConversationCreated?.(String(res.conversationId));
+				const createdConversationId =
+					!conversationId && "conversationId" in res && res.conversationId
+						? String(res.conversationId)
+						: undefined;
+
+				let result: Record<string, unknown> | undefined;
+				let receivedText = false;
+				if ("stream" in res && typeof res.stream?.getReader === "function") {
+					const reader = res.stream.getReader();
+					const decoder = new TextDecoder();
+					let buffer = "";
+					const cancelReader = () => {
+						void reader.cancel(requestController.signal.reason);
+					};
+					requestController.signal.addEventListener("abort", cancelReader, {
+						once: true,
+					});
+					const processLine = (line: string) => {
+						if (!line.trim()) return null;
+						return JSON.parse(line) as {
+							type?: string;
+							text?: string;
+							result?: Record<string, unknown>;
+						};
+					};
+					try {
+						while (true) {
+							const { value, done } = await reader.read();
+							buffer += decoder.decode(value, { stream: !done });
+							const lines = buffer.split("\n");
+							buffer = lines.pop() || "";
+							for (const line of lines) {
+								const event = processLine(line);
+								if (event?.type === "delta" && event.text) {
+									receivedText = true;
+									accumulatedText += event.text;
+									yield {
+										content: [{ type: "text", text: accumulatedText }],
+									};
+								} else if (event?.type === "result") {
+									result = event.result;
+								}
+							}
+							if (done) break;
+						}
+						const event = processLine(buffer);
+						if (event?.type === "result") result = event.result;
+						if (event?.type === "delta" && event.text) {
+							receivedText = true;
+							accumulatedText += event.text;
+							yield {
+								content: [{ type: "text", text: accumulatedText }],
+							};
+						}
+					} finally {
+						requestController.signal.removeEventListener("abort", cancelReader);
+						reader.releaseLock();
+					}
+				} else {
+					result = res as Record<string, unknown>;
 				}
 
-				const citations = (
-					"citations" in res ? res.citations : []
-				) as CitationRef[];
-				const rawProposals =
-					"proposedActions" in res && Array.isArray(res.proposedActions)
-						? res.proposedActions
-						: [];
+				if (!result)
+					throw new Error("Company Brain ended without a final response.");
+				const content =
+					typeof result.content === "string" ? result.content.trim() : "";
+				if (!receivedText && content) {
+					accumulatedText = content;
+					yield { content: [{ type: "text", text: accumulatedText }] };
+				} else if (result.errorCode && content) {
+					accumulatedText += `\n\n${content}`;
+					yield { content: [{ type: "text", text: accumulatedText }] };
+				}
+
+				const citations = Array.isArray(result.citations)
+					? (result.citations as CitationRef[])
+					: [];
+				const rawProposals = Array.isArray(result.proposedActions)
+					? result.proposedActions
+					: [];
 				const proposals: ProposedActionItem[] = rawProposals.map((p) => ({
 					...p,
 					payload: parseProposalPayload(p.payload),
 					status: (p.status as ProposedActionItem["status"]) || "pending",
 				}));
 				const latencyMs =
-					"latencyMs" in res ? (res.latencyMs as number) : undefined;
+					typeof result.latencyMs === "number" ? result.latencyMs : undefined;
 				const modelId =
-					"modelId" in res && typeof res.modelId === "string"
-						? res.modelId
-						: undefined;
-
-				return {
-					content: [
-						{
-							type: "text",
-							text:
-								"content" in res && typeof res.content === "string"
-									? res.content.trim()
-									: "Request processed.",
-						},
-					],
+					typeof result.modelId === "string" ? result.modelId : undefined;
+				const charts = Array.isArray(result.charts)
+					? result.charts.filter(isAssistantChartSpec)
+					: [];
+				yield {
 					metadata: {
 						custom: {
 							citations,
 							proposals,
+							charts,
 							modelId,
 							latencyMs,
 						} satisfies MessageCustomData,
 					},
 				};
+				// Changing the route key before the stream completes unmounts this
+				// runtime, which aborts the response.
+				if (createdConversationId) {
+					setTimeout(() => onConversationCreated?.(createdConversationId), 0);
+				}
 			} catch (err: unknown) {
 				const label = timedOut
 					? "Timeout"
@@ -154,14 +227,11 @@ export function useAssistantUiBridge(
 							? err.message
 							: "Failed to communicate with assistant.";
 				toast.error(errorMsg);
-				return {
-					content: [
-						{
-							type: "text",
-							text: `⚠️ ${label}: ${errorMsg}`,
-						},
-					],
+				accumulatedText += `⚠️ ${label}: ${errorMsg}`;
+				yield {
+					content: [{ type: "text", text: accumulatedText }],
 				};
+				return;
 			} finally {
 				clearTimeout(timeoutId);
 				abortSignal.removeEventListener("abort", handleAbort);
@@ -180,6 +250,7 @@ export function useAssistantUiBridge(
 				custom: {
 					citations: m.citations || [],
 					proposals: m.proposals || [],
+					charts: (m.charts || []).filter(isAssistantChartSpec),
 					modelId: m.modelId || undefined,
 					latencyMs: m.latencyMs || undefined,
 				} satisfies MessageCustomData,

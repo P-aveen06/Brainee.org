@@ -10,7 +10,7 @@ actualHours:t.actualHours,blockedReason:t.blockedReason,dueDate:t.dueDate,
 assigneeId:u.id,assigneeName:u.name,
 isLeaf:size([(t)<-[:PARENT_TASK]-(child:Task) WHERE child.projectId=$projectId | child.id])=0}"""
 
-# These projections deliberately omit contracts, storage keys, credentials, and HR fields.
+# These projections deliberately omit storage keys, credentials, and HR fields.
 SEARCH_KINDS = {
     "task": (
         "MATCH (p:Project)-[:HAS_TASK]->(n:Task) OPTIONAL MATCH (n)-[:ASSIGNED_TO]->(u:Employee)",
@@ -83,10 +83,21 @@ description:p.description,status:p.status,ownerId:p.ownerId,targetEndDate:p.targ
 WHERE n.id=$id AND n.status <> 'superseded'
 RETURN {id:n.id,type:'document',projectId:p.id,projectCode:p.code,title:n.title,
 version:n.version,checksum:n.checksum,mimeType:n.mimeType,text:CASE WHEN n.deliveryTextChecksum=n.checksum
-THEN n.deliveryText ELSE null END,indexStatus:coalesce(n.deliveryIndexStatus,'not_indexed')}""",
+THEN n.deliveryText ELSE null END,indexStatus:CASE WHEN n.deliveryTextChecksum=n.checksum THEN coalesce(n.deliveryIndexStatus,'not_indexed') ELSE 'not_indexed' END}""",
                                actor_id, id=document_id)
         if not rows:
             raise ValueError("Current document not found.")
+        return rows[0]
+
+    async def coverage(self, actor_id):
+        rows = await self.read("""MATCH (d:DocumentVersion)-[:IN_PROJECT]->(:Project)
+WHERE d.status <> 'superseded'
+RETURN {currentDocuments:count(d),
+indexedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='indexed' THEN 1 ELSE 0 END),
+truncatedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='truncated' THEN 1 ELSE 0 END),
+unsupportedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='unsupported' THEN 1 ELSE 0 END),
+emptyDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='empty' THEN 1 ELSE 0 END),
+unindexedDocuments:sum(CASE WHEN d.deliveryTextChecksum IS NULL OR d.checksum IS NULL OR d.deliveryTextChecksum<>d.checksum THEN 1 ELSE 0 END)}""", actor_id)
         return rows[0]
 
     async def search_kind(self, actor_id, kind, terms, ceiling):

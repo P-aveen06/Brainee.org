@@ -87,7 +87,7 @@ export const compareProjectTranscriptTool: ToolHandler = {
 			.from(projectTasks)
 			.leftJoin(users, eq(projectTasks.assigneeId, users.id))
 			.where(eq(projectTasks.projectId, project.id))
-			.limit(50);
+			.limit(100);
 		if (!project) return { success: false, error: "Project not found." };
 		const findings = compareTranscriptClaims({ project, tasks, claims });
 		const matchedIds = findings.flatMap((finding) =>

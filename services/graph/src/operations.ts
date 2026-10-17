@@ -4,6 +4,7 @@ import { executeData, executeBatch, resolveActor } from "./data-executor.ts";
 import { resolveIdentity } from "./identity.ts";
 import { peopleOperation } from "./people-operations.ts";
 import { createTaskOperation } from "./task-operation.ts";
+import { deliveryOperation } from "./delivery-retrieval.ts";
 
 export function operations(graph: Graph) {
 	return async (name: string, payload: unknown, subject: string) => {
@@ -13,6 +14,8 @@ export function operations(graph: Graph) {
 			return resolveIdentity(graph, payload);
 		}
 		const actor = await resolveActor(graph, subject);
+		if (name.startsWith("delivery."))
+			return deliveryOperation(graph, name, payload, actor);
 		if (name === "data.execute")
 			return executeData(graph, payload as GraphRequest, actor);
 		if (name === "data.batch")

@@ -12,6 +12,13 @@ export function getForcedToolForIntent(
 	if (APPLY_WORDS.test(userMessage) && LEAVE_WORDS.test(userMessage)) {
 		return "propose_leave_request";
 	}
+	if (
+		/\b(similar (functionality|feature|implementation)|previous implementation|built before|developed before|reuse|reusable)\b/i.test(
+			userMessage,
+		) &&
+		!LEAVE_WORDS.test(userMessage)
+	)
+		return "search_delivery_knowledge";
 	if (!CANCEL_WORDS.test(userMessage)) return undefined;
 	if (LEAVE_WORDS.test(userMessage)) return "propose_leave_cancellation";
 

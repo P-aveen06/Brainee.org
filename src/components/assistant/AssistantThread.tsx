@@ -59,7 +59,7 @@ export function AssistantThread({
 			)}
 
 			{/* Scrollable Message Viewport */}
-			<ThreadPrimitive.Viewport className="flex-1 overflow-y-auto scrollbar-thin">
+			<ThreadPrimitive.Viewport className="relative flex-1 flex flex-col overflow-y-auto scrollbar-thin">
 				<ThreadPrimitive.Empty>
 					<AssistantEmptyState />
 				</ThreadPrimitive.Empty>

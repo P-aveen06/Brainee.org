@@ -163,9 +163,38 @@ const FOLLOW_UPS = {
 	],
 };
 
+const ROLE_FOLLOW_UPS: Record<ReturnType<typeof callerPersona>, string[]> = {
+	ceo: [
+		"Give me an executive briefing on delivery risks, client commitments, and decisions needing my attention.",
+		"Which client projects have blockers that could affect their delivery dates?",
+		"Compare the health of our internal initiatives and client projects.",
+	],
+	hr: [
+		"Who is away or working remotely this week, and which teams need coverage?",
+		"Show me the reporting lines across the team.",
+		"What are my remaining leave and WFH balances?",
+	],
+	lead: [
+		"Which of my projects need attention, and who owns each blocker?",
+		"Show pending leave and WFH approvals from my direct reports.",
+		"Which of my direct reports are missing today's update?",
+	],
+	architect: [
+		"What technical dependencies or integration risks are recorded across my projects?",
+		"Which architecture reviews are due next, and who owns them?",
+		"Summarize the decisions recorded about our project dependencies.",
+	],
+	employee: [
+		"What should I focus on today across my assigned projects?",
+		"Which of my tasks are overdue or blocked, and what is the next step?",
+		"Show my remaining leave and WFH balances.",
+	],
+};
+
 /** Relevant shortcuts without an extra model request or unsupported data claims. */
 export function getFollowUpSuggestions(
 	messages: readonly ThreadMessage[],
+	user: { role: string; authId?: string },
 ): string[] {
 	const last = messages.at(-1);
 	if (!last || last.role !== "assistant" || last.status?.type !== "complete")
@@ -195,7 +224,11 @@ export function getFollowUpSuggestions(
 				: /\b(asset|assets|equipment|hardware|laptop)\b/.test(query)
 					? "assets"
 					: "general";
-	return FOLLOW_UPS[group]
+	const suggestions =
+		group === "general"
+			? ROLE_FOLLOW_UPS[callerPersona(user)]
+			: FOLLOW_UPS[group];
+	return suggestions
 		.filter((prompt) => !questions.includes(prompt.toLowerCase()))
 		.slice(0, 3);
 }

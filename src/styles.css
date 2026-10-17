@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "tw-shimmer";
 @plugin "@tailwindcss/typography";
 
 @theme inline {
@@ -951,8 +952,6 @@
     }
 }
 
-
-
 /* Skeleton shimmer */
 @keyframes skeleton-shimmer {
     100% {
@@ -983,6 +982,32 @@
     .skeleton-shimmer::after {
         animation: none;
     }
+}
+
+/* Concentric Ripple Breathing Animation */
+@keyframes ripple-breathe {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.92;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.025);
+        opacity: 1;
+    }
+}
+
+.animate-ripple-breathe {
+    animation: ripple-breathe 14s ease-in-out infinite;
+}
+
+.ripple-wave-circle {
+    stroke: url(#ripple-grad-light);
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+.dark .ripple-wave-circle {
+    stroke: url(#ripple-grad-dark);
 }
 
 @media (prefers-reduced-motion: reduce) {

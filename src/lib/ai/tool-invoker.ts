@@ -1,3 +1,4 @@
+import type { GroundedLabel } from "./citations";
 import { aiToolInvocations } from "@/db/schema";
 import { TOOL_TIMEOUT_MS } from "./completion-timeout";
 import type { ToolCall } from "./provider";
@@ -11,7 +12,7 @@ export interface InvokerTurnResults {
 		result: ToolExecutionResult;
 	}>;
 	allGroundedIds: Set<string>;
-	allGroundedLabels: Array<{ id: string; label: string }>;
+	allGroundedLabels: GroundedLabel[];
 	proposedActions: Array<{
 		actionType: string;
 		targetEntityType: string;
@@ -25,15 +26,16 @@ async function executeWithTimeout(
 	call: ToolCall,
 	ctx: ToolContext,
 ): Promise<ToolExecutionResult> {
+	const timeoutMs = Math.min(handler.timeoutMs ?? TOOL_TIMEOUT_MS, 40000);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const timeout = new Promise<ToolExecutionResult>((resolve) => {
 		timer = setTimeout(
 			() =>
 				resolve({
 					success: false,
-					error: `Tool '${call.name}' timed out after ${TOOL_TIMEOUT_MS / 1000} seconds.`,
+					error: `Tool '${call.name}' timed out after ${timeoutMs / 1000} seconds.`,
 				}),
-			TOOL_TIMEOUT_MS,
+			timeoutMs,
 		);
 	});
 	try {

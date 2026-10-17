@@ -1,3 +1,4 @@
+import { tryIndexDeliveryDocument } from "@/lib/ai/delivery-documents.server";
 import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
 import { desc, eq } from "@/db/graph-query";
@@ -120,7 +121,11 @@ export const uploadProjectDocument = createServerFn({ method: "POST" })
 				}),
 			});
 
-			return { success: true, id: docId };
+			return {
+				success: true,
+				id: docId,
+				deliveryIndex: await tryIndexDeliveryDocument(docId),
+			};
 		} catch (err) {
 			return toClientError(err, "Failed to upload document.");
 		}
@@ -187,7 +192,11 @@ export const supersedeDocument = createServerFn({ method: "POST" })
 				checksum,
 			});
 
-			return { success: true, id: newDocId };
+			return {
+				success: true,
+				id: newDocId,
+				deliveryIndex: await tryIndexDeliveryDocument(newDocId),
+			};
 		} catch (err) {
 			return toClientError(err, "Failed to upload new version.");
 		}

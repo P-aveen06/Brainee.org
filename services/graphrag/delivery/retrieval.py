@@ -42,13 +42,15 @@ def source_for(item):
             label += f" {item.get('date', '')}"
         elif kind in ("decision", "discussion"):
             label += f" {item.get('excerpt', '')[:70]}"
+        label += f" ({item['id']})"
+    label = re.sub(r"\s+", " ", label).replace("[", "(").replace("]", ")").strip()
     return {"id": item["id"], "type": kind, "label": label, "projectId": item["projectId"]}
 
 
 class DeliveryRetrieval(RetrievalStrategy):
     """SDK strategy for the application's native graph, without copying business records.
 
-    Uses the SDK search/Context/result contracts and optional SDK cosine reranking.
+    Uses the SDK search/Context/result contracts and parameterized native graph expansion.
     The default SDK document ontology is intentionally not imposed on app nodes.
     """
     async def _execute(self, query, ctx: Context, **kwargs):
@@ -86,15 +88,13 @@ class DeliveryRetrieval(RetrievalStrategy):
         ) for item in raw.records], metadata=raw.metadata)
 
 
-async def search_delivery(graph, actor_id, payload, reranker=None):
+async def search_delivery(graph, actor_id, payload):
     ctx = Context(latency_budget_ms=10000, metadata={"actorId": actor_id, **payload})
     result = await DeliveryRetrieval(graph_store=graph).search(payload["query"], ctx)
     offset, limit = payload.get("offset", 0), payload.get("limit", 15)
-    if reranker and offset == 0:
-        result = await reranker.rerank(payload["query"], result, ctx)
-        result.metadata["ranking"] = "sdk_cosine_reranking"
     selected = [item.metadata["record"] for item in result.items[offset:offset + limit]]
     return {"matches": selected, **result.metadata,
             "nextOffset": offset + limit if result.metadata["hasMore"] else None,
-            "sources": [item["source"] for item in selected]}
+            "sources": [item["source"] for item in selected],
+            "documentCoverage": await graph.coverage(actor_id)}
 

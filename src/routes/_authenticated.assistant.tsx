@@ -57,6 +57,7 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 						role: m.role as "user" | "assistant",
 						content: m.content,
 						citations: m.citations,
+						charts: m.charts,
 						proposals: m.proposals?.map(
 							(p): ProposedActionItem => ({
 								...p,
@@ -118,7 +119,7 @@ function AssistantRoute() {
 		});
 	};
 
-	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	return (
 		<div className="relative flex h-full w-full min-w-0 overflow-hidden bg-background">

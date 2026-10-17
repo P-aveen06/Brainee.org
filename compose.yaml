@@ -25,6 +25,7 @@ services:
       dockerfile: services/graph/Dockerfile
     restart: unless-stopped
     environment: &graph-env
+      GRAPHRAG_SERVICE_URL: http://graphrag:3200
       TEST_AUTH_ENABLED: "true"
       GRAPH_HOST: falkordb
       GRAPH_PORT: "6379"
@@ -35,11 +36,27 @@ services:
       - "127.0.0.1:3100:3100"
     depends_on:
       falkordb: {condition: service_healthy}
+      graphrag: {condition: service_healthy}
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/ready',{headers:{authorization:'Bearer '+process.env.GRAPH_SERVICE_TOKEN},signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 4s
       retries: 3
+    networks: [graph]
+  graphrag:
+    build:
+      context: .
+      dockerfile: services/graphrag/Dockerfile
+    restart: unless-stopped
+    environment: *graph-env
+    depends_on:
+      falkordb: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:3200/ready',headers={'Authorization':'Bearer '+os.environ['GRAPH_SERVICE_TOKEN']}),timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      start_period: 30s
+      retries: 5
     networks: [graph]
   graph-tools:
     build:

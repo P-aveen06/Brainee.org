@@ -116,7 +116,7 @@ export const getAssetInventoryTool: ToolHandler = {
 
 		const where = conditions.length > 0 ? and(...conditions) : undefined;
 		const [items, groups] = await Promise.all([
-			ctx.db.select().from(assets).where(where).limit(50),
+			ctx.db.select().from(assets).where(where).limit(100),
 			ctx.db
 				.select({
 					name: assets.name,

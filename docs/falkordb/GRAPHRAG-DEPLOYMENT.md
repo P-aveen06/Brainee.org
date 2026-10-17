@@ -1,6 +1,6 @@
 # Delivery Graph RAG: deployment constraints
 
-Status: architecture assessment, 17 October 2026. Retrieval implementation has not started.
+Status: local retrieval implemented, 17 October 2026. Deployment selection is deferred until after implementation, as requested.
 
 ## Confirmed product scope
 
@@ -34,7 +34,7 @@ The existing app already calls an external private Node graph service through
 `src/db/transport.server.ts`. Both that service and FalkorDB need a deployment host;
 the current `compose.yaml` is a local Docker setup, not a Cloudflare deployment.
 
-## Proposed layout if external hosting is acceptable
+## Implemented portable layout
 
 ```text
 Browser
@@ -46,7 +46,7 @@ Browser
 ```
 
 The SDK can share infrastructure with the existing graph backend. Document extraction,
-indexing, embedding/ranking, and graph expansion run there. The Worker sends requests
+indexing, concept ranking, and graph expansion run there. This implementation uses model-expanded concepts and graph traversal, without a vector index. The Worker sends requests
 and returns evidence/streamed answers. Backend identity is derived from the signed
 session; the LLM cannot supply a different actor or arbitrary executable graph queries.
 
@@ -75,7 +75,15 @@ The retrieval HTTP contract should remain portable between Cloudflare and Vercel
 The current application uses Cloudflare-specific R2 bindings, so changing the app's
 host would also require adapting document storage access and the framework build.
 
-## Implementation gates
+## Deployment follow-up
+
+The SDK retrieval/chunking and private HTTP boundary are implemented. See
+[implementation and local setup](../../services/graphrag/README.md). The remaining
+hosting decision must account for the SDK native dependency footprint, backend
+RAM, database persistence, document storage, commercial-use terms, and model costs.
+Cloudflare Free compatibility is a build target, not a measured production guarantee.
+
+## Verification and deployment gates
 
 1. Confirm whether an external graph/SDK backend is acceptable.
 2. Pin and validate the official SDK APIs against the existing application graph.

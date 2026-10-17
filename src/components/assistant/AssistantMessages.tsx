@@ -6,19 +6,15 @@ import { useState } from "react";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { isAssistantChartSpec } from "@/lib/ai/chart-types";
+import { AssistantChartLoader } from "./AssistantChartLoader";
+import { AssistantMarkdownTable } from "./AssistantDataTable";
 import type { MessageCustomData } from "./AssistantRuntimeAdapter";
 import { CitationChips } from "./CitationChips";
 import { ProposedActionCard } from "./ProposedActionCard";
 
 const markdownComponents = {
-	table: ({
-		node: _node,
-		...props
-	}: React.ComponentProps<"table"> & { node?: unknown }) => (
-		<div className="my-2.5 w-full overflow-x-auto rounded-lg border border-border/80 shadow-2xs">
-			<table className="w-full border-collapse text-left text-xs" {...props} />
-		</div>
-	),
+	table: AssistantMarkdownTable,
 	thead: ({
 		node: _node,
 		...props
@@ -47,6 +43,22 @@ const markdownComponents = {
 		<td className="px-3 py-2 text-foreground align-top" {...props} />
 	),
 };
+
+const remarkPlugins = [remarkGfm];
+
+function AssistantMessageText() {
+	return (
+		<MarkdownTextPrimitive
+			preprocess={preprocessMarkdown}
+			remarkPlugins={remarkPlugins}
+			components={markdownComponents}
+			smooth={false}
+			defer
+		/>
+	);
+}
+
+const messagePartComponents = { Text: AssistantMessageText };
 
 function preprocessMarkdown(text: string): string {
 	let t = text.trim();
@@ -96,21 +108,29 @@ export function AssistantMessages({
 					return (
 						<MessagePrimitive.Root
 							key={message.id}
-							className="flex justify-end"
+							className="group flex justify-end"
 						>
-							<div className="max-w-[82%] min-w-0">
+							<div className="relative max-w-[82%] min-w-0">
+								<Button
+									variant="ghost"
+									size="icon-xs"
+									className="absolute -left-8 top-1 size-6 text-muted-foreground hover:text-foreground"
+									onClick={() => handleCopy(message.id, rawText)}
+									title="Copy question"
+									aria-label={
+										copiedId === message.id
+											? "Question copied"
+											: "Copy question"
+									}
+								>
+									{copiedId === message.id ? (
+										<Check className="size-3 text-emerald-600" />
+									) : (
+										<Copy className="size-3" />
+									)}
+								</Button>
 								<div className="rounded-2xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 shadow-xs text-sm leading-relaxed font-sans select-text">
-									<MessagePrimitive.Parts
-										components={{
-											Text: () => (
-												<MarkdownTextPrimitive
-													preprocess={preprocessMarkdown}
-													remarkPlugins={[remarkGfm]}
-													components={markdownComponents}
-												/>
-											),
-										}}
-									/>
+									<MessagePrimitive.Parts components={messagePartComponents} />
 								</div>
 							</div>
 						</MessagePrimitive.Root>
@@ -184,9 +204,18 @@ export function AssistantMessages({
 								<Button
 									variant="ghost"
 									size="icon-xs"
-									className="size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+									className="size-6 text-muted-foreground hover:text-foreground"
 									onClick={() => handleCopy(message.id, rawText)}
-									title="Copy response"
+									title={
+										copiedId === message.id
+											? "Response copied"
+											: "Copy response"
+									}
+									aria-label={
+										copiedId === message.id
+											? "Response copied"
+											: "Copy response"
+									}
 								>
 									{copiedId === message.id ? (
 										<Check className="size-3 text-emerald-600" />
@@ -211,17 +240,19 @@ export function AssistantMessages({
 								<div className="pt-0.5 text-sm leading-relaxed text-foreground">
 									<div className="assistant-prose prose prose-sm dark:prose-invert max-w-none">
 										<MessagePrimitive.Parts
-											components={{
-												Text: () => (
-													<MarkdownTextPrimitive
-														preprocess={preprocessMarkdown}
-														remarkPlugins={[remarkGfm]}
-														components={markdownComponents}
-													/>
-												),
-											}}
+											components={messagePartComponents}
 										/>
 									</div>
+								</div>
+							)}
+							{!isFailure && custom.charts && custom.charts.length > 0 && (
+								<div className="space-y-2">
+									{custom.charts.filter(isAssistantChartSpec).map((chart) => (
+										<AssistantChartLoader
+											key={`${message.id}-${chart.type}-${chart.title}-${chart.asOf}`}
+											chart={chart}
+										/>
+									))}
 								</div>
 							)}
 

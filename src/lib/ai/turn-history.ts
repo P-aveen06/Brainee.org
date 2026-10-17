@@ -3,7 +3,10 @@ import type { ChatMessage } from "./provider";
 
 /** How a 'tool' row's content is stored, so a later turn can re-check access before replay. */
 export interface StoredToolPayload {
+	knowledgeScope?: "company_delivery";
 	scopeProjectId?: string;
+	scopeProjectIds?: string[];
+	scopeUserIds?: string[];
 	result: unknown;
 }
 
@@ -14,6 +17,7 @@ export interface StoredToolPayload {
 export function reconstructHistory(
 	historyRows: Array<typeof aiMessages.$inferSelect>,
 	canSeeProject: (projectId: string) => boolean,
+	canSeeChartScope?: (projectIds: string[], userIds: string[]) => boolean,
 ): ChatMessage[] {
 	// A bounded row query can begin halfway through an older multi-hop turn. Drop that
 	// incomplete prefix so provider history always begins at a user-message boundary.
@@ -30,8 +34,16 @@ export function reconstructHistory(
 					stored = { result: m.content };
 				}
 			}
+			const blockedByProject =
+				stored.knowledgeScope !== "company_delivery" &&
+				((stored.scopeProjectId && !canSeeProject(stored.scopeProjectId)) ||
+					stored.scopeProjectIds?.some((id) => !canSeeProject(id)));
+			const blockedByChartScope =
+				stored.scopeUserIds?.length &&
+				(!canSeeChartScope ||
+					!canSeeChartScope(stored.scopeProjectIds ?? [], stored.scopeUserIds));
 			const content =
-				stored.scopeProjectId && !canSeeProject(stored.scopeProjectId)
+				blockedByProject || blockedByChartScope
 					? JSON.stringify({ error: "That project is no longer accessible." })
 					: JSON.stringify(stored.result);
 			return {

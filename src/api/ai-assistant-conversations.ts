@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray } from "@/db/graph-query";
 import { createDb } from "@/db";
+import { and, desc, eq, inArray } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiProposedActions } from "@/db/schema";
+import { isAssistantChartSpec } from "@/lib/ai/chart-types";
+import { loadWorkBrief } from "@/lib/ai/tools/work-brief-data";
 import { recoverStaleAssistantTurns } from "@/lib/ai/turn-failure.server";
 import { authMiddleware } from "@/lib/server-fn";
 import {
@@ -16,6 +18,10 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
 	} catch {
 		return fallback;
 	}
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export const getAiConversations = createServerFn({ method: "GET" })
@@ -59,6 +65,51 @@ export const getAiConversation = createServerFn({ method: "GET" })
 			.from(aiMessages)
 			.where(eq(aiMessages.conversationId, data.conversationId))
 			.orderBy(aiMessages.createdAt);
+		const storedCharts = allRows.flatMap((row) => {
+			if (row.role !== "tool" || !row.content || !row.turnId) return [];
+			const stored = safeJsonParse<Record<string, unknown> | null>(
+				row.content,
+				null,
+			);
+			const result = stored && isRecord(stored.result) ? stored.result : null;
+			const chart = result?.chart;
+			if (
+				!isAssistantChartSpec(chart) ||
+				!Array.isArray(stored?.scopeProjectIds) ||
+				!stored.scopeProjectIds.every((id) => typeof id === "string") ||
+				!Array.isArray(stored?.scopeUserIds) ||
+				!stored.scopeUserIds.every((id) => typeof id === "string")
+			) {
+				return [];
+			}
+			return [
+				{
+					turnId: row.turnId,
+					chart,
+					projectIds: stored.scopeProjectIds as string[],
+					userIds: stored.scopeUserIds as string[],
+				},
+			];
+		});
+		const chartsByTurnId = new Map<string, (typeof storedCharts)[number][]>();
+		if (storedCharts.length > 0) {
+			const currentBrief = await loadWorkBrief({ db, user: context.user });
+			const currentProjects = new Set(currentBrief.projectIds);
+			const currentPeople = new Set(
+				currentBrief.relevantPeople.map((person) => person.id),
+			);
+			for (const stored of storedCharts) {
+				if (
+					!stored.projectIds.every((id) => currentProjects.has(id)) ||
+					!stored.userIds.every((id) => currentPeople.has(id))
+				) {
+					continue;
+				}
+				const charts = chartsByTurnId.get(stored.turnId) || [];
+				charts.push(stored);
+				chartsByTurnId.set(stored.turnId, charts);
+			}
+		}
 
 		// Tool-call placeholders and raw tool-result rows exist only so the next turn can
 		// replay a valid provider conversation; the UI only ever shows user/assistant turns.
@@ -110,6 +161,12 @@ export const getAiConversation = createServerFn({ method: "GET" })
 				citations: safeJsonParse(m.citations, []),
 				toolCalls: safeJsonParse(m.toolCalls, undefined),
 				proposals: proposalsByMessageId.get(m.id) || [],
+				charts:
+					m.role === "assistant"
+						? (chartsByTurnId.get(m.turnId ?? "") || []).map(
+								(stored) => stored.chart,
+							)
+						: [],
 				modelId: m.modelId,
 				latencyMs: m.latencyMs,
 				createdAt: m.createdAt,

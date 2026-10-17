@@ -1,4 +1,3 @@
-import base64
 import hashlib
 import io
 import tempfile
@@ -9,7 +8,7 @@ from xml.etree import ElementTree
 from graphrag_sdk import Context, FixedSizeChunking
 from graphrag_sdk.ingestion.loaders.pdf_loader import PdfLoader
 
-from .retrieval import excerpt, query_terms, source_for
+from .retrieval import query_terms, source_for
 
 
 MAX_TEXT = 1_000_000
@@ -41,9 +40,8 @@ async def extract_text(content, mime_type):
     return "", "unsupported"
 
 
-async def index_document(graph, actor_id, payload):
-    document = await graph.document(actor_id, payload["documentId"])
-    content = base64.b64decode(payload["contentBase64"], validate=True)
+async def index_document(graph, actor_id, document_id, content):
+    document = await graph.document(actor_id, document_id)
     if len(content) > 25 * 1024 * 1024:
         raise ValueError("Document exceeds the 25 MB extraction limit.")
     checksum = hashlib.sha256(content).hexdigest()
