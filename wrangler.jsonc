@@ -9,8 +9,7 @@
   "r2_buckets": [
     {
       "binding": "PROJECT_DOCS",
-      "bucket_name": "tcc-tower-project-docs",
-      "preview_bucket_name": "tcc-tower-project-docs-dev"
+      "bucket_name": "brainee-docs",
     }
   ],
   "observability": {
