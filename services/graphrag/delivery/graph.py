@@ -82,7 +82,7 @@ description:p.description,status:p.status,ownerId:p.ownerId,targetEndDate:p.targ
         rows = await self.read("""MATCH (n:DocumentVersion)-[:IN_PROJECT]->(p:Project)
 WHERE n.id=$id AND n.status <> 'superseded'
 RETURN {id:n.id,type:'document',projectId:p.id,projectCode:p.code,title:n.title,
-version:n.version,checksum:n.checksum,text:CASE WHEN n.deliveryTextChecksum=n.checksum
+version:n.version,checksum:n.checksum,mimeType:n.mimeType,text:CASE WHEN n.deliveryTextChecksum=n.checksum
 THEN n.deliveryText ELSE null END,indexStatus:coalesce(n.deliveryIndexStatus,'not_indexed')}""",
                                actor_id, id=document_id)
         if not rows:
