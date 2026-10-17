@@ -18,8 +18,11 @@ try {
 			case "down": compose(["down"]); break; // Keep the data volume.
 			case "status": compose(["ps"]); break;
 			case "migrate": compose(["run", "--rm", "--build", "graph-tools"]); break;
+			case "seed":
+				compose(["run","--rm","--build","graph-tools","node","--experimental-strip-types","src/seed.ts"]);
+				break;
 			case "test":
-				compose(["run", "--rm", "--build", "graph-tools", "node", "--experimental-strip-types", "--test", "test/database.integration.ts"]);
+				compose(["run", "--rm", "--build", "graph-tools", "node", "--experimental-strip-types", "--test", "test/database.integration.ts", "test/data-layer.integration.ts"]);
 				break;
 			case "health": {
 				const response = await fetch("http://127.0.0.1:3100/ready", {
@@ -37,7 +40,7 @@ try {
 				await verifyRestore(file);
 				break;
 			}
-			default: throw new Error("Use setup, up, down, status, migrate, health, test, test:recovery, backup, or restore-check.");
+			default: throw new Error("Use setup, up, down, status, migrate, health, seed, test, test:recovery, backup, or restore-check.");
 		}
 	}
 } catch (error) {

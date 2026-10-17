@@ -112,20 +112,28 @@ export function NotificationBell({
 								size: showLabel ? "default" : "icon",
 							}),
 							"relative",
-							showLabel && "h-8 w-full justify-start gap-2 px-2",
+							showLabel &&
+								"h-8 w-full justify-start gap-2.5 rounded-xl px-2.5 text-[13px] ease-standard",
 							className,
 						)}
 					>
-						<Bell className="h-5 w-5" />
+						<Bell className="size-4 shrink-0" />
 						{showLabel && (
-							<span className="group-data-[collapsible=icon]:hidden">
+							<span className="flex-1 truncate text-left group-data-[collapsible=icon]:hidden">
 								Notifications
 							</span>
 						)}
 						{unreadCount > 0 && (
-							<span className="absolute top-1 right-1 flex h-2 w-2">
-								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-								<span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+							<span
+								className={cn(
+									"relative flex size-2 shrink-0 items-center justify-center",
+									showLabel
+										? "group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-1.5 group-data-[collapsible=icon]:right-1.5"
+										: "absolute top-1.5 right-1.5",
+								)}
+							>
+								<span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-75" />
+								<span className="relative inline-flex size-2 rounded-full bg-destructive" />
 							</span>
 						)}
 						<span className="sr-only">Open notifications</span>

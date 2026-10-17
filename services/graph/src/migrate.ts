@@ -10,7 +10,7 @@ const client = await connect(config, password);
 try {
 	await migrate(client.selectGraph(config.graphName));
 	console.log(
-		"Graph identity schema is ready. No sample records were created.",
+		"Graph identity and business schemas are ready. No sample records were created.",
 	);
 } finally {
 	await client.close();

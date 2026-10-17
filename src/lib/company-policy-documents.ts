@@ -37,10 +37,12 @@ export function parsePolicyUpload(formData: FormData) {
 		.object({
 			title: z.string().trim().min(1, "Title is required.").max(200),
 			description: z.string().trim().max(2000),
+			revisionOfId: z.string().uuid().optional(),
 		})
 		.parse({
 			title: formData.get("title"),
 			description: formData.get("description") ?? "",
+			revisionOfId: formData.get("revisionOfId") || undefined,
 		});
 	return { ...fields, file, mimeType };
 }

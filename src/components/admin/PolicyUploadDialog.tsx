@@ -20,16 +20,18 @@ import {
 } from "@/lib/company-policy-documents";
 
 interface PolicyUploadDialogProps {
+	revisionOf?: { id: string; title: string; description: string | null };
 	onClose: () => void;
 	onSuccess: () => Promise<void>;
 }
 
 export function PolicyUploadDialog({
+	revisionOf,
 	onClose,
 	onSuccess,
 }: PolicyUploadDialogProps) {
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
+	const [title, setTitle] = useState(revisionOf?.title ?? "");
+	const [description, setDescription] = useState(revisionOf?.description ?? "");
 	const [file, setFile] = useState<File | null>(null);
 	const [isPending, setIsPending] = useState(false);
 	const [error, setError] = useState("");
@@ -44,12 +46,17 @@ export function PolicyUploadDialog({
 			data.set("file", file);
 			data.set("title", title.trim());
 			data.set("description", description.trim());
+			if (revisionOf) data.set("revisionOfId", revisionOf.id);
 			const result = await uploadCompanyPolicyDocument({ data });
 			if ("error" in result) {
 				setError(result.error);
 				return;
 			}
-			toast.success("Policy document uploaded");
+			toast.success(
+				revisionOf
+					? "New policy revision uploaded as Draft"
+					: "Policy document uploaded as Draft",
+			);
 			await onSuccess();
 			onClose();
 		} catch {
@@ -69,9 +76,13 @@ export function PolicyUploadDialog({
 			<DialogContent className="sm:max-w-md" showCloseButton={!isPending}>
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<DialogHeader>
-						<DialogTitle>Upload policy document</DialogTitle>
+						<DialogTitle>
+							{revisionOf ? "Upload policy revision" : "Upload policy document"}
+						</DialogTitle>
 						<DialogDescription>
-							Add a company policy to your admin document library.
+							{revisionOf
+								? `This will create a new Draft revision of ${revisionOf.title}. The existing document stays unchanged.`
+								: "Add a company policy to your admin document library. New uploads start as Draft and require review before publication."}
 						</DialogDescription>
 					</DialogHeader>
 					<fieldset disabled={isPending} className="space-y-4">

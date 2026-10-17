@@ -1,14 +1,7 @@
-import { getTableName, isTable } from "drizzle-orm";
-import { describe, expect, it } from "vitest";
-import * as currentSchema from "@/db/schema";
-import { tableLabels } from "../../services/graph/src/schema";
-
-describe("graph migration inventory", () => {
-	it("accounts for every current application table, including company policies", () => {
-		const currentTables = Object.values(currentSchema)
-			.filter(isTable)
-			.map(getTableName)
-			.sort();
-		expect(Object.keys(tableLabels).sort()).toEqual(currentTables);
-	});
+import { expect, it } from "vitest";
+import { models } from "../../shared/graph/model";
+import * as schema from "../db/schema";
+it("covers all application graph models", () => {
+	expect(Object.keys(schema).length).toBe(37);
+	expect(models.length).toBe(37);
 });

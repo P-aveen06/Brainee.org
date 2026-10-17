@@ -2,8 +2,9 @@
 
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Maximize2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 import { deriveAssistantPageContext } from "@/lib/ai/page-context";
 import { cn } from "@/lib/utils";
 import { AssistantPane } from "./AssistantPane";
@@ -16,6 +17,9 @@ export function GlobalBrainDrawer() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const pageContext = deriveAssistantPageContext(location.pathname);
+	const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar();
+	const wasSidebarOpenRef = useRef<boolean>(false);
+	const prevIsOpenRef = useRef(isOpen);
 
 	// Global Cmd+J / Ctrl+J hotkey and Escape to close
 	useEffect(() => {
@@ -30,6 +34,24 @@ export function GlobalBrainDrawer() {
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [isOpen]);
+
+	// Auto-close sidebar while drawer is open, restore when closed
+	useEffect(() => {
+		const prev = prevIsOpenRef.current;
+		prevIsOpenRef.current = isOpen;
+
+		if (!prev && isOpen) {
+			wasSidebarOpenRef.current = sidebarOpen;
+			if (sidebarOpen) {
+				setSidebarOpen(false);
+			}
+		} else if (prev && !isOpen) {
+			if (wasSidebarOpenRef.current) {
+				setSidebarOpen(true);
+				wasSidebarOpenRef.current = false;
+			}
+		}
+	}, [isOpen, sidebarOpen, setSidebarOpen]);
 
 	// If user is already on the dedicated full-page /assistant, hide the floating widget
 	const isAssistantPage = location.pathname.startsWith("/assistant");
@@ -72,7 +94,7 @@ export function GlobalBrainDrawer() {
 					isOpen ? "flex animate-in fade-in zoom-in-95" : "hidden",
 				)}
 				role="dialog"
-				aria-label="Brainee.org Brain Chat Window"
+				aria-label="Company Brain Chat Window"
 			>
 				{/* Window Header */}
 				<div className="flex h-10 shrink-0 select-none items-center justify-between border-b border-border bg-card px-3">
@@ -83,7 +105,7 @@ export function GlobalBrainDrawer() {
 							className="size-4.5 object-contain shrink-0"
 						/>
 						<span className="font-heading text-xs font-semibold text-foreground truncate">
-							Brainee.org Brain
+							Company Brain
 						</span>
 						{contextLabel && (
 							<span className="rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground border border-border/50 truncate">
@@ -136,8 +158,8 @@ export function GlobalBrainDrawer() {
 						? "bg-card border border-border text-foreground shadow-md hover:bg-surface-alt"
 						: "bg-card border border-border shadow-md hover:bg-surface-alt hover:border-accent/40"
 				}`}
-				title={isOpen ? "Close Brain (Esc)" : "Open Brain (⌘J)"}
-				aria-label={isOpen ? "Close Brain" : "Open Brain"}
+				title={isOpen ? "Close Company Brain (Esc)" : "Open Company Brain (⌘J)"}
+				aria-label={isOpen ? "Close Company Brain" : "Open Company Brain"}
 			>
 				{isOpen ? (
 					<X className="size-4.5 text-foreground" />

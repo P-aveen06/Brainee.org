@@ -20,7 +20,7 @@ const assistantSearchSchema = z.object({
 export const Route = createFileRoute("/_authenticated/assistant")({
 	validateSearch: (search) => assistantSearchSchema.parse(search),
 	loaderDeps: ({ search }) => ({ thread: search.thread }),
-	loader: async ({ deps }) => {
+	loader: async ({ deps, context }) => {
 		const [convsRes, pageData] = await Promise.all([
 			getAiConversations(),
 			getProjectsPageData(),
@@ -75,10 +75,7 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 			activeId,
 			activeMessages,
 			projectCount: "projects" in pageData ? pageData.projects.length : 0,
-			userRole:
-				"userRole" in pageData && typeof pageData.userRole === "string"
-					? pageData.userRole
-					: "user",
+			userRole: context.user.role,
 		};
 	},
 	component: AssistantRoute,

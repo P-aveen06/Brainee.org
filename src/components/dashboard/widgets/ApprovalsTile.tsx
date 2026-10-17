@@ -64,7 +64,7 @@ export function ApprovalsTile({
 	return (
 		<Tile title="Pending approvals" icon={Inbox}>
 			{total === 0 ? (
-				<div className="flex h-full min-h-[220px] flex-col items-center justify-center p-6 text-center">
+				<div className="flex h-full min-h-[180px] flex-col items-center justify-center p-4 text-center">
 					<div className="mb-3 flex size-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
 						<Check className="size-5" />
 					</div>
@@ -163,7 +163,7 @@ export function ApprovalsTile({
 							})}
 						</div>
 					) : (
-						<ul className="mt-3 space-y-2.5">
+						<ul className="mt-2 space-y-2">
 							{items.slice(0, shownCount).map((item) => {
 								const key = keyOf(item);
 								const isRejecting = rejecting === key;
@@ -239,7 +239,7 @@ export function ApprovalsTile({
 							})}
 						</ul>
 					)}
-					<div className="mt-3 pt-2 text-center border-t border-border/40">
+					<div className="mt-2 pt-1.5 text-center border-t border-border/40">
 						<Link
 							to="/approvals"
 							className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"

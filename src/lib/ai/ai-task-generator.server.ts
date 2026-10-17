@@ -1,11 +1,10 @@
-import { and, desc, eq } from "drizzle-orm";
 import type { Database } from "@/db";
+import { and, desc, eq } from "@/db/graph-query";
 import { projectTasks } from "@/db/schema";
 import { getEnvVar } from "@/lib/auth.server";
 import { createTaskCore } from "@/lib/project-task-create.server";
 import type { AppUser } from "@/lib/server-fn";
-import { AzureDeepSeekProvider } from "./providers/azure-deepseek";
-import { OpenRouterProvider } from "./providers/openrouter";
+import { OpenCodeProvider } from "./providers/opencode";
 
 export interface GeneratedTaskResult {
 	id: string;
@@ -20,18 +19,16 @@ import { type ExtractionPayload, heuristicExtract } from "./ai-task-heuristic";
 export type { ExtractionPayload };
 
 /**
- * Uses DeepSeek or Gemini via OpenRouter to analyze the developer's daily work summary
+ * Uses OpenCode inference to analyze the developer's daily work summary
  * and extract one or more distinct, professional tasks (not combining unrelated items).
  */
 export async function extractTasksWithAi(
 	summary: string,
 	blockers?: string | null,
 ): Promise<ExtractionPayload[]> {
-	const deepseekKey =
-		getEnvVar("DEEPSEEK_API_KEY") || getEnvVar("AZURE_DEEPSEEK_API_KEY") || "";
-	const openRouterKey = getEnvVar("OPENROUTER_API_KEY");
+	const opencodeKey = getEnvVar("OPENCODE_API_KEY") || "";
 
-	if (!deepseekKey && !openRouterKey) {
+	if (!opencodeKey) {
 		return heuristicExtract(summary, blockers);
 	}
 
@@ -58,14 +55,13 @@ Format your response strictly as JSON with NO markdown wrapping:
 }`;
 
 	try {
-		const provider = deepseekKey
-			? new AzureDeepSeekProvider(
-					deepseekKey,
-					getEnvVar("AZURE_DEEPSEEK_ENDPOINT") ||
-						"https://open-model-resource.openai.azure.com/openai/v1",
-					getEnvVar("AZURE_DEEPSEEK_MODEL") || "DeepSeek-V4-Flash",
-				)
-			: new OpenRouterProvider(openRouterKey || "", "google/gemini-2.5-flash");
+		const provider = new OpenCodeProvider(
+			opencodeKey,
+			getEnvVar("OPENCODE_ENDPOINT") ||
+				getEnvVar("OPENCODE_BASE_URL") ||
+				"https://opencode.ai/inference/openai/v1",
+			getEnvVar("OPENCODE_MODEL") || "deepseek-v4-flash",
+		);
 
 		const res = await provider.complete({
 			system:

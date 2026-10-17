@@ -1,249 +1,47 @@
-Welcome to your new TanStack Start app! 
+# Brainee.org
 
-# Getting Started
+Team workspace for people, leave, projects, tasks and equipment. The app uses TanStack Start on Cloudflare Workers, one FalkorDB graph in local Docker, and R2 for uploaded files.
 
-To run this application:
+## Run locally
 
-```bash
+Requires Bun and Docker Desktop with its engine running.
+
+```sh
 bun install
-bun --bun run dev
+cp .dev.vars.example .dev.vars
+# Set SESSION_SECRET in .dev.vars to a random value from: openssl rand -hex 32
+bun run graph:setup
+bun run graph:up
+bun run graph:seed
+bun run dev
 ```
 
-# Building For Production
+Open http://localhost:3000 and choose a role and teammate. The local demo requires `TEST_AUTH_ENABLED=true` and a seeded graph. It opens Company Brain with that person’s signed identity; the database determines their permissions. Passwords are not required.
 
-To build this application for production:
+The Northstar Studio sample contains 14 people, 10 projects (4 internal and 6 different clients), and a 3/3/4 project split across Maya Rao, Vikram Menon, and Priya Sen. CEO Aditi Deshmukh sees the company portfolio, solution architect Dev Malhotra participates in all ten projects, HR Arjun Mehta has people access, and eight employees each join one or two projects. Project tasks, decisions, daily updates, leave, and equipment are connected for Company Brain briefings.
 
-```bash
-bun --bun run build
+See [the startup roster, portfolio, and Company Brain scenarios](docs/falkordb/STARTUP-DEMO.md) for the full setup.
+
+When upgrading the original sample dataset, the first seed reconciles only the known fictional startup accounts, project metadata, and staffing. Later runs preserve edits. Existing unrelated records are retained.
+
+`graph:setup` retains existing graph passwords and configures the private Worker-to-service connection in ignored `.dev.vars`. The browser receives no graph credentials. FalkorDB is the only application database; there is no D1 binding, database selector or SQL fallback.
+
+## Sample team
+
+`graph:seed` explicitly adds a fictional company, 8 employees, 3 projects, 18 tasks (including 6 nested follow-ups), 6 development checklist items, threaded project decisions, task-linked daily updates, leave balances, 5 leave requests, 3 WFH requests, 6 assets and 4 assignments. It also adds client contact and project activity records, previous-week timesheets and reference leave types/stages. The sample calendar uses Monday–Friday, 8 hours/day, Asia/Kolkata. The dates stay anchored to the first seed run. Repeating the command preserves existing records and edits; it does not reset data. Sample leave allowances are examples, not approved company policy.
+
+## Checks and data maintenance
+
+```sh
+bun run typecheck
+bun run test
+bun run build
+bun run graph:test
+bun run graph:health
+bun run graph:backup
+bun run graph:restore-check
 ```
 
-## Testing
+`graph:test` uses disposable graphs; `graph:test:recovery` also recreates the local containers and tests an isolated restore. `graph:down` keeps the data volume. No reset command runs automatically.
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-bun --bun run test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-```
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-
-## Temporary test login
-
-WorkOS has been replaced with an email/password form and signed, HttpOnly sessions.
-
-1. Copy `.dev.vars.example` to `.dev.vars`.
-2. Generate a random signing secret with `openssl rand -hex 32` and put it in `SESSION_SECRET`.
-3. Leave `TEST_AUTH_ENABLED=true` in your local `.dev.vars`.
-4. Run `bun run db:migrate:local` and `bun run dev`.
-5. Sign in at `/sign-in` with **test@example.com** / **TestLogin123!**.
-
-The first login creates a **Test Admin** account with administrator access. Complete
-the normal profile onboarding to enter the app. Repeat logins keep the same user,
-role, and employment status; a deactivated account remains blocked.
-
-Sample login and existing sessions are disabled unless `TEST_AUTH_ENABLED` is
-explicitly set to `true`. Keep it local: this shared test account is temporary and
-is not a production authentication system. No WorkOS API keys or OAuth setup are required.
-Existing users remain intact; the legacy `workos_id` database column is reused as
-an internal authentication ID, so no schema migration is needed for this change.
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
-
-## Brainee.org branding
-
-The application uses the sample purple-and-blue B mark in `public/brainee-logo.svg`.
-Replace that SVG to update the sidebar, sign-in, onboarding, assistant, mascot, and favicon together.
-
-Migration `0020_brainee_branding.sql` updates the existing internal company without changing its ID,
-and renames stored inventory destinations, seeded asset tags, project names, and system notification labels.
-The session cookie is now `brainee_session`; existing users will need to sign in again.
-
-Existing Cloudflare Worker, D1, and R2 resource names in `wrangler.jsonc` remain unchanged to preserve
-resource connections. Historical migration filenames also remain unchanged. These technical identifiers
-are separate from application branding. Production has not been modified.
+See [local setup](docs/falkordb/LOCAL-SETUP.md) and [graph model](docs/falkordb/GRAPH-MODEL.md). All migration work is local. Production access and deployment remain human-controlled. Replace the shared test login before real team use.

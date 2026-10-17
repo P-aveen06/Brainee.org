@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 	get: vi.fn(),
 }));
 vi.mock("cloudflare:workers", () => ({
-	env: { DATABASE: {}, PROJECT_DOCS: { get: mocks.get } },
+	env: { PROJECT_DOCS: { get: mocks.get } },
 }));
 vi.mock("./current-user.server", () => ({
 	getCurrentUserWithState: mocks.currentUser,

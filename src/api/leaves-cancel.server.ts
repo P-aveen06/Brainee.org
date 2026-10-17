@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, or } from "@/db/graph-query";
 import type { Database } from "@/db";
 import { leaveRequests } from "@/db/schema";
 import { formatDateDisplay } from "@/lib/date-format";

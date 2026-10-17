@@ -1,5 +1,17 @@
 import { ConstraintType, EntityType, type Graph } from "falkordb";
 import {
+	businessChecksums,
+	businessMigrationId,
+	checkBusinessReady,
+	migrateBusiness,
+} from "./business-schema.ts";
+import {
+	checkCompanyPolicyReady,
+	companyPolicyChecksum,
+	companyPolicyMigrationId,
+	migrateCompanyPolicyDocuments,
+} from "./company-policy-migration.ts";
+import {
 	type ConstraintRow,
 	constraints,
 	constraintsReady,
@@ -8,6 +20,38 @@ import {
 	sameConstraint,
 } from "./schema.ts";
 
+const migrations = [
+	{ id: migrationId, checksums: [migrationChecksum] },
+	{ id: businessMigrationId, checksums: businessChecksums },
+	{ id: companyPolicyMigrationId, checksums: [companyPolicyChecksum] },
+];
+
+function hasExpectedMigrations(
+	versions: Array<{ id: string; checksum: string }>,
+	allowMissing: boolean,
+) {
+	if (
+		versions.some((version) => {
+			const expected = migrations.find(
+				(migration) => migration.id === version.id,
+			);
+			return (
+				!expected ||
+				!expected.checksums.some((checksum) => checksum === version.checksum)
+			);
+		})
+	)
+		return false;
+	return (
+		allowMissing ||
+		(versions.length === migrations.length &&
+			migrations.every(
+				(expected) =>
+					versions.filter((version) => version.id === expected.id).length === 1,
+			))
+	);
+}
+
 interface IndexRow {
 	label: string;
 	properties: string[];
@@ -15,7 +59,11 @@ interface IndexRow {
 	status: string;
 }
 
-async function ensureIndex(graph: Graph, label: string, property: string) {
+export async function ensureIndex(
+	graph: Graph,
+	label: string,
+	property: string,
+) {
 	const read = async () => {
 		const { data = [] } = await graph.roQuery<IndexRow>("CALL db.indexes()", {
 			TIMEOUT: 3000,
@@ -51,11 +99,7 @@ export async function checkReady(graph: Graph) {
 	}>("MATCH (m:SchemaMigration) RETURN m.id AS id, m.checksum AS checksum", {
 		TIMEOUT: 3000,
 	});
-	if (
-		versions.length !== 1 ||
-		versions[0].id !== migrationId ||
-		versions[0].checksum !== migrationChecksum
-	) {
+	if (!hasExpectedMigrations(versions, false)) {
 		throw new Error(
 			"Graph schema is missing or incompatible. Run graph:migrate.",
 		);
@@ -64,6 +108,8 @@ export async function checkReady(graph: Graph) {
 		"CALL db.constraints()",
 		{ TIMEOUT: 3000 },
 	);
+	await checkBusinessReady(graph);
+	await checkCompanyPolicyReady(graph);
 	if (!constraintsReady(data))
 		throw new Error("Graph constraints are not operational.");
 }
@@ -75,11 +121,7 @@ export async function migrate(graph: Graph) {
 		id: string;
 		checksum: string;
 	}>("MATCH (m:SchemaMigration) RETURN m.id AS id, m.checksum AS checksum");
-	if (
-		versions.some(
-			(v) => v.id !== migrationId || v.checksum !== migrationChecksum,
-		)
-	) {
+	if (!hasExpectedMigrations(versions, true)) {
 		throw new Error("Refusing to change an incompatible graph schema.");
 	}
 	const { data: existing = [] } = await graph.roQuery<ConstraintRow>(
@@ -118,5 +160,7 @@ export async function migrate(graph: Graph) {
 			params: { id: migrationId, checksum: migrationChecksum, now: Date.now() },
 		},
 	);
+	await migrateCompanyPolicyDocuments(graph);
+	await migrateBusiness(graph);
 	await checkReady(graph);
 }

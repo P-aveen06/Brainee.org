@@ -98,5 +98,5 @@ export function sanitizeModelOutputText(text: string): string {
 	// Strip raw file paths in tmp or system dirs
 	clean = clean.replace(/\/(?:private\/var|tmp|Users)\/[^\s]+/g, "[File]");
 
-	return clean;
+	return clean.trim();
 }

@@ -54,7 +54,7 @@ export class StubProvider implements ChatProvider {
 		return {
 			text:
 				this.scriptedResponse ||
-				`I am the Brainee.org Assistant. I can help with projects, tasks, leaves, WFH, and assets. You asked: "${query}"`,
+				`I am Company Brain. I can help with projects, tasks, leaves, WFH, and assets. You asked: "${query}"`,
 			usage: { promptTokens: 25, completionTokens: 25, totalTokens: 50 },
 			modelId: "stub-deterministic-v1",
 			latencyMs: 5,

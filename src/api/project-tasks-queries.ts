@@ -1,16 +1,17 @@
-import { env } from "cloudflare:workers";
-import { createServerFn } from "@tanstack/react-start";
 import {
 	and,
 	asc,
+	count,
 	desc,
 	eq,
 	inArray,
+	isNotNull,
 	isNull,
 	like,
+	lower,
 	or,
-	sql,
-} from "drizzle-orm";
+} from "@/db/graph-query";
+import { createServerFn } from "@tanstack/react-start";
 import { createDb } from "../db";
 import { projects, projectTasks, users } from "../db/schema";
 import { getTodayIsoDate } from "../lib/leave-policy";
@@ -25,7 +26,7 @@ export const getProjectTasks = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getProjectTasksSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -54,8 +55,8 @@ export const getProjectTasks = createServerFn({ method: "GET" })
 		if (input.q?.trim()) {
 			const query = `%${input.q.trim().toLowerCase()}%`;
 			const searchFilter = or(
-				like(sql`lower(${projectTasks.title})`, query),
-				like(sql`lower(${projectTasks.description})`, query),
+				like(lower(projectTasks.title), query),
+				like(lower(projectTasks.description), query),
 			);
 			if (searchFilter) {
 				conditions.push(searchFilter);
@@ -99,7 +100,7 @@ export const getProjectTasks = createServerFn({ method: "GET" })
 		const allCounts = await db
 			.select({
 				status: projectTasks.status,
-				count: sql<number>`count(*)`,
+				count: count(),
 			})
 			.from(projectTasks)
 			.where(eq(projectTasks.projectId, input.projectId))
@@ -127,13 +128,13 @@ export const getProjectTasks = createServerFn({ method: "GET" })
 		const subtaskCounts = await db
 			.select({
 				parentTaskId: projectTasks.parentTaskId,
-				count: sql<number>`count(*)`,
+				count: count(),
 			})
 			.from(projectTasks)
 			.where(
 				and(
 					eq(projectTasks.projectId, input.projectId),
-					sql`${projectTasks.parentTaskId} IS NOT NULL`,
+					isNotNull(projectTasks.parentTaskId),
 				),
 			)
 			.groupBy(projectTasks.parentTaskId);
@@ -161,7 +162,7 @@ export const getProjectTasks = createServerFn({ method: "GET" })
 export const getMyTasks = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const visibleIds = await visibleProjectIdsFor(db, context.user);
 
 		if (Array.isArray(visibleIds) && visibleIds.length === 0) {

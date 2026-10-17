@@ -1,5 +1,4 @@
-import { env } from "cloudflare:workers";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "@/db/graph-query";
 import { createDb } from "../db";
 import {
 	leaveRequests,
@@ -49,7 +48,7 @@ export function eachDay(from: string, to: string, min: string, max: string) {
 export async function getCalendarEvents(
 	month: string,
 ): Promise<CalendarEvent[]> {
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const { start, end, mm } = monthBounds(month);
 	const events: CalendarEvent[] = [];
 

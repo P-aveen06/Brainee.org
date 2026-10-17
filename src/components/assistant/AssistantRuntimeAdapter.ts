@@ -1,5 +1,4 @@
 import { type ChatModelAdapter, useLocalRuntime } from "@assistant-ui/react";
-import type { MutableRefObject } from "react";
 import { toast } from "sonner";
 import { sendAiMessage } from "@/api/ai-assistant";
 import type { CitationRef } from "@/lib/ai/citations";
@@ -52,7 +51,6 @@ export function useAssistantUiBridge(
 	initialMessages: InitialAssistantMessage[] = [],
 	onConversationCreated?: (conversationId: string) => void,
 	pageContext?: AssistantPageContext,
-	modelIdRef?: MutableRefObject<string | undefined>,
 ) {
 	const adapter: ChatModelAdapter = {
 		async run({ messages, abortSignal }) {
@@ -83,7 +81,6 @@ export function useAssistantUiBridge(
 					data: {
 						conversationId,
 						message: userText,
-						modelId: modelIdRef?.current || undefined,
 						pageContext,
 					},
 					signal: requestController.signal,
@@ -130,7 +127,7 @@ export function useAssistantUiBridge(
 							type: "text",
 							text:
 								"content" in res && typeof res.content === "string"
-									? res.content
+									? res.content.trim()
 									: "Request processed.",
 						},
 					],
@@ -150,7 +147,7 @@ export function useAssistantUiBridge(
 						? "Interrupted"
 						: "Connection Error";
 				const errorMsg = timedOut
-					? "Brainee.org Brain did not complete within 32 seconds. Please retry; do not assume the requested action was performed."
+					? "Company Brain did not complete within 32 seconds. Please retry; do not assume the requested action was performed."
 					: abortSignal.aborted
 						? "The response was interrupted before completion."
 						: err instanceof Error
@@ -176,7 +173,8 @@ export function useAssistantUiBridge(
 		initialMessages: initialMessages.map((m) => ({
 			id: m.id,
 			role: m.role,
-			content: m.content || "",
+			content:
+				typeof m.content === "string" ? m.content.trim() : m.content || "",
 			createdAt: m.createdAt ? new Date(m.createdAt) : undefined,
 			metadata: {
 				custom: {

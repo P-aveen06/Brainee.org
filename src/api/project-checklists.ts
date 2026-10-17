@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "@/db";
 import {
@@ -29,7 +28,7 @@ export const getProjectChecklist = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getChecklistSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -82,7 +81,7 @@ export const toggleChecklistItem = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => toggleChecklistSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [item] = await db
 				.select()
@@ -146,7 +145,7 @@ export const createChecklistItem = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => createItemSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(
 				db,
 				context.user,
@@ -179,7 +178,7 @@ export const updateChecklistItem = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateItemSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [item] = await db
 				.select()
 				.from(projectChecklistItems)
@@ -222,7 +221,7 @@ export const deleteChecklistItem = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [item] = await db
 				.select()
 				.from(projectChecklistItems)

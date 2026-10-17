@@ -12,44 +12,64 @@ vi.mock("@tanstack/start-server-core/request-response", () => ({
 	setResponseHeader: request.setResponseHeader,
 }));
 
+import { demoPeople } from "../../shared/demo-startup";
 import {
 	createLogoutCookie,
 	getSessionFromRequest,
 	sealSession,
-	signInWithPassword,
 	TEST_AUTH_USER_ID,
 	unsealSession,
 } from "./auth.server";
+import { signInAsDemoPerson } from "./demo-login.server";
 
-const credentials = { email: "test@example.com", password: "TestLogin123!" };
+const credentials = { email: "test@example.com" };
 const session = () => ({
 	authUserId: TEST_AUTH_USER_ID,
 	email: credentials.email,
 	expiresAt: Date.now() + 60_000,
 });
 
-describe("temporary password authentication", () => {
+describe("local startup role authentication", () => {
 	beforeEach(() => {
 		vi.stubEnv("TEST_AUTH_ENABLED", "true");
 		vi.stubEnv(
 			"SESSION_SECRET",
 			"a-unique-session-signing-secret-for-tests-only",
 		);
+		vi.stubEnv("GRAPH_SERVICE_URL", "http://127.0.0.1:3100");
+		vi.stubEnv("GRAPH_SERVICE_TOKEN", "local-graph-test-token");
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (_url: string, options: RequestInit) => {
+				const body = JSON.parse(String(options.body));
+				const person = demoPeople.find(
+					(entry) => entry.authId === body.subject,
+				)!;
+				return {
+					ok: true,
+					json: async () => ({
+						data: { ...person, isActive: true, isOnboarded: true },
+					}),
+				};
+			}),
+		);
 		request.cookie = "";
 		request.url = "http://localhost:3000/sign-in";
 		vi.clearAllMocks();
 	});
 
-	afterEach(() => vi.unstubAllEnvs());
+	afterEach(() => {
+		vi.unstubAllEnvs();
+		vi.unstubAllGlobals();
+	});
 
 	it("signs in the sample account with an HttpOnly cookie that resolves on later requests", async () => {
-		expect(await signInWithPassword(credentials)).toEqual({ success: true });
+		expect(await signInAsDemoPerson("sample-admin")).toEqual({ success: true });
 		const [header, cookie] = request.setResponseHeader.mock.calls[0];
 		expect(header).toBe("Set-Cookie");
 		expect(cookie).toContain("HttpOnly;");
 		expect(cookie).toContain("SameSite=Lax;");
 		expect(cookie).not.toContain("Secure;");
-		expect(cookie).not.toContain(credentials.password);
 		request.cookie = cookie.split(";")[0];
 		expect(await getSessionFromRequest()).toMatchObject({
 			authUserId: TEST_AUTH_USER_ID,
@@ -57,34 +77,60 @@ describe("temporary password authentication", () => {
 		});
 	});
 
-	it("normalizes email casing and whitespace", async () => {
-		expect(
-			await signInWithPassword({ ...credentials, email: " TEST@EXAMPLE.COM " }),
-		).toEqual({ success: true });
-	});
-
-	it.each([
-		{ ...credentials, password: "wrong-password" },
-		{ ...credentials, password: `${credentials.password} ` },
-		{ ...credentials, email: "other@example.com" },
-	])("rejects incorrect credentials without issuing a cookie", async (input) => {
-		expect(await signInWithPassword(input)).toEqual({
-			error: "Invalid email or password.",
+	it.each(
+		demoPeople,
+	)("authenticates $name using their server-owned identity", async (person) => {
+		expect(await signInAsDemoPerson(person.id)).toEqual({ success: true });
+		request.cookie = request.setResponseHeader.mock.calls[0][1].split(";")[0];
+		expect(await getSessionFromRequest()).toMatchObject({
+			authUserId: person.authId,
+			email: person.email,
 		});
+		const sealed = (await getSessionFromRequest()) as unknown as Record<
+			string,
+			unknown
+		>;
+		expect(sealed.role).toBeUndefined();
+	});
+	it.each([
+		"admin",
+		"unknown",
+		"sample-admin;role=admin",
+	])("rejects unknown person %s", async (id) => {
+		expect(await signInAsDemoPerson(id)).toHaveProperty("error");
+		expect(request.setResponseHeader).not.toHaveBeenCalled();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+	it("refuses role selection on a nonlocal host", async () => {
+		request.url = "https://example.com/sign-in";
+		expect(await signInAsDemoPerson("sample-admin")).toHaveProperty("error");
+		expect(request.setResponseHeader).not.toHaveBeenCalled();
+	});
+	it("rejects a missing or deactivated account without a session", async () => {
+		vi.mocked(fetch).mockResolvedValueOnce({
+			ok: false,
+			json: async () => ({ error: "Missing" }),
+		} as Response);
+		expect(await signInAsDemoPerson("sample-anika")).toHaveProperty("error");
+		vi.mocked(fetch).mockResolvedValueOnce({
+			ok: true,
+			json: async () => ({ data: { ...demoPeople[0], isActive: false } }),
+		} as Response);
+		expect(await signInAsDemoPerson("sample-admin")).toHaveProperty("error");
 		expect(request.setResponseHeader).not.toHaveBeenCalled();
 	});
 
 	it("disables both sign-in and existing sessions when test authentication is not enabled", async () => {
 		request.cookie = `brainee_session=${await sealSession(session())}`;
 		vi.stubEnv("TEST_AUTH_ENABLED", "");
-		expect(await signInWithPassword(credentials)).toHaveProperty("error");
+		expect(await signInAsDemoPerson("sample-admin")).toHaveProperty("error");
 		expect(await getSessionFromRequest()).toBeNull();
 		expect(request.setResponseHeader).not.toHaveBeenCalled();
 	});
 
 	it("uses Secure cookies for HTTPS, including logout", async () => {
-		request.url = "https://example.com/sign-in";
-		await signInWithPassword(credentials);
+		request.url = "https://localhost:3000/sign-in";
+		await signInAsDemoPerson("sample-admin");
 		expect(request.setResponseHeader.mock.calls[0][1]).toContain(" Secure;");
 		expect(createLogoutCookie()).toContain(" Secure;");
 	});
@@ -118,7 +164,7 @@ describe("temporary password authentication", () => {
 		"too-short",
 	])("refuses to issue sessions with an invalid signing secret", async (secret) => {
 		vi.stubEnv("SESSION_SECRET", secret);
-		await expect(signInWithPassword(credentials)).rejects.toThrow();
+		expect(await signInAsDemoPerson("sample-admin")).toHaveProperty("error");
 		expect(request.setResponseHeader).not.toHaveBeenCalled();
 	});
 

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "@/db/graph-query";
 import {
 	leaveBalances,
 	leaveRequests,

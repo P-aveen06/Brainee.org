@@ -1,9 +1,9 @@
-"use client";
-
+import { Link } from "@tanstack/react-router";
 import {
 	BarChart3,
 	Calendar,
 	CheckSquare,
+	ChevronLeft,
 	Edit,
 	FolderKanban,
 	Kanban,
@@ -12,6 +12,14 @@ import {
 	Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-layout";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { PageTabs } from "@/components/ui/page-tabs";
 import type { ProjectAccess } from "@/lib/project-access";
@@ -63,47 +71,71 @@ export function ProjectHeaderSection({
 }: ProjectHeaderSectionProps) {
 	return (
 		<>
-			<PageHeader
-				title={
-					<div className="flex flex-wrap items-center gap-3">
-						<span className="font-mono text-base font-semibold text-primary">
-							{project.code}
-						</span>
-						<span>{project.name}</span>
-						<div className="flex items-center gap-2">
-							<ProjectStatusBadge status={project.status} />
-							<ProjectHealthBadge health={project.healthOverride} />
+			<div className="space-y-2.5">
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							<BreadcrumbLink
+								render={
+									<Link
+										to="/projects"
+										className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+									/>
+								}
+							>
+								<ChevronLeft className="size-3.5" />
+								Projects
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>{project.name}</BreadcrumbPage>
+						</BreadcrumbItem>
+					</BreadcrumbList>
+				</Breadcrumb>
+
+				<PageHeader
+					title={
+						<div className="flex flex-wrap items-center gap-3">
+							<span className="font-mono text-base font-semibold text-primary">
+								{project.code}
+							</span>
+							<span>{project.name}</span>
+							<div className="flex items-center gap-2">
+								<ProjectStatusBadge status={project.status} />
+								<ProjectHealthBadge health={project.healthOverride} />
+							</div>
 						</div>
-					</div>
-				}
-				description={project.description}
-				actions={
-					<div className="flex items-center gap-2">
-						{onManageMembersClick && (
-							<Button
-								variant="outline"
-								size="sm"
-								className="gap-1.5"
-								onClick={onManageMembersClick}
-							>
-								<Users className="size-3.5" />
-								Team
-							</Button>
-						)}
-						{access.canManage && (
-							<Button
-								variant="outline"
-								size="sm"
-								className="gap-1.5"
-								onClick={onEditClick}
-							>
-								<Edit className="size-3.5" />
-								Edit Project
-							</Button>
-						)}
-					</div>
-				}
-			/>
+					}
+					description={project.description}
+					actions={
+						<div className="flex items-center gap-2">
+							{onManageMembersClick && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="gap-1.5"
+									onClick={onManageMembersClick}
+								>
+									<Users className="size-3.5" />
+									Team
+								</Button>
+							)}
+							{access.canManage && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="gap-1.5"
+									onClick={onEditClick}
+								>
+									<Edit className="size-3.5" />
+									Edit Project
+								</Button>
+							)}
+						</div>
+					}
+				/>
+			</div>
 
 			{/* Navigation Tabs at the top */}
 			<PageTabs

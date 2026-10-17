@@ -31,7 +31,7 @@ export function DayCell({
 			onClick={onSelect}
 			aria-label={`${date}, ${events.length} events`}
 			className={cn(
-				"flex h-9 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors duration-150 ease-out hover:bg-surface-alt focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+				"flex h-9 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors duration-150 ease-out hover:bg-surface-alt focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-8",
 				!inMonth && "text-muted-foreground/40",
 				isSelected &&
 					!isToday &&

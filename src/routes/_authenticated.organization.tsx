@@ -1,7 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@/db/graph-query";
 import { Page, PageHeader } from "../components/layout/page-layout";
 import { OrgChartTree } from "../components/organization/OrgChartTree";
 import { createDb } from "../db";
@@ -11,7 +10,7 @@ import { authMiddleware } from "../lib/server-fn";
 export const getOrgData = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const dbUsers = await db
 			.select({
 				id: users.id,

@@ -15,7 +15,7 @@ try {
 	if (action === "cleanup") await graph.delete();
 	else if (action === "prepare") {
 		await migrate(graph);
-		await graph.query("CREATE (:Task {id:'recovery-fixture', title:'Recovery check', estimateHours:1.5, dueDate:'2026-10-21'})");
+		await graph.query("CREATE (:Task {id:'recovery-fixture',projectId:'recovery-project',taskNumber:1,status:'todo',priority:'medium',sequence:0, title:'Recovery check', estimateHours:1.5, dueDate:'2026-10-21'})");
 	} else {
 		await checkReady(graph);
 		const { data } = await graph.roQuery<{id: string; hours: number; due: string}>(

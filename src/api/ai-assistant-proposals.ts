@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@/db/graph-query";
 import { createDb } from "@/db";
 import { aiProposedActions } from "@/db/schema";
 import { parseProposedAction } from "@/lib/ai/proposed-actions";
@@ -19,7 +18,7 @@ export const confirmAiProposedAction = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => confirmProposalSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [prop] = await db
 			.select()
@@ -182,7 +181,7 @@ export const rejectAiProposedAction = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => rejectProposalSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [target] = await db
 			.select({

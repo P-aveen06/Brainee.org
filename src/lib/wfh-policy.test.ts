@@ -5,7 +5,7 @@ import {
 	getWfhCycleBounds,
 	getWfhRequestDays,
 	isCurrentWfhQuotaRequest,
-	isSqliteWfhDateUniqueConstraintError,
+	isWfhDateUniqueConstraintError,
 	isValidWfhAllowance,
 	isValidWfhDate,
 } from "./wfh-policy";
@@ -53,14 +53,12 @@ describe("wfh-policy", () => {
 
 	it("recognizes only the WFH date unique-constraint failure", () => {
 		expect(
-			isSqliteWfhDateUniqueConstraintError(
-				new Error(
-					"D1_ERROR: UNIQUE constraint failed: wfh_requests.user_id, wfh_requests.date: SQLITE_CONSTRAINT",
-				),
+			isWfhDateUniqueConstraintError(
+				new Error("Unique constraint violation on WfhRequest.userId,date"),
 			),
 		).toBe(true);
 		expect(
-			isSqliteWfhDateUniqueConstraintError(
+			isWfhDateUniqueConstraintError(
 				new Error("CHECK constraint failed: wfh_policy_allowance_check"),
 			),
 		).toBe(false);

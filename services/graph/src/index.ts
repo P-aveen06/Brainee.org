@@ -1,3 +1,4 @@
+import { operations } from "./operations.ts";
 import { readConfig } from "./config.ts";
 import { connect } from "./connection.ts";
 import { createGraphServer } from "./http.ts";
@@ -7,7 +8,11 @@ const config = readConfig(process.env);
 const client = await connect(config);
 const graph = client.selectGraph(config.graphName);
 await checkReady(graph);
-const server = createGraphServer(config.serviceToken, () => checkReady(graph));
+const server = createGraphServer(
+	config.serviceToken,
+	() => checkReady(graph),
+	operations(graph),
+);
 client.once("error", () => {
 	// Restart with a fresh connection rather than queue requests after a disconnect.
 	server.close();

@@ -1,12 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import {
-	FileText,
-	House,
-	Palmtree,
-	ScrollText,
-	Settings,
-	Users,
-} from "lucide-react";
+import { House, Palmtree, ScrollText, Settings, Users } from "lucide-react";
 import { PageTabs } from "@/components/ui/page-tabs";
 
 const ADMIN_TABS = [
@@ -19,7 +12,6 @@ const ADMIN_TABS = [
 	},
 	{ value: "wfh", label: "WFH", icon: House },
 	{ value: "policies", label: "Policies", icon: ScrollText },
-	{ value: "audit", label: "Audit", icon: FileText },
 ] as const;
 
 type TabValue = (typeof ADMIN_TABS)[number]["value"];
@@ -30,7 +22,6 @@ interface AdminConsoleTabsProps {
 	leaveConfigContent: React.ReactNode;
 	wfhContent: React.ReactNode;
 	policiesContent: React.ReactNode;
-	auditContent: React.ReactNode;
 }
 
 export function AdminConsoleTabs({
@@ -39,7 +30,6 @@ export function AdminConsoleTabs({
 	leaveConfigContent,
 	wfhContent,
 	policiesContent,
-	auditContent,
 }: AdminConsoleTabsProps) {
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/_authenticated/admin/" });
@@ -61,7 +51,6 @@ export function AdminConsoleTabs({
 		"leave-config": leaveConfigContent,
 		wfh: wfhContent,
 		policies: policiesContent,
-		audit: auditContent,
 	};
 
 	return (

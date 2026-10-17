@@ -20,14 +20,14 @@ test("real engine: clean migration, constraints, rollback, permissions and concu
 		await checkReady(query);
 		const empty = await graph.roQuery<{ count: number }>("MATCH (n:Employee) RETURN count(n) AS count");
 		assert.equal(empty.data?.[0].count, 0);
-		await query.query("CREATE (:Employee {id:'one', authId:'auth-one', emailKey:'one@example.test'})");
+		await query.query("CREATE (:Employee {id:'one', authId:'auth-one', emailKey:'one@example.test',email:'one@example.test',name:'One',role:'admin',standardHours:8,isOnboarded:true,isActive:true})");
 		await assert.rejects(query.query("CREATE (:Employee {id:'one', authId:'auth-two', emailKey:'two@example.test'})"));
 		await assert.rejects(query.query("CREATE (:Employee {id:'missing-identity'})"));
-		await assert.rejects(query.query("CREATE (:Task {id:'rolled-back'}) CREATE (:Employee {id:'one', authId:'other', emailKey:'other@example.test'})"));
-		const undone = await query.roQuery<{ count: number }>("MATCH (t:Task {id:'rolled-back'}) RETURN count(t) AS count");
+		await assert.rejects(query.query("CREATE (:Task {id:'rolled-back',projectId:'test',taskNumber:2,title:'Rollback',status:'todo',priority:'medium',sequence:0}) CREATE (:Employee {id:'one', authId:'other', emailKey:'other@example.test'})"));
+		const undone = await query.roQuery<{ count: number }>("MATCH (t:Task {id:'rolled-back',projectId:'test',taskNumber:2,title:'Rollback',status:'todo',priority:'medium',sequence:0}) RETURN count(t) AS count");
 		assert.equal(undone.data?.[0].count, 0);
 		const attempts = await Promise.allSettled(Array.from({ length: 8 }, () =>
-			query.query("CREATE (:Task {id:'concurrent'})")));
+			query.query("CREATE (:Task {id:'concurrent',projectId:'test',taskNumber:1,title:'Test',status:'todo',priority:'medium',sequence:0})")));
 		assert.equal(attempts.filter(result => result.status === "fulfilled").length, 1);
 		await assert.rejects(query.delete());
 		await assert.rejects(app.selectGraph("unrelated_graph").query("CREATE (:Task {id:'forbidden'})"));

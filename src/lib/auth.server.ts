@@ -8,8 +8,6 @@ import {
 const SESSION_COOKIE_NAME = "brainee_session";
 const DEFAULT_EXPIRATION_SECONDS = 7 * 24 * 60 * 60;
 export const TEST_AUTH_USER_ID = "test-sample-user";
-const TEST_EMAIL = "test@example.com";
-const TEST_PASSWORD = "TestLogin123!";
 
 export interface SessionPayload {
 	authUserId: string;
@@ -61,31 +59,6 @@ function getCookiePassword(): string {
 
 function securePart(): string {
 	return getRequestUrl().protocol === "https:" ? " Secure;" : "";
-}
-
-/** Temporary, explicitly enabled sample account. Never accepts a client-supplied identity or role. */
-export async function signInWithPassword(credentials: {
-	email: string;
-	password: string;
-}) {
-	if (!isTestAuthEnabled()) {
-		return { error: "Test sign-in is disabled in this environment." };
-	}
-	if (
-		credentials.email.trim().toLowerCase() !== TEST_EMAIL ||
-		credentials.password !== TEST_PASSWORD
-	) {
-		return { error: "Invalid email or password." };
-	}
-	const cookie = await createSessionCookie({
-		authUserId: TEST_AUTH_USER_ID,
-		email: TEST_EMAIL,
-		emailVerified: true,
-		firstName: "Test",
-		lastName: "Admin",
-	});
-	setResponseCookieHeader(cookie);
-	return { success: true };
 }
 
 /**

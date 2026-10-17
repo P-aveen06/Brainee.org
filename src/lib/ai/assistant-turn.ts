@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiTurns } from "@/db/schema";
 import { getEnvVar } from "@/lib/auth.server";
 import { visibleProjectIdsFor } from "@/lib/project-access";
@@ -17,8 +17,7 @@ import {
 	type ChatMessage,
 	type ChatProvider,
 } from "./provider";
-import { AzureDeepSeekProvider } from "./providers/azure-deepseek";
-import { OpenRouterProvider } from "./providers/openrouter";
+import { OpenCodeProvider } from "./providers/opencode";
 import { StubProvider } from "./providers/stub";
 import type { ToolContext } from "./tools/tool-types";
 import { getAssistantSystemPrompt, getToolDefinitions } from "./tools-registry";
@@ -72,49 +71,28 @@ export async function runAssistantTurn(
 	const startTime = Date.now();
 	const deadlineMs = startTime + TURN_TIMEOUT_MS;
 
-	const deepseekKey =
-		getEnvVar("DEEPSEEK_API_KEY") || getEnvVar("AZURE_DEEPSEEK_API_KEY") || "";
-	const deepseekEndpoint =
-		getEnvVar("AZURE_DEEPSEEK_ENDPOINT") ||
-		"https://open-model-resource.openai.azure.com/openai/v1";
-	const deepseekModel =
-		getEnvVar("AZURE_DEEPSEEK_MODEL") || "DeepSeek-V4-Flash";
-	const openRouterKey = getEnvVar("OPENROUTER_API_KEY");
+	const opencodeKey = getEnvVar("OPENCODE_API_KEY") || "";
+	const opencodeEndpoint =
+		getEnvVar("OPENCODE_ENDPOINT") ||
+		getEnvVar("OPENCODE_BASE_URL") ||
+		"https://opencode.ai/inference/openai/v1";
+	const opencodeModel = getEnvVar("OPENCODE_MODEL") || "deepseek-v4-flash";
 
 	const requestedModelId =
 		input.customModelId && ALLOWED_MODEL_IDS.has(input.customModelId)
 			? input.customModelId
-			: deepseekKey
-				? deepseekModel
-				: undefined;
-
-	// Provider routing:
-	// - If a specific model is requested, route to the provider that actually supports it!
-	//   * OpenRouter models (gemini, gpt, claude, or contains '/') -> OpenRouterProvider
-	//   * DeepSeek models -> AzureDeepSeekProvider (or OpenRouter if no Azure key)
-	// - Otherwise fall back based on available API keys
-	const isRequestedOpenRouterModel =
-		requestedModelId &&
-		(requestedModelId.includes("/") ||
-			requestedModelId.startsWith("google/") ||
-			requestedModelId.startsWith("openai/") ||
-			requestedModelId.startsWith("anthropic/"));
+			: opencodeModel;
 
 	const provider: ChatProvider =
 		input.providerOverride ||
-		(isRequestedOpenRouterModel && openRouterKey
-			? new OpenRouterProvider(openRouterKey)
-			: deepseekKey &&
-					(!requestedModelId ||
-						requestedModelId.toLowerCase().includes("deepseek"))
-				? new AzureDeepSeekProvider(
-						deepseekKey,
-						deepseekEndpoint,
-						deepseekModel,
-					)
-				: openRouterKey
-					? new OpenRouterProvider(openRouterKey)
-					: new StubProvider());
+		(opencodeKey
+			? new OpenCodeProvider(
+					opencodeKey,
+					opencodeEndpoint,
+					requestedModelId,
+					input.conversationId,
+				)
+			: new StubProvider());
 
 	// Fetch complete recent multi-hop history. Sequence disambiguates rows written in one second.
 	// to a project the caller can no longer see is redacted before it reaches the model.
@@ -160,7 +138,7 @@ export async function runAssistantTurn(
 	conversationHistory.push({ role: "user", content: input.userMessage });
 
 	const tools = getToolDefinitions();
-	const systemPrompt = getAssistantSystemPrompt(input.pageContext);
+	const systemPrompt = getAssistantSystemPrompt(input.pageContext, ctx.user);
 	const groundedRecordIds = new Set<string>();
 	const groundedLabels: Array<{ id: string; label: string }> = [];
 	const createdProposals: AssistantTurnOutput["proposedActions"] = [];

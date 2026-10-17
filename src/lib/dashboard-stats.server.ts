@@ -1,5 +1,4 @@
-import { env } from "cloudflare:workers";
-import { and, desc, eq, gt, gte, inArray, lte } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, lte } from "@/db/graph-query";
 import { createDb } from "#/db";
 import {
 	leaveBalances,
@@ -61,7 +60,7 @@ function getMonthRange() {
 export async function getPersonalStats(
 	user: DashboardUser,
 ): Promise<PersonalStats> {
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const { start, end } = getMonthRange();
 	const cycle = user.birthday ? await ensureBalancesForCycle(db, user) : null;
 
@@ -140,7 +139,7 @@ export async function getPersonalStats(
 }
 
 export async function getTeamStats(user: DashboardUser): Promise<TeamStats> {
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const today = getTodayIsoDate();
 
 	// 1. Fetch team hours today
@@ -210,7 +209,7 @@ export async function getTeamStats(user: DashboardUser): Promise<TeamStats> {
 }
 
 export async function getDashboardData(user: DashboardUser) {
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const today = getTodayIsoDate();
 	const canApprove = user.role === "lead" || user.role === "admin";
 

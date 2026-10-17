@@ -1,0 +1,13 @@
+**
+!services/
+!services/graph/
+!services/graph/package.json
+!services/graph/package-lock.json
+!services/graph/tsconfig.json
+!services/graph/src/
+!services/graph/src/**
+!services/graph/test/
+!services/graph/test/**
+!shared/
+!shared/graph/
+!shared/graph/**

@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { wfhPolicy, wfhRequests } from "../db/schema";
@@ -48,7 +47,7 @@ export const getWfhQuota = createServerFn({ method: "GET" })
 			};
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const cycle = getWfhCycleBounds(user.birthday, input.date);
 		const [allowance, requests] = await Promise.all([
 			getAllowance(db),
@@ -90,7 +89,7 @@ export const updateWfhPolicy = createServerFn({ method: "POST" })
 			.parse(data),
 	)
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const [oldPolicy] = await db
 			.select()
 			.from(wfhPolicy)

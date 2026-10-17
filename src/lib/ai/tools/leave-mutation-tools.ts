@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "@/db/graph-query";
 import { leaveRequests, systemLeaveTypes } from "@/db/schema";
 import { getLeaveCancellationTargetStatus } from "@/lib/leave-policy";
 import type { ToolHandler } from "./tool-types";

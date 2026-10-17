@@ -1,7 +1,6 @@
 "use client";
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useRef } from "react";
 import type { AssistantPageContext } from "@/lib/ai/page-context";
 import {
 	type InitialAssistantMessage,
@@ -41,14 +40,11 @@ export function AssistantPane({
 	userRole,
 	projectCount,
 }: AssistantPaneProps) {
-	const modelIdRef = useRef<string | undefined>("DeepSeek-V4-Flash");
-
 	const bridge = useAssistantUiBridge(
 		conversationId,
 		initialMessages,
 		onConversationCreated,
 		pageContext,
-		modelIdRef,
 	);
 
 	return (
@@ -61,7 +57,6 @@ export function AssistantPane({
 				sidebarOpen={sidebarOpen}
 				userRole={userRole}
 				projectCount={projectCount}
-				modelIdRef={modelIdRef}
 			/>
 		</AssistantRuntimeProvider>
 	);

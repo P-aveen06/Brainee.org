@@ -1,4 +1,4 @@
-import { aliasedTable, desc, eq } from "drizzle-orm";
+import { aliasedTable, desc, eq } from "@/db/graph-query";
 import type { Database } from "../db";
 import { leaveRequests, users, wfhRequests } from "../db/schema";
 

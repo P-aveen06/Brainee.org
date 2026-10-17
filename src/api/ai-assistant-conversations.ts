@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "@/db/graph-query";
 import { createDb } from "@/db";
 import { aiConversations, aiMessages, aiProposedActions } from "@/db/schema";
 import { recoverStaleAssistantTurns } from "@/lib/ai/turn-failure.server";
@@ -22,7 +21,7 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
 export const getAiConversations = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const threads = await db
 			.select()
 			.from(aiConversations)
@@ -37,7 +36,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getConversationSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [conv] = await db
 			.select()
@@ -121,7 +120,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 export const createAiConversation = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const id = `cnv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 		await db.insert(aiConversations).values({
@@ -137,7 +136,7 @@ export const deleteAiConversation = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => deleteConversationSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		// ai_proposed_actions has no FK to the conversation, so the cascade that removes
 		// messages and turns leaves pending proposals behind — still confirmable by id.

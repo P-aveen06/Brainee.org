@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@/db/graph-query";
 import { createDb } from "../db";
 import {
 	notifications,
@@ -24,7 +23,7 @@ export const saveEodReport = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => saveEodReportSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [report] = await db
 			.select()
@@ -55,7 +54,7 @@ export const finaliseEodReport = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => finaliseEodReportSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [report] = await db
 			.select()
@@ -94,7 +93,7 @@ export const remindMissingSubmitters = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => remindMissingSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const [project] = await db

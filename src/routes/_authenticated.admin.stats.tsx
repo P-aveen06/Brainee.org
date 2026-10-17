@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -20,7 +19,7 @@ export const getStatsPageData = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.inputValidator((data: unknown) => statsSearchSchema.parse(data))
 	.handler(async ({ data: searchParams }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const detailedStats = await getDetailedAdminStats(db, searchParams);
 
 		return {

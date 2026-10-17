@@ -3,7 +3,6 @@
 // Runtime types generated with workerd@1.20260603.1 2025-09-02 nodejs_compat
 interface __BaseEnv_Env {
 	PROJECT_DOCS: R2Bucket;
-	DATABASE: D1Database;
 	TEST_AUTH_ENABLED: string;
 	SESSION_SECRET: string;
 }

@@ -31,5 +31,13 @@ export function setupGraph() {
 	].join("\n") + "\n";
 	writeFileSync(".local/falkordb/users.acl", acl, { mode: 0o600 });
 	chmodSync(file, 0o600);
-	console.log("Local graph credentials ready; existing passwords retained. No records seeded.");
+
+ const varsFile=".dev.vars";
+ let vars=existsSync(varsFile)?readFileSync(varsFile,"utf8"):"";
+ for(const [key,value] of Object.entries({GRAPH_SERVICE_URL:"http://127.0.0.1:3100",GRAPH_SERVICE_TOKEN:secrets.GRAPH_SERVICE_TOKEN})){
+  const line=`${key}=${value}`;
+  vars=new RegExp(`^${key}=.*$`,"m").test(vars)?vars.replace(new RegExp(`^${key}=.*$`,"m"),line):vars.trimEnd()+"\n"+line+"\n";
+ }
+ writeFileSync(varsFile,vars,{mode:0o600});chmodSync(varsFile,0o600);
+	console.log("Local graph credentials ready; existing passwords retained. Worker connection configured. No records seeded.");
 }

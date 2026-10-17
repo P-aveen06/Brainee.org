@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { createDb } from "../db";
 import { projectEvents, projectTasks } from "../db/schema";
 import { assertProjectAccess, meetsAccessLevel } from "../lib/project-access";
@@ -16,7 +15,7 @@ export const createTask = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => createTaskSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		return createTaskCore(db, context.user, input);
 	});
 
@@ -24,7 +23,7 @@ export const updateTask = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => updateTaskSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const targetId = input.id || input.taskId || "";
 
 		const [existing] = await db
@@ -105,7 +104,7 @@ export const deleteTask = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => deleteTaskSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const targetId = input.id || input.taskId || "";
 
 		const [existing] = await db

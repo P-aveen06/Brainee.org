@@ -1,8 +1,7 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@/db/graph-query";
 import { checkOnboardingUser } from "../api/users";
 import { Shell } from "../components/layout/Shell";
 import {
@@ -18,7 +17,7 @@ export const getMyNotifications = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const items = await db
 			.select()
 			.from(notifications)

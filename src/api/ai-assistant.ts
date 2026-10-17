@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte } from "@/db/graph-query";
 import { createDb } from "@/db";
 import { aiConversations, aiMessages } from "@/db/schema";
 import { classifyAssistantFailure } from "@/lib/ai/ai-errors";
@@ -25,7 +24,7 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => sendMessageSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		// 1. Rate limiting: max messages and total tokens per user per 24 hours (and hourly burst protection)
 		const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

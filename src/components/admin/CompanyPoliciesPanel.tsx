@@ -6,7 +6,8 @@ import {
 	DataTableContainer,
 	DataTableToolbar,
 } from "@/components/layout/data-table-layout";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	Table,
@@ -16,6 +17,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { PolicyReviewDialog } from "./PolicyReviewDialog";
 import { PolicyUploadDialog } from "./PolicyUploadDialog";
 
 type PolicyDocument = Awaited<
@@ -29,6 +32,8 @@ export function CompanyPoliciesPanel({
 }) {
 	const router = useRouter();
 	const [uploadOpen, setUploadOpen] = useState(false);
+	const [revisionOf, setRevisionOf] = useState<PolicyDocument | null>(null);
+	const [reviewing, setReviewing] = useState<PolicyDocument | null>(null);
 	const [search, setSearch] = useState("");
 	const query = search.trim().toLowerCase();
 	const filtered = documents.filter((doc) =>
@@ -36,6 +41,14 @@ export function CompanyPoliciesPanel({
 			value?.toLowerCase().includes(query),
 		),
 	);
+	const openUpload = (base?: PolicyDocument) => {
+		setRevisionOf(base ?? null);
+		setUploadOpen(true);
+	};
+	const closeUpload = () => {
+		setUploadOpen(false);
+		setRevisionOf(null);
+	};
 
 	return (
 		<section className="space-y-4" aria-label="Company policy documents">
@@ -62,7 +75,7 @@ export function CompanyPoliciesPanel({
 						className="pl-9"
 					/>
 				</div>
-				<Button size="sm" onClick={() => setUploadOpen(true)}>
+				<Button size="sm" onClick={() => openUpload()}>
 					<Plus className="size-3.5" aria-hidden="true" />
 					Upload document
 				</Button>
@@ -84,11 +97,7 @@ export function CompanyPoliciesPanel({
 							: "Upload your employee handbook, leave policy, or other company guidelines."}
 					</p>
 					{!documents.length && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => setUploadOpen(true)}
-						>
+						<Button variant="outline" size="sm" onClick={() => openUpload()}>
 							Upload your first document
 						</Button>
 					)}
@@ -99,6 +108,8 @@ export function CompanyPoliciesPanel({
 						<TableHeader>
 							<TableRow>
 								<TableHead>Document</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead>Version</TableHead>
 								<TableHead>Size</TableHead>
 								<TableHead>Uploaded by</TableHead>
 								<TableHead>Date</TableHead>
@@ -129,6 +140,20 @@ export function CompanyPoliciesPanel({
 											</div>
 										</div>
 									</TableCell>
+									<TableCell>
+										<Badge
+											variant={
+												doc.status === "published"
+													? "success"
+													: doc.status === "archived"
+														? "outline"
+														: "warning"
+											}
+										>
+											{doc.status}
+										</Badge>
+									</TableCell>
+									<TableCell className="text-xs">v{doc.version}</TableCell>
 									<TableCell className="text-xs text-muted-foreground">
 										{doc.sizeBytes >= 1024 * 1024
 											? `${(doc.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
@@ -146,22 +171,37 @@ export function CompanyPoliciesPanel({
 										})}
 									</TableCell>
 									<TableCell className="text-right">
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											nativeButton={false}
-											render={
-												<a
-													href={`/api/company-policies/${doc.id}/download`}
-													aria-label={`Download ${doc.title}`}
-												>
-													<span className="sr-only">Download {doc.title}</span>
-												</a>
-											}
-											aria-label={`Download ${doc.title}`}
-										>
-											<Download className="size-4" />
-										</Button>
+										<div className="flex justify-end gap-1">
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => setReviewing(doc)}
+											>
+												Review
+											</Button>
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() => openUpload(doc)}
+											>
+												New revision
+											</Button>
+											<a
+												href={`/api/company-policies/${doc.id}/download`}
+												download
+												aria-label={`Download ${doc.title}`}
+												title={`Download ${doc.title}`}
+												className={cn(
+													buttonVariants({
+														variant: "ghost",
+														size: "icon-sm",
+													}),
+												)}
+											>
+												<Download className="size-4" />
+												<span className="sr-only">Download {doc.title}</span>
+											</a>
+										</div>
 									</TableCell>
 								</TableRow>
 							))}
@@ -175,7 +215,25 @@ export function CompanyPoliciesPanel({
 			</p>
 			{uploadOpen && (
 				<PolicyUploadDialog
-					onClose={() => setUploadOpen(false)}
+					revisionOf={
+						revisionOf
+							? {
+									id: revisionOf.id,
+									title: revisionOf.title,
+									description: revisionOf.description,
+								}
+							: undefined
+					}
+					onClose={closeUpload}
+					onSuccess={async () => {
+						await router.invalidate();
+					}}
+				/>
+			)}
+			{reviewing && (
+				<PolicyReviewDialog
+					document={reviewing}
+					onClose={() => setReviewing(null)}
 					onSuccess={async () => {
 						await router.invalidate();
 					}}

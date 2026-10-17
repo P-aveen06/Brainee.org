@@ -812,6 +812,25 @@
     margin-bottom: 0.5rem;
 }
 
+/* Ensure no excessive top or bottom margins on markdown edge elements */
+.assistant-prose :first-child,
+.assistant-prose h1:first-child,
+.assistant-prose h2:first-child,
+.assistant-prose h3:first-child,
+.assistant-prose h4:first-child,
+.assistant-prose p:first-child,
+.assistant-prose ul:first-child,
+.assistant-prose ol:first-child {
+    margin-top: 0 !important;
+}
+
+.assistant-prose :last-child,
+.assistant-prose p:last-child,
+.assistant-prose ul:last-child,
+.assistant-prose ol:last-child {
+    margin-bottom: 0 !important;
+}
+
 .assistant-prose h3 {
     font-size: 0.875rem;
     padding-bottom: 0.25rem;
@@ -873,6 +892,56 @@
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
     overflow-x: auto;
+}
+
+/* Assistant Prose Table Styling */
+.assistant-prose table {
+    width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.assistant-prose thead {
+    background-color: var(--surface-alt, rgba(0, 0, 0, 0.03));
+}
+
+.dark .assistant-prose thead {
+    background-color: var(--surface-alt, rgba(255, 255, 255, 0.04));
+}
+
+.assistant-prose th {
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    text-align: left;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.assistant-prose td {
+    padding: 0.5rem 0.75rem;
+    color: var(--foreground);
+    border-bottom: 1px solid rgba(226, 228, 233, 0.5);
+}
+
+.dark .assistant-prose td {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.assistant-prose tr:last-child td {
+    border-bottom: none;
+}
+
+.assistant-prose tbody tr:hover td {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark .assistant-prose tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* Sidebar collapsible chevron animation & accessibility */

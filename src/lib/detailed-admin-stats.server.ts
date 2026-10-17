@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "@/db/graph-query";
 import type { Database } from "../db";
 import {
 	companies,

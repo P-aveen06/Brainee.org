@@ -4,13 +4,15 @@ services:
     image: falkordb/falkordb:6.0.2@sha256:107455e862a824e45e8e9f5a7fbfdf5e00a08b14e13eae2577c72fd9e3f59ba6
     restart: unless-stopped
     environment:
-      BROWSER: "0"
+      BROWSER: "1"
       REDIS_ARGS: /etc/brainee/redis.conf
       REDISCLI_AUTH: ${GRAPH_ADMIN_PASSWORD:?Run bun run graph:setup first}
     volumes:
       - graph-data:/var/lib/falkordb/data
       - ./infra/falkordb/redis.conf:/etc/brainee/redis.conf:ro
       - ./.local/falkordb/users.acl:/etc/brainee/users.acl:ro
+    ports:
+      - "127.0.0.1:3001:3000"
     healthcheck:
       test: [CMD-SHELL, "redis-cli --user admin ping | grep -qx PONG"]
       interval: 5s
@@ -18,9 +20,12 @@ services:
       retries: 12
     networks: [graph]
   graph-service:
-    build: ./services/graph
+    build:
+      context: .
+      dockerfile: services/graph/Dockerfile
     restart: unless-stopped
     environment: &graph-env
+      TEST_AUTH_ENABLED: "true"
       GRAPH_HOST: falkordb
       GRAPH_PORT: "6379"
       GRAPH_NAME: brainee_dev
@@ -37,7 +42,9 @@ services:
       retries: 3
     networks: [graph]
   graph-tools:
-    build: ./services/graph
+    build:
+      context: .
+      dockerfile: services/graph/Dockerfile
     profiles: [tools]
     environment:
       <<: *graph-env

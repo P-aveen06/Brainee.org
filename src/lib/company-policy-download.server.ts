@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { createDb } from "@/db";
 import { companyPolicyDocuments } from "@/db/schema";
 import { getCurrentUserWithState } from "./current-user.server";
@@ -11,7 +11,7 @@ export async function downloadCompanyPolicyDocument(
 	if (!user) return new Response("Unauthorized", { status: 401 });
 	if (user.role !== "admin") return new Response("Forbidden", { status: 403 });
 
-	const [doc] = await createDb(env.DATABASE)
+	const [doc] = await createDb()
 		.select()
 		.from(companyPolicyDocuments)
 		.where(eq(companyPolicyDocuments.id, documentId))

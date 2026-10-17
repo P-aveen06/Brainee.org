@@ -1,3 +1,4 @@
+import {businessChecksum} from "../services/graph/src/business-rules.ts";
 import { randomUUID } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, sep } from "node:path";
@@ -39,8 +40,8 @@ export async function verifyRestore(path: string, recoveryGraph?: string) {
 		while (true) {
 			try {
 				const result = run("docker", ["exec", name, "redis-cli", "--raw", "GRAPH.RO_QUERY", "brainee_dev",
-					"MATCH (m:SchemaMigration {id:'0001-record-identities'}) RETURN m.checksum"], true);
-				if (result.includes(migrationChecksum) && !result.includes("ERR")) break;
+					"MATCH (m:SchemaMigration) RETURN m.id,m.checksum"], true);
+				if (result.includes(migrationChecksum) && result.includes(businessChecksum) && !result.includes("ERR")) break;
 			} catch { /* Container may still be loading the snapshot. */ }
 			if (Date.now() > deadline) throw new Error("Restored graph did not pass its schema-record check.");
 			await new Promise(resolve => setTimeout(resolve, 250));

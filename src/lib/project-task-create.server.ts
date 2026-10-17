@@ -1,30 +1,11 @@
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, or } from "@/db/graph-query";
 import type { z } from "zod";
 import type { createTaskSchema } from "@/api/project-tasks-schema";
 import type { Database } from "@/db";
-import {
-	projectEvents,
-	projectMembers,
-	projects,
-	projectTasks,
-	users,
-} from "@/db/schema";
-import { logAuditEvent } from "@/lib/audit.server";
+import { projectMembers, projects, users } from "@/db/schema";
 import { AppError } from "@/lib/errors";
 import { assertProjectAccess } from "@/lib/project-access";
 import type { AppUser } from "@/lib/server-fn";
-
-async function getNextTaskNumber(
-	db: Database,
-	projectId: string,
-): Promise<number> {
-	const [maxRow] = await db
-		.select({ maxNum: sql<number>`max(${projectTasks.taskNumber})` })
-		.from(projectTasks)
-		.where(eq(projectTasks.projectId, projectId));
-
-	return (maxRow?.maxNum || 0) + 1;
-}
 
 export async function resolveTaskAssignee(
 	db: Database,
@@ -190,59 +171,22 @@ export async function createTaskCore(
 		);
 	}
 
-	const taskId = crypto.randomUUID();
-	let taskNumber = await getNextTaskNumber(db, input.projectId);
-	const taskValues = () => ({
-		id: taskId,
-		projectId: input.projectId,
-		stageKey: input.stageKey || null,
-		parentTaskId: input.parentTaskId || null,
-		taskNumber,
-		title: input.title.trim(),
-		description: input.description?.trim() || null,
-		status: "todo" as const,
-		priority: input.priority,
-		assigneeId: resolvedAssigneeId,
-		createdById: user.id,
-		startDate: input.startDate || null,
-		dueDate: input.dueDate || null,
-		estimateHours: input.estimateHours ?? null,
-		sequence: 0,
-		createdAt: new Date(),
-		updatedAt: new Date(),
-	});
-
-	try {
-		await db.insert(projectTasks).values(taskValues());
-	} catch (error: unknown) {
-		if (!String(error).includes("UNIQUE constraint failed")) throw error;
-		taskNumber = await getNextTaskNumber(db, input.projectId);
-		await db.insert(projectTasks).values(taskValues());
-	}
-
-	await db.insert(projectEvents).values({
-		id: crypto.randomUUID(),
-		projectId: input.projectId,
-		eventType: "task_created",
-		actorId: user.id,
-		entityType: "task",
-		entityId: taskId,
-		details: JSON.stringify({
-			taskNumber,
-			title: input.title,
-			priority: input.priority,
-			assigneeId: resolvedAssigneeId,
-		}),
-		createdAt: new Date(),
-	});
-
-	await logAuditEvent(db, {
-		actorId: user.id,
-		action: "project_task_created",
-		entityType: "project_task",
-		entityId: taskId,
-		newData: { projectId: input.projectId, taskNumber, title: input.title },
-	});
-
-	return { success: true, taskId, taskNumber };
+	return db.operation<{ success: boolean; taskId: string; taskNumber: number }>(
+		"tasks.create",
+		{
+			values: {
+				id: crypto.randomUUID(),
+				projectId: input.projectId,
+				stageKey: input.stageKey || null,
+				parentTaskId: input.parentTaskId || null,
+				title: input.title.trim(),
+				description: input.description?.trim() || null,
+				priority: input.priority,
+				assigneeId: resolvedAssigneeId,
+				startDate: input.startDate || null,
+				dueDate: input.dueDate || null,
+				estimateHours: input.estimateHours ?? null,
+			},
+		},
+	);
 }

@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { users } from "../db/schema";
@@ -45,7 +44,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
 			return { error: parsed.error.issues[0]?.message || "Invalid data" };
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		// Update user profile in local database
 		const [user] = await db

@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { notifications } from "../db/schema";
@@ -13,7 +12,7 @@ export const markNotificationRead = createServerFn({ method: "POST" })
 	})
 	.handler(async ({ data: id, context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await db
 			.update(notifications)
 			.set({ isRead: true })
@@ -28,7 +27,7 @@ export const markAllNotificationsRead = createServerFn({
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await db
 			.update(notifications)
 			.set({ isRead: true })

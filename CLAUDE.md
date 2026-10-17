@@ -70,7 +70,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - **Framework:** TanStack Start — for doubts, refer to the installed skill at `.agents/skills/tanstack-start/SKILL.md`
 - **Runtime:** Cloudflare Workers via `@cloudflare/vite-plugin`
-- **Database:** Cloudflare D1 (SQLite) with Drizzle ORM
+- **Database:** FalkorDB in local Docker, accessed through the private Node graph service
 - **Auth:** Temporary local email/password test login with signed sessions
 - **UI:** shadcn/ui (base-nova style) + Tailwind CSS v4
 - **Package manager:** Bun
@@ -79,34 +79,19 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Never touch production. This overrides any other instruction in this file.**
 
-Do not run, and do not suggest running as a next step:
+Do not deploy, write deployed Worker secrets, run Wrangler commands with `--remote`, or connect to a production graph. This includes read-only production queries.
 
-- `bun run db:migrate:prod` / any `wrangler ... --remote`
-- `bun run deploy` / `wrangler deploy`
-- `bun run db:push` (see below — it bypasses migrations entirely)
-- `wrangler secret put`, or any command that writes to the deployed Worker or the remote D1
+All work stays local: Docker graphs, `bun run dev`, tests and `bun run build`. Deployment and production changes are human-run steps. If a task requires production, stop and ask.
 
-This includes **read-only** queries against `--remote`. There is no staging environment — one
-`database_id` serves local and production — so a "harmless look" is still a production connection.
+### FalkorDB and local data
 
-All work lands **locally only**: `--local` migrations, `bun run dev`, `bun run build`.
-Deploying and migrating production are **human-run steps**, done deliberately by the maintainer.
-When work is ready, say so and hand over the exact commands — do not run them.
-
-If a task appears to require production, stop and ask.
-
-### Cloudflare D1 & Wrangler
-
-- Keep the D1 binding name in `wrangler.jsonc` consistent with code (e.g. if binding is `"DATABASE"`, use `env.DATABASE` not `env.DB`).
-- Drizzle migrations output to `drizzle/`; `wrangler.jsonc` `migrations_dir` points there.
-- After schema changes: `bun run db:generate` → **read the generated SQL** → `bunx wrangler d1 migrations apply DATABASE --local`
-- **Never use `bun run db:push`.** It writes `schema.ts` straight to the database with no migration
-  file. It has already been used here and desynced local D1 from `drizzle/`, producing columns that
-  existed in shipped code but in no migration. Always `db:generate` → review → `migrations apply`.
-- Schema changes are **additive and reversible by preference**: no destructive `DROP COLUMN` /
-  `DROP TABLE` on a table holding data without saying so explicitly first. There are no soft
-  deletes in this schema and several tables cascade — deleting a user destroys their timesheet and
-  leave history.
+- FalkorDB is the only application database. Do not add a selector, dual writes, SQL fallback or D1 binding.
+- Typed fields and references: `shared/graph/models.json`; models: `src/db/models/`; parameterized query compiler: `shared/graph/`.
+- The Worker calls the private graph service through `src/db/transport.server.ts`, deriving identity from the signed session. Tokens stay server-side. Preserve existing middleware and domain access checks.
+- Schema changes are additive/checksum-checked. Use `bun run graph:migrate`, review constraints, then `bun run graph:test` locally.
+- Use `bun run graph:backup` before data changes. Never delete the active volume or graph without explicit instruction.
+- `bun run graph:seed` explicitly adds fictional samples; it must not run on startup or overwrite existing records.
+- Keep new code files under 300 lines and verify app/service types, tests and app build. Production remains off-limits.
 
 ### shadcn/ui
 
@@ -127,6 +112,6 @@ If a task appears to require production, stop and ask.
   - **AI & Super Agent:** Pale purple containers (`#EFEDFD`), AI pink (`#FA12E3`) & cyan (`#12D0FA`) accents, and interactive action snippets.
   - **Brand Gradients:** ClickUp gradient marks combining purple-to-blue (`#6647F0` to `#0091FF`) and pink-to-orange (`#FF02F0` to `#F76808`).
 - Route files go in `src/routes/` (file-based routing)
-- DB schema lives in `src/db/schema.ts`
+- `src/db/schema.ts` exports the typed graph models
 - Use `biome` for formatting and linting (`bun run check`, `bun run format`)
 - Server functions in `src/api/` by domain

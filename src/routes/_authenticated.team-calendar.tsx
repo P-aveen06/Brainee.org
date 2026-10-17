@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import TeamCalendarGrid from "../components/admin/TeamCalendarGrid";
@@ -16,7 +15,7 @@ export const getTeamCalendarPageData = createServerFn({
 })
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const now = new Date();
 		const employees = await getTeamCalendarLiveData(db, now);
 

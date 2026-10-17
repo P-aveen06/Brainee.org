@@ -1,6 +1,13 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { aliasedTable, and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import {
+	aliasedTable,
+	and,
+	desc,
+	eq,
+	gte,
+	inArray,
+	lte,
+} from "@/db/graph-query";
 import { createDb } from "../db";
 import {
 	leaveBalances,
@@ -31,7 +38,7 @@ export const getCalendarData = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const today = getTodayIsoDate();
 		const startIso = addIsoDays(today, -30);

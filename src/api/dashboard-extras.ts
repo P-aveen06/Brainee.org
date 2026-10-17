@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { dashboardLayouts } from "../db/schema";
@@ -40,7 +39,7 @@ export const saveDashboardLayout = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => layoutSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const layout = JSON.stringify(data);
 		await db
 			.insert(dashboardLayouts)
@@ -55,7 +54,7 @@ export const saveDashboardLayout = createServerFn({ method: "POST" })
 export const resetDashboardLayout = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await db
 			.delete(dashboardLayouts)
 			.where(eq(dashboardLayouts.userId, context.user.id));

@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { publicHolidays } from "../db/schema";
@@ -24,7 +23,7 @@ export const createHoliday = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const id = crypto.randomUUID();
 			await db.insert(publicHolidays).values({
@@ -61,7 +60,7 @@ export const updateHoliday = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [oldHoliday] = await db
 				.select()
@@ -106,7 +105,7 @@ export const deleteHoliday = createServerFn({ method: "POST" })
 	.handler(async ({ data: id, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [oldHoliday] = await db
 				.select()

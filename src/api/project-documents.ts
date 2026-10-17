@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "@/db";
 import { projectDocuments, projectEvents, users } from "@/db/schema";
@@ -21,7 +21,7 @@ export const getProjectDocuments = createServerFn({ method: "GET" })
 		z.object({ projectId: z.string() }).parse(data),
 	)
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -62,7 +62,7 @@ export const uploadProjectDocument = createServerFn({ method: "POST" })
 	.inputValidator((data: FormData) => parseUploadDocFormData(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(
 				db,
 				context.user,
@@ -131,7 +131,7 @@ export const supersedeDocument = createServerFn({ method: "POST" })
 	.inputValidator((data: FormData) => parseSupersedeDocFormData(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [prev] = await db
 				.select()
 				.from(projectDocuments)
@@ -200,7 +200,7 @@ export const deleteProjectDocument = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [doc] = await db
 				.select()
 				.from(projectDocuments)
