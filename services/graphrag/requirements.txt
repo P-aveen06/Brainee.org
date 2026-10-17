@@ -1,0 +1,3 @@
+graphrag-sdk[pdf,litellm]==1.4.0
+aiohttp>=3.13,<4
+
