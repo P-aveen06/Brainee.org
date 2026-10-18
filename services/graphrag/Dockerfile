@@ -6,10 +6,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch>=2.6,<3'
 COPY services/graphrag/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
+COPY services/graphrag/delivery/encoder.py ./encoder.py
+RUN python encoder.py
 COPY services/graphrag/delivery ./delivery
 COPY services/graphrag/tests ./tests
 RUN python -m unittest discover -s tests -p 'test_*.py'
-RUN useradd --create-home retrieval
+RUN useradd --create-home retrieval && chmod -R a+rX /opt/models/delivery-encoder
 USER retrieval
+RUN python -c 'from delivery.encoder import LocalEncoder; LocalEncoder()'
 EXPOSE 3200
 CMD ["python", "-m", "delivery.server"]

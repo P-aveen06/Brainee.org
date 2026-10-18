@@ -1,11 +1,14 @@
 import asyncio
 import json
 import re
+import time
+from collections import Counter
 
 from graphrag_sdk import Context, RetrievalStrategy
 from graphrag_sdk.core.models import RawSearchResult, RetrieverResult, RetrieverResultItem
 
 from .graph import SEARCH_KINDS
+from .vocabulary import expand_vocabulary
 
 
 STOP = set("a an and are as at be been built build by can company could develop developed "
@@ -44,7 +47,19 @@ def source_for(item):
             label += f" {item.get('excerpt', '')[:70]}"
         label += f" ({item['id']})"
     label = re.sub(r"\s+", " ", label).replace("[", "(").replace("]", ")").strip()
-    return {"id": item["id"], "type": kind, "label": label, "projectId": item["projectId"]}
+    description = next((item.get(field) for field in
+                        ("excerpt", "summary", "description", "text", "body")
+                        if isinstance(item.get(field), str) and item[field].strip()), "")
+    if not description:
+        details = [item.get("status"), item.get("priority"), item.get("assigneeName"),
+                   item.get("projectRole"), item.get("category")]
+        description = " · ".join(str(value) for value in details if value)
+    description = re.sub(r"\s+", " ", str(description)).strip()[:480]
+    source = {"id": item["id"], "type": kind, "label": label,
+              "projectId": item["projectId"]}
+    if description:
+        source["description"] = description
+    return source
 
 
 class DeliveryRetrieval(RetrievalStrategy):
@@ -55,31 +70,66 @@ class DeliveryRetrieval(RetrievalStrategy):
     """
     async def _execute(self, query, ctx: Context, **kwargs):
         actor_id = ctx.metadata["actorId"]
-        terms = query_terms(query, ctx.metadata.get("concepts", []))
+        terms = expand_vocabulary(query_terms(query, ctx.metadata.get("concepts", [])))
         if not terms:
             raise ValueError("Describe a functionality, task, person, or project to search.")
         offset, limit = ctx.metadata.get("offset", 0), ctx.metadata.get("limit", 15)
-        ceiling = offset + limit + 1
+        ceiling = min(500, max(50, offset + limit + 1))
         ctx.ensure_budget("delivery graph search")
-        groups = await asyncio.gather(*[
-            self._graph.search_kind(actor_id, kind, terms, ceiling) for kind in SEARCH_KINDS
-        ])
-        records = []
-        for group in groups:
-            for row in group:
+        semantic = getattr(self._graph, "semantic", None)
+        if semantic and semantic.stats.get("indexedPassages", 0):
+            groups = [await semantic.lexical(actor_id, terms, ceiling)]
+        else:
+            groups = await asyncio.gather(*[
+                self._graph.search_kind(actor_id, kind, terms, ceiling) for kind in SEARCH_KINDS
+            ])
+        lexical = sorted([row for group in groups for row in group],
+                         key=lambda row: (-row["score"], row["item"]["id"]))
+        semantic_rows = await semantic.search(actor_id, query, ceiling) if semantic else []
+        records = {}
+        for channel, rows in (("lexical", lexical), ("semantic", semantic_rows)):
+            for rank, row in enumerate(rows):
                 item = row["item"]
+                key = f"{item['type']}:{item['id']}:{item['projectId']}"
                 text, start, shortened = excerpt(row["body"], row["matched"])
+                if channel == "semantic":
+                    text, start = row["passageText"], row["passageStart"]
+                    shortened = start > 0 or len(text) < len(row["body"])
                 item.update(excerpt=text, excerptStart=start, excerptTruncated=shortened,
-                            matchedConcepts=row["matched"], score=row["score"])
+                            matchedConcepts=row["matched"], semanticScore=row.get("semanticScore"))
                 item["source"] = source_for(item)
-                records.append(item)
-        records.sort(key=lambda item: (-item["score"], item["projectCode"], item["type"], item["id"]))
-        unique = {f"{item['type']}:{item['id']}:{item['projectId']}": item for item in records}
-        ordered = sorted(unique.values(), key=lambda item: (-item["score"], item["projectCode"], item["id"]))
+                existing = records.setdefault(key, {**item, "score": 0, "retrievalReasons": []})
+                existing["score"] += 1 / (60 + rank + 1)
+                existing["retrievalReasons"].append(channel)
+                if channel == "semantic":
+                    existing["semanticScore"] = row["semanticScore"]
+                if item.get("title", "").casefold() == query.strip().casefold():
+                    existing["score"] += 0.03
+                if item["type"] == "decision":
+                    existing["score"] += 0.002
+        ordered = sorted(records.values(), key=lambda item: (-item["score"], item["projectCode"], item["id"]))
+        seeds = [item["id"] for item in ordered[:12] if item["type"] == "task"]
+        related = await self._graph.related_tasks(actor_id, seeds, 30) if seeds and hasattr(self._graph, "related_tasks") else []
+        if seeds and hasattr(self._graph, "linked_evidence"):
+            related += await self._graph.linked_evidence(actor_id, seeds, 20)
+        for row in related:
+            item = row["item"]
+            key = f"{item['type']}:{item['id']}:{item['projectId']}"
+            if key in records:
+                records[key]["evidencePath"] = row["evidencePath"]
+                continue
+            item.update(excerpt=row["body"][:1600], excerptStart=0,
+                        excerptTruncated=len(row["body"]) > 1600, matchedConcepts=[],
+                        score=0.006, retrievalReasons=["graph_link"], evidencePath=row["evidencePath"])
+            item["source"] = source_for(item)
+            records[key] = item
+        ordered = sorted(records.values(), key=lambda item: (-item["score"], item["projectCode"], item["id"]))
         return RawSearchResult(records=ordered, metadata={
             "scope": "company_delivery", "terms": terms, "offset": offset, "limit": limit,
             "hasMore": len(ordered) > offset + limit,
-            "ranking": "concept_overlap_and_graph_links", "sdk": "graphrag-sdk/1.4.0",
+            "ranking": "reciprocal_rank_fusion_title_decision_and_graph_links", "sdk": "graphrag-sdk/1.4.0",
+            "retrievalCoverage": {"semantic": semantic.stats if semantic else {"state": "disabled"},
+                                  "candidateLimit": ceiling, "graphLinkedRecords": len(related)},
         })
 
     def _format(self, raw):
@@ -89,6 +139,7 @@ class DeliveryRetrieval(RetrievalStrategy):
 
 
 async def search_delivery(graph, actor_id, payload):
+    started = time.monotonic()
     ctx = Context(latency_budget_ms=10000, metadata={"actorId": actor_id, **payload})
     result = await DeliveryRetrieval(graph_store=graph).search(payload["query"], ctx)
     offset, limit = payload.get("offset", 0), payload.get("limit", 15)
@@ -96,5 +147,7 @@ async def search_delivery(graph, actor_id, payload):
     return {"matches": selected, **result.metadata,
             "nextOffset": offset + limit if result.metadata["hasMore"] else None,
             "sources": [item["source"] for item in selected],
-            "documentCoverage": await graph.coverage(actor_id)}
+            "documentCoverage": await graph.coverage(actor_id),
+            "diagnostics": {"latencyMs": round((time.monotonic() - started) * 1000),
+                            "sourceContributions": dict(Counter(item["type"] for item in selected))}}
 

@@ -17,7 +17,8 @@ SEARCH_KINDS = {
         "coalesce(n.title,'')+' '+coalesce(n.description,'')+' '+coalesce(n.blockedReason,'')+' '+coalesce(u.name,'')",
         "{id:n.id,type:'task',projectId:p.id,projectCode:p.code,projectName:p.name,title:n.title,"
         "taskNumber:n.taskNumber,status:n.status,estimateHours:n.estimateHours,actualHours:n.actualHours,"
-        "parentTaskId:n.parentTaskId,assigneeName:u.name}",
+        "parentTaskId:n.parentTaskId,assigneeId:u.id,assigneeName:u.name,dueDate:n.dueDate,"
+        "priority:n.priority,blockedReason:n.blockedReason}",
     ),
     "decision": (
         "MATCH (n:Comment)-[:IN_PROJECT]->(p:Project)", "coalesce(n.body,'')",
@@ -56,6 +57,37 @@ SEARCH_KINDS = {
 class DeliveryGraph:
     def __init__(self, connection: FalkorDBConnection):
         self.connection = connection
+        self.semantic = None
+
+    async def hydrate(self, actor_id, kind, keys):
+        match, body, projection = SEARCH_KINDS[kind]
+        return await self.read(f"""{match}
+WITH p,n,{body} AS body,{projection} AS item
+WHERE any(key IN $keys WHERE key.id=n.id AND key.projectId=p.id)
+RETURN {{item:item,body:body,matched:[],score:0}}""", actor_id, keys=keys)
+
+    async def related_tasks(self, actor_id, task_ids, ceiling):
+        return await self.read("""MATCH (p:Project)-[:HAS_TASK]->(seed:Task)
+WHERE seed.id IN $ids
+MATCH (seed)-[:PARENT_TASK*0..2]->(parent:Task)<-[:PARENT_TASK*0..2]-(n:Task)
+WHERE n.projectId=p.id AND parent.projectId=p.id AND n.id<>seed.id
+OPTIONAL MATCH (n)-[:ASSIGNED_TO]->(u:Employee)
+RETURN DISTINCT {item:{id:n.id,type:'task',projectId:p.id,projectCode:p.code,projectName:p.name,
+title:n.title,taskNumber:n.taskNumber,status:n.status,parentTaskId:n.parentTaskId,
+estimateHours:n.estimateHours,actualHours:n.actualHours,assigneeName:u.name,dueDate:n.dueDate},
+body:coalesce(n.title,'')+' '+coalesce(n.description,''),matched:[],score:0,
+evidencePath:{fromId:seed.id,viaId:parent.id,toId:n.id,relation:'PARENT_TASK'}}
+ORDER BY n.id LIMIT $ceiling""", actor_id, ids=task_ids, ceiling=ceiling)
+
+    async def linked_evidence(self, actor_id, task_ids, ceiling):
+        return await self.read("""MATCH (p:Project)-[:HAS_TASK]->(t:Task)
+WHERE t.id IN $ids
+MATCH (n:Comment)-[:IN_PROJECT]->(p) WHERE n.taskId=t.id
+RETURN {item:{id:n.id,type:CASE WHEN n.isDecision THEN 'decision' ELSE 'discussion' END,
+projectId:p.id,projectCode:p.code,projectName:p.name,title:'Task discussion',taskId:t.id,documentId:n.documentId},
+body:coalesce(n.body,''),matched:[],score:0,
+evidencePath:{fromId:t.id,toId:n.id,relation:'Comment.taskId'}}
+ORDER BY n.id LIMIT $ceiling""", actor_id, ids=task_ids, ceiling=ceiling)
 
     async def read(self, query, actor_id, **params):
         result = await self.connection.graph.ro_query(
@@ -72,7 +104,8 @@ class DeliveryGraph:
         rows = await self.read("""MATCH (p:Project)
 WHERE p.id=$value OR toLower(p.code)=toLower($value)
 RETURN {id:p.id,type:'project',projectId:p.id,projectCode:p.code,title:p.name,
-description:p.description,status:p.status,ownerId:p.ownerId,targetEndDate:p.targetEndDate} LIMIT 1""",
+description:p.description,status:p.status,ownerId:p.ownerId,targetEndDate:p.targetEndDate,
+currentStageKey:p.currentStageKey,healthOverride:p.healthOverride} LIMIT 1""",
                                actor_id, value=value)
         if not rows:
             raise ValueError("Project not found.")
@@ -82,7 +115,7 @@ description:p.description,status:p.status,ownerId:p.ownerId,targetEndDate:p.targ
         rows = await self.read("""MATCH (n:DocumentVersion)-[:IN_PROJECT]->(p:Project)
 WHERE n.id=$id AND n.status <> 'superseded'
 RETURN {id:n.id,type:'document',projectId:p.id,projectCode:p.code,title:n.title,
-version:n.version,checksum:n.checksum,mimeType:n.mimeType,text:CASE WHEN n.deliveryTextChecksum=n.checksum
+version:n.version,checksum:n.checksum,mimeType:n.mimeType,locations:n.deliveryLocations,text:CASE WHEN n.deliveryTextChecksum=n.checksum
 THEN n.deliveryText ELSE null END,indexStatus:CASE WHEN n.deliveryTextChecksum=n.checksum THEN coalesce(n.deliveryIndexStatus,'not_indexed') ELSE 'not_indexed' END}""",
                                actor_id, id=document_id)
         if not rows:
@@ -97,6 +130,8 @@ indexedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryI
 truncatedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='truncated' THEN 1 ELSE 0 END),
 unsupportedDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='unsupported' THEN 1 ELSE 0 END),
 emptyDocuments:sum(CASE WHEN d.deliveryTextChecksum=d.checksum AND d.deliveryIndexStatus='empty' THEN 1 ELSE 0 END),
+pendingDocuments:sum(CASE WHEN d.deliveryIndexStatus='pending' THEN 1 ELSE 0 END),
+failedDocuments:sum(CASE WHEN d.deliveryIndexStatus='failed' THEN 1 ELSE 0 END),
 unindexedDocuments:sum(CASE WHEN d.deliveryTextChecksum IS NULL OR d.checksum IS NULL OR d.deliveryTextChecksum<>d.checksum THEN 1 ELSE 0 END)}""", actor_id)
         return rows[0]
 

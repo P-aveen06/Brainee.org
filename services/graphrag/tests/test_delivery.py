@@ -52,7 +52,7 @@ class DeliveryTests(unittest.IsolatedAsyncioTestCase):
         with zipfile.ZipFile(blob, 'w') as archive:
             archive.writestr('word/document.xml', '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:r><w:t>SSO</w:t></w:r></w:p></w:document>')
         self.assertEqual(await extract_text(blob.getvalue(), DOCX), ('SSO', 'indexed'))
-        self.assertEqual(await extract_text(b'png', 'image/png'), ('', 'unsupported'))
+        self.assertEqual(await extract_text(b'zip', 'application/zip'), ('', 'unsupported'))
 
     async def test_sdk_pdf_loader(self):
         from pypdf import PdfWriter

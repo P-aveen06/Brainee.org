@@ -8,9 +8,11 @@ from graphrag_sdk import FalkorDBConnection
 
 from .config import Settings
 from .context import implementation_context
-from .documents import document_passages, index_document
+from .documents import document_passages, index_document, record_index_failure
 from .graph import DeliveryGraph
 from .retrieval import search_delivery
+from .encoder import LocalEncoder
+from .semantic import SemanticIndex
 
 
 class Payload(BaseModel):
@@ -38,6 +40,12 @@ def create_app(settings, graph=None):
     app = web.Application(client_max_size=25 * 1024 * 1024)
     handlers = {"delivery.search": search_delivery, "delivery.context": implementation_context,
                 "delivery.passages": document_passages}
+
+    async def start(_app):
+        if connection:
+            graph.semantic = SemanticIndex(graph, LocalEncoder())
+            await graph.semantic.setup()
+            app["semantic_task"] = asyncio.create_task(graph.semantic.run())
 
     async def operation(request):
         supplied = request.headers.get("authorization", "")
@@ -75,6 +83,10 @@ def create_app(settings, graph=None):
         except web.HTTPRequestEntityTooLarge:
             return web.json_response({"error": "Document exceeds 25 MB."}, status=413)
         except Exception:
+            try:
+                await record_index_failure(graph, actor_id, request.match_info["id"])
+            except Exception:
+                pass  # The failed operation remains a failure, including if the store is unavailable.
             return web.json_response({"error": "Document could not be indexed. Verify its format and checksum."}, status=400)
 
     async def ready(request):
@@ -82,17 +94,26 @@ def create_app(settings, graph=None):
             return web.json_response({"error": "Unauthorized."}, status=401)
         try:
             await graph.connection.graph.ro_query("RETURN 1", timeout=3000)
-            return web.json_response({"status": "ready", "sdk": "graphrag-sdk/1.4.0"})
+            return web.json_response({"status": "ready", "sdk": "graphrag-sdk/1.4.0",
+                                      "retrieval": {**graph.semantic.stats,
+                                          "queries": dict(graph.semantic.query_stats),
+                                          "lastSemanticLatencyMs": graph.semantic.last_latency_ms}
+                                      if graph.semantic else {"state": "disabled"}})
         except Exception:
             return web.json_response({"error": "GraphRAG is unavailable."}, status=503)
 
     async def close(_app):
+        task = app.get("semantic_task")
+        if task:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
         if connection:
             await connection.close()
 
     app.router.add_post("/operations", operation)
     app.router.add_post("/documents/{id}/index", index)
     app.router.add_get("/ready", ready)
+    app.on_startup.append(start)
     app.on_cleanup.append(close)
     return app
 

@@ -1,14 +1,13 @@
 import hashlib
-import io
-import tempfile
-import zipfile
-from pathlib import Path
-from xml.etree import ElementTree
+import asyncio
+import json
+import time
+from urllib.parse import quote
 
 from graphrag_sdk import Context, FixedSizeChunking
-from graphrag_sdk.ingestion.loaders.pdf_loader import PdfLoader
 
 from .retrieval import query_terms, source_for
+from .extraction import extract_document
 
 
 MAX_TEXT = 1_000_000
@@ -16,28 +15,21 @@ TEXT_TYPES = {"text/plain", "text/markdown", "text/csv", "application/json"}
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
+async def record_index_failure(graph, actor_id, document_id):
+    # Error categories only: exceptions can include source text or storage details.
+    await graph.connection.graph.query("""MATCH (a:Employee {id:$actorId}) WHERE a.isActive=true
+MATCH (d:DocumentVersion {id:$id}) WHERE d.status<>'superseded'
+WITH d,CASE WHEN d.deliveryAttemptChecksum=d.checksum THEN coalesce(d.deliveryIndexAttempts,0)+1 ELSE 1 END AS attempts
+SET d.deliveryIndexAttempts=attempts,d.deliveryAttemptChecksum=d.checksum,
+d.deliveryIndexStatus=CASE WHEN attempts>=5 THEN 'failed' ELSE 'pending' END,
+d.deliveryRetryAt=$now+CASE WHEN attempts<5 THEN 60*pow(2,attempts-1) ELSE 3600 END,
+d.deliveryIndexError='extraction_failed' RETURN d.id""", params={"actorId": actor_id,
+        "id": document_id, "now": int(time.time())}, timeout=5000)
+
+
 async def extract_text(content, mime_type):
-    if mime_type in TEXT_TYPES:
-        return content.decode("utf-8-sig"), "indexed"
-    if mime_type == "application/pdf":
-        with tempfile.TemporaryDirectory(prefix="delivery-pdf-") as directory:
-            path = Path(directory) / "source.pdf"
-            path.write_bytes(content)
-            loaded = await PdfLoader().load(str(path), Context(latency_budget_ms=15000))
-            return loaded.text, "indexed"
-    if mime_type == DOCX:
-        with zipfile.ZipFile(io.BytesIO(content)) as archive:
-            info = archive.getinfo("word/document.xml")
-            if info.file_size > 10 * 1024 * 1024:
-                raise ValueError("Document XML exceeds the extraction limit.")
-            xml = archive.read(info)
-            if b"<!DOCTYPE" in xml or b"<!ENTITY" in xml:
-                raise ValueError("Document XML declarations are not supported.")
-            root = ElementTree.fromstring(xml)
-            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-            paragraphs = ["".join(node.itertext()) for node in root.findall(".//w:p", ns)]
-            return "\n".join(paragraphs), "indexed"
-    return "", "unsupported"
+    text, status, _ = await asyncio.to_thread(extract_document, content, mime_type)
+    return text, status
 
 
 async def index_document(graph, actor_id, document_id, content):
@@ -47,7 +39,7 @@ async def index_document(graph, actor_id, document_id, content):
     checksum = hashlib.sha256(content).hexdigest()
     if not document["checksum"] or checksum != document["checksum"]:
         raise ValueError("Document content does not match the current source checksum.")
-    text, status = await extract_text(content, document["mimeType"])
+    text, status, locations = await asyncio.to_thread(extract_document, content, document["mimeType"])
     if status == "indexed":
         status = "truncated" if len(text) > MAX_TEXT else "indexed" if text.strip() else "empty"
     text = text[:MAX_TEXT]
@@ -55,9 +47,10 @@ async def index_document(graph, actor_id, document_id, content):
     result = await graph.connection.graph.query("""
 MATCH (a:Employee {id:$actorId}) WHERE a.isActive=true
 MATCH (d:DocumentVersion {id:$id}) WHERE d.checksum=$checksum AND d.status <> 'superseded'
-SET d.deliveryText=$text,d.deliveryTextChecksum=$checksum,d.deliveryIndexStatus=$status
+SET d.deliveryText=$text,d.deliveryTextChecksum=$checksum,d.deliveryIndexStatus=$status,
+d.deliveryLocations=$locations,d.deliveryIndexAttempts=0,d.deliveryRetryAt=0,d.deliveryIndexError=null
 RETURN d.id""", params={"actorId": actor_id, "id": document["id"], "checksum": checksum,
-                        "text": text, "status": status}, timeout=5000)
+                        "text": text, "status": status, "locations": json.dumps(locations)}, timeout=5000)
     if not result.result_set:
         raise ValueError("Document or caller changed during indexing. Retry retrieval.")
     return {"documentId": document["id"], "status": status, "characters": len(text)}
@@ -68,6 +61,7 @@ async def document_passages(graph, actor_id, payload):
     text = document.pop("text") or ""
     document.pop("checksum", None)
     document.pop("mimeType", None)
+    locations = json.loads(document.pop("locations", None) or "[]")
     chunks = await FixedSizeChunking(chunk_size=3200, chunk_overlap=300).chunk(text, Context())
     terms = query_terms(payload.get("query", ""), payload.get("concepts", []))
     passages = []
@@ -77,10 +71,13 @@ async def document_passages(graph, actor_id, payload):
             continue
         source = source_for(document)
         source["label"] += f" passage {chunk.index + 1}"
+        source["description"] = " ".join(chunk.text.split())[:480]
+        source["url"] = f"/api/delivery/documents/{quote(document['id'], safe='')}/passages?position={chunk.index}"
+        located = [location for location in locations if location["startChar"] < chunk.metadata["end_char"] and location["endChar"] > chunk.metadata["start_char"]]
         passages.append({"text": chunk.text, "position": chunk.index,
                          "startChar": chunk.metadata["start_char"],
                          "endChar": chunk.metadata["end_char"], "matchedConcepts": matched,
-                         "score": len(matched), "source": source})
+                         "score": len(matched), "source": source, "locations": located})
     passages.sort(key=lambda item: (-item["score"], item["position"]))
     offset, limit = payload.get("offset", 0), payload.get("limit", 10)
     selected = passages[offset:offset + limit]
