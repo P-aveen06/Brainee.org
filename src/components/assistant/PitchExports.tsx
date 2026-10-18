@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { downloadPitchExport } from "@/lib/ai/pitch-download.client";
+import { downloadPitchExport } from "@/lib/ai/pitch-download";
 import type { PitchPackage } from "@/lib/ai/pitch-types";
 
 export function PitchExports({

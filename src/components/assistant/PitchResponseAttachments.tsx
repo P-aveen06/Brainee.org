@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
 	downloadPitchExport,
 	type PitchExportFormat,
-} from "@/lib/ai/pitch-download.client";
+} from "@/lib/ai/pitch-download";
 import type { PitchPackage } from "@/lib/ai/pitch-types";
 import { useOpenPitch } from "./PitchWorkspace";
 
