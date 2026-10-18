@@ -98,7 +98,7 @@ test("native graph data layer: fields, relationships, queries, upserts and permi
 			authId: "employee-auth",
 			email: "employee@example.test",
 			name: "Employee",
-			birthday: "2000-01-01",
+			birthday: "2026-10-16",
 			peerLeadId: "admin",
 		});
 		const [employee] = await db

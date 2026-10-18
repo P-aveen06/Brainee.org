@@ -41,7 +41,7 @@ export async function seedSamplePeople(
 	await addSample(db, "WfhPolicy", { id: 1, annualAllowance: 12 });
 	const people = [
 		...sampleEmployees,
-		{ id: String(admin.id), birthday: String(admin.birthday ?? "1990-01-10") },
+		{ id: String(admin.id), birthday: String(admin.birthday ?? "2026-10-16") },
 	];
 	const requests = [
 		{

@@ -80,7 +80,7 @@ export async function assertBusinessOperations(
 		userId: "employee",
 		leaveType: "annual",
 		totalLimit: 12,
-		cycleStart: "2026-01-01",
+		cycleStart: "2026-10-16",
 		cycleEnd: "2026-12-31",
 	});
 	const leavePayload = {
@@ -91,7 +91,7 @@ export async function assertBusinessOperations(
 			endDate: "2026-10-21",
 			totalDays: 1,
 		},
-		cycleStart: "2026-01-01",
+		cycleStart: "2026-10-16",
 	};
 	const requested = await peopleOperation(
 		graph,
@@ -105,7 +105,7 @@ export async function assertBusinessOperations(
 			peopleOperation(
 				graph,
 				"leave.approve",
-				{ id: "leave", cycleStart: "2026-01-01" },
+				{ id: "leave", cycleStart: "2026-10-16" },
 				actor,
 			),
 		),
@@ -124,7 +124,7 @@ export async function assertBusinessOperations(
 	assert.equal(rowCount(blocked), 0);
 	const wfhArgs = {
 		values: { id: "wfh", date: "2026-10-22" },
-		cycleStart: "2026-01-01",
+		cycleStart: "2026-10-16",
 		cycleEnd: "2026-12-31",
 		defaultAllowance: 1,
 	};
@@ -174,13 +174,13 @@ export async function assertBusinessOperations(
 	await peopleOperation(
 		graph,
 		"leave.revoke",
-		{ id: "leave", reason: "Test", cycleStart: "2026-01-01" },
+		{ id: "leave", reason: "Test", cycleStart: "2026-10-16" },
 		actor,
 	);
 	await peopleOperation(
 		graph,
 		"leave.revoke",
-		{ id: "leave", reason: "Test", cycleStart: "2026-01-01" },
+		{ id: "leave", reason: "Test", cycleStart: "2026-10-16" },
 		actor,
 	);
 	assert.equal((await db.select().from(Balance))[0].used, 0);
