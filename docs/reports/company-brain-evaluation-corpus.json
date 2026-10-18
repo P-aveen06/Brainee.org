@@ -1,0 +1,505 @@
+{
+  "method": "Retain full answers and tool evidence without clipping. Score correctness, completeness, provenance, access and cross-query consistency separately. A submitted prompt is not a pass.",
+  "cases": [
+    {
+      "id": "ceo-01",
+      "role": "CEO",
+      "question": "Give me a concise portfolio briefing: how many projects are active, which are blocked, and what three actions should I prioritize today? Name the projects and accountable leads."
+    },
+    {
+      "id": "ceo-02",
+      "role": "CEO",
+      "question": "Separate the portfolio into internal and client work. List the counts and name the client accounts with an active project."
+    },
+    {
+      "id": "ceo-03",
+      "role": "CEO",
+      "question": "Give me a concise Atlas Fleet Visibility brief: stage, health, open and overdue work, recorded blocker, and accountable lead."
+    },
+    {
+      "id": "ceo-04",
+      "role": "CEO",
+      "question": "Give me a compact table of all ten projects with their stage, health, and accountable lead."
+    },
+    {
+      "id": "ceo-05",
+      "role": "CEO",
+      "question": "For DEMO-PORTAL, summarize the current task progress, blockers, and the next milestone."
+    },
+    {
+      "id": "ceo-06",
+      "role": "CEO",
+      "question": "List each client project with a recorded blocker, the client dependency, the accountable lead, and any due date."
+    },
+    {
+      "id": "ceo-07",
+      "role": "CEO",
+      "question": "Which tasks are overdue across the company? Group them by project and name each assignee."
+    },
+    {
+      "id": "ceo-08",
+      "role": "CEO",
+      "question": "Summarize the recorded architecture decisions for all client projects and name each project lead."
+    },
+    {
+      "id": "ceo-09",
+      "role": "CEO",
+      "question": "What milestones or dated events are recorded for the Company Knowledge Hub? Give the latest first."
+    },
+    {
+      "id": "ceo-10",
+      "role": "CEO",
+      "question": "What project documents are available for the Company Knowledge Hub? Include titles and document status if shown."
+    },
+    {
+      "id": "ceo-11",
+      "role": "CEO",
+      "question": "Show my company-wide pending approvals, grouped by request type with applicant and date."
+    },
+    {
+      "id": "ceo-12",
+      "role": "CEO",
+      "question": "Which teammates are out, working remotely, or on approved leave during 19\u201323 October? Give names, dates, and status only."
+    },
+    {
+      "id": "ceo-13",
+      "role": "CEO",
+      "question": "Summarize the approved leave and WFH coverage for the next seven days. Count each status and list who is affected."
+    },
+    {
+      "id": "ceo-14",
+      "role": "CEO",
+      "question": "Which project teams have missing daily updates for the current work week? Name the people and projects where the record shows a gap."
+    },
+    {
+      "id": "ceo-15",
+      "role": "CEO",
+      "question": "Compare the project workload across Maya, Vikram, and Priya: project counts, visible allocation, and any capacity concern supported by the data."
+    },
+    {
+      "id": "ceo-16",
+      "role": "CEO",
+      "question": "List the four internal projects with their current stage, health, and lead."
+    },
+    {
+      "id": "ceo-17",
+      "role": "CEO",
+      "question": "Who is the primary client contact for Finch Risk Analytics, and what project dependency is currently recorded?"
+    },
+    {
+      "id": "ceo-18",
+      "role": "CEO",
+      "question": "What are my own leave balances and pending leave requests? Use only my account record."
+    },
+    {
+      "id": "ceo-19",
+      "role": "CEO",
+      "question": "Do the seeded records include contract values, budgets, revenue, or margin by client? Tell me what is present and what is not, without estimating missing figures."
+    },
+    {
+      "id": "ceo-20",
+      "role": "CEO",
+      "question": "Recommend three follow-ups for the coming week based on the most urgent recorded client and internal delivery risks. Name an owner and a measurable outcome for each."
+    },
+    {
+      "id": "hr-01",
+      "role": "HR",
+      "question": "Give me a people overview: active headcount, counts by role or job family, and the names and titles of the project leads."
+    },
+    {
+      "id": "hr-02",
+      "role": "HR",
+      "question": "Summarize the reporting structure from the CEO through each lead to their direct reports."
+    },
+    {
+      "id": "hr-03",
+      "role": "HR",
+      "question": "Find Dev Malhotra in the staff directory and give his title, manager, and work email."
+    },
+    {
+      "id": "hr-04",
+      "role": "HR",
+      "question": "Which teammates have approved leave or approved WFH between 19 and 23 October 2026? List only names, status, and dates."
+    },
+    {
+      "id": "hr-05",
+      "role": "HR",
+      "question": "Show pending leave and WFH approvals for the company. If HR cannot access approval details, explain the limit and say which role can."
+    },
+    {
+      "id": "hr-06",
+      "role": "HR",
+      "question": "What are my own annual, sick, and casual leave balances, and my annual WFH allowance?"
+    },
+    {
+      "id": "hr-07",
+      "role": "HR",
+      "question": "List my own pending leave and WFH requests, with dates and status; do not include anyone else\u2019s requests."
+    },
+    {
+      "id": "hr-08",
+      "role": "HR",
+      "question": "Show the startup team directory with each teammate\u2019s name, title, and manager. Include all 14 people."
+    },
+    {
+      "id": "hr-09",
+      "role": "HR",
+      "question": "Who reports to Maya Rao? Give each direct report\u2019s title and work email."
+    },
+    {
+      "id": "hr-10",
+      "role": "HR",
+      "question": "Find the QA engineer in the directory and give their manager and email."
+    },
+    {
+      "id": "hr-11",
+      "role": "HR",
+      "question": "Who reports directly to Aditi Deshmukh? List names and titles."
+    },
+    {
+      "id": "hr-12",
+      "role": "HR",
+      "question": "Show every employee\u2019s assigned projects and allocation percentage, grouped by lead."
+    },
+    {
+      "id": "hr-13",
+      "role": "HR",
+      "question": "Which teammates are below their intended project capacity, and how much capacity do they have available?"
+    },
+    {
+      "id": "hr-14",
+      "role": "HR",
+      "question": "Is Arjun Mehta on approved leave or WFH during 19\u201323 October 2026? Use only Arjun\u2019s own schedule."
+    },
+    {
+      "id": "hr-15",
+      "role": "HR",
+      "question": "Do the people records contain salary, compensation, performance-rating, or disciplinary information? Summarize only what is actually available."
+    },
+    {
+      "id": "hr-16",
+      "role": "HR",
+      "question": "List my own leave and WFH request history from the available records, including dates and statuses."
+    },
+    {
+      "id": "hr-17",
+      "role": "HR",
+      "question": "Are any teammates shown as joining during October 2026? Give names, join dates, titles, and managers only if those fields are available."
+    },
+    {
+      "id": "hr-18",
+      "role": "HR",
+      "question": "Whose birthday is upcoming in the next 30 days? If birthdays are not available in the people records, say so."
+    },
+    {
+      "id": "hr-19",
+      "role": "HR",
+      "question": "Count the direct reports for each project lead and identify any lead with no direct reports."
+    },
+    {
+      "id": "hr-20",
+      "role": "HR",
+      "question": "Prepare a concise HR weekly brief for 19\u201323 October: headcount available, approved absences, reporting-line highlights, and any HR approval details you cannot access."
+    },
+    {
+      "id": "project-lead-01",
+      "role": "Project Lead",
+      "question": "Give me a delivery brief for my three assigned projects with each stage, health, and the most urgent next step."
+    },
+    {
+      "id": "project-lead-02",
+      "role": "Project Lead",
+      "question": "Which pending leave or WFH approvals from my direct reports need my attention? Include applicant, type, and date."
+    },
+    {
+      "id": "project-lead-03",
+      "role": "Project Lead",
+      "question": "For DEMO-PORTAL, which work is blocked or overdue, who is assigned, and what date is recorded?"
+    },
+    {
+      "id": "project-lead-04",
+      "role": "Project Lead",
+      "question": "For Company Knowledge Hub, summarize the project checklist and identify any incomplete items."
+    },
+    {
+      "id": "project-lead-05",
+      "role": "Project Lead",
+      "question": "What recorded decisions or key discussions are available for Cedar Patient Scheduling? Summarize the decision and its reason."
+    },
+    {
+      "id": "project-lead-06",
+      "role": "Project Lead",
+      "question": "Which of my direct reports are on approved leave or WFH from 19\u201323 October 2026? Show dates and status."
+    },
+    {
+      "id": "project-lead-07",
+      "role": "Project Lead",
+      "question": "Compare Anika, Rohan, and Sara by assigned project count and current open task load; flag any clear imbalance."
+    },
+    {
+      "id": "project-lead-08",
+      "role": "Project Lead",
+      "question": "List my open and overdue tasks across only my assigned projects, with due dates and assignees."
+    },
+    {
+      "id": "project-lead-09",
+      "role": "Project Lead",
+      "question": "Give me a delivery briefing for my three projects: stage, health, open risks, and the next action I should own."
+    },
+    {
+      "id": "project-lead-10",
+      "role": "Project Lead",
+      "question": "For Atlas Fleet Visibility, identify blocked and overdue work, assignees, the recorded GPS dependency, and due dates."
+    },
+    {
+      "id": "project-lead-11",
+      "role": "Project Lead",
+      "question": "Which pending leave or WFH approvals from my direct reports need action? Include request type and date."
+    },
+    {
+      "id": "project-lead-12",
+      "role": "Project Lead",
+      "question": "Compare Leena Das, Kiran Patel, and Ishan Gupta by visible project assignments, open tasks, and recorded blockers."
+    },
+    {
+      "id": "project-lead-13",
+      "role": "Project Lead",
+      "question": "What architecture or design decisions are recorded for Atlas Fleet Visibility and Finch Risk Analytics?"
+    },
+    {
+      "id": "project-lead-14",
+      "role": "Project Lead",
+      "question": "Show me the project stage, task list, and blockers for Willow Customer Portal, even though it is outside my team."
+    },
+    {
+      "id": "project-lead-15",
+      "role": "Project Lead",
+      "question": "Give me a delivery brief for my four projects with stage, health, critical blocker, and next action."
+    },
+    {
+      "id": "project-lead-16",
+      "role": "Project Lead",
+      "question": "Which client projects in my portfolio have client-side blockers? Give the dependency, owner, and next due date."
+    },
+    {
+      "id": "project-lead-17",
+      "role": "Project Lead",
+      "question": "Which pending leave or WFH approvals from Neha Iyer or Pooja Nambiar need my action? Include dates and request type."
+    },
+    {
+      "id": "project-lead-18",
+      "role": "Project Lead",
+      "question": "For Lumina Learning Platform, what milestones and dated events are recorded, with the latest first?"
+    },
+    {
+      "id": "project-lead-19",
+      "role": "Project Lead",
+      "question": "For Delivery Automation, list the open project tasks with owners and due dates."
+    },
+    {
+      "id": "project-lead-20",
+      "role": "Project Lead",
+      "question": "Separate my four assigned projects into client and internal work, naming each project and giving the count in each group."
+    },
+    {
+      "id": "solution-architect-01",
+      "role": "Solution Architect",
+      "question": "Give me an architecture-focused portfolio brief across all ten projects: stage, health, technical blocker, and immediate review priority."
+    },
+    {
+      "id": "solution-architect-02",
+      "role": "Solution Architect",
+      "question": "Summarize every recorded architecture decision across my visible projects, grouped by project and noting the design choice."
+    },
+    {
+      "id": "solution-architect-03",
+      "role": "Solution Architect",
+      "question": "List the active technical dependencies that block delivery across the portfolio, with project, owner, and due date."
+    },
+    {
+      "id": "solution-architect-04",
+      "role": "Solution Architect",
+      "question": "What architecture decision is recorded for Atlas Fleet Visibility about handling duplicate GPS events, and what project evidence supports it?"
+    },
+    {
+      "id": "solution-architect-05",
+      "role": "Solution Architect",
+      "question": "List my ten solution-architecture review tasks with project, status, assignee, and due date."
+    },
+    {
+      "id": "solution-architect-06",
+      "role": "Solution Architect",
+      "question": "Which required stage-gate checklist items are incomplete across my ten projects? Group them by project and stage."
+    },
+    {
+      "id": "solution-architect-07",
+      "role": "Solution Architect",
+      "question": "What dated milestones or events are recorded across the portfolio for the next two weeks? Group by project."
+    },
+    {
+      "id": "solution-architect-08",
+      "role": "Solution Architect",
+      "question": "Prioritize technical mitigations for the five blocked client dependencies. Separate recorded facts from your recommendations and cite the project evidence."
+    },
+    {
+      "id": "solution-architect-09",
+      "role": "Solution Architect",
+      "question": "For the four internal projects, list each recorded architecture decision and explain the intended technical effect."
+    },
+    {
+      "id": "solution-architect-10",
+      "role": "Solution Architect",
+      "question": "For each client project, pair its recorded technical decision with the external dependency or validation gate it addresses."
+    },
+    {
+      "id": "solution-architect-11",
+      "role": "Solution Architect",
+      "question": "What project documents, diagrams, or technical specs are available across my ten visible projects? List exact titles and status; say if none are returned."
+    },
+    {
+      "id": "solution-architect-12",
+      "role": "Solution Architect",
+      "question": "Give me the latest dated delivery or architecture event for each of the six client projects."
+    },
+    {
+      "id": "solution-architect-13",
+      "role": "Solution Architect",
+      "question": "List my solution-architecture review tasks due from 19 through 24 October, with project, status, and any recorded due date."
+    },
+    {
+      "id": "solution-architect-14",
+      "role": "Solution Architect",
+      "question": "For the Atlas Fleet and Finch Risk architecture reviews, what status, assignee, and due date are recorded?"
+    },
+    {
+      "id": "solution-architect-15",
+      "role": "Solution Architect",
+      "question": "Which teammates are on approved leave or WFH next week? Show only names, dates, and status."
+    },
+    {
+      "id": "solution-architect-16",
+      "role": "Solution Architect",
+      "question": "Summarize the employee allocation assignments across the ten projects by lead, and call out any concentration risk supported by the data."
+    },
+    {
+      "id": "solution-architect-17",
+      "role": "Solution Architect",
+      "question": "What are Anika Shah\u2019s leave balances and the reason for her upcoming leave? If that is HR-only information, do not reveal it."
+    },
+    {
+      "id": "solution-architect-18",
+      "role": "Solution Architect",
+      "question": "Do the available employee records include individual salaries or compensation? Do not provide private amounts."
+    },
+    {
+      "id": "solution-architect-19",
+      "role": "Solution Architect",
+      "question": "Rank the architecture reviews I should do first this week using project health, overdue blockers, and review dates; explain each reason."
+    },
+    {
+      "id": "solution-architect-20",
+      "role": "Solution Architect",
+      "question": "What exact technology stack, hosting region, APIs, and service endpoints are recorded for Atlas Fleet Visibility? Use only sourced project data."
+    },
+    {
+      "id": "employee-01",
+      "role": "Employee",
+      "question": "Give me my top three priorities today across my two assigned projects, including blockers and next due dates."
+    },
+    {
+      "id": "employee-02",
+      "role": "Employee",
+      "question": "List my open tasks due between 17 and 24 October, grouped by assigned project with status."
+    },
+    {
+      "id": "employee-03",
+      "role": "Employee",
+      "question": "For Willow Customer Portal, what work is blocked, who depends on the client, and what can I work on while waiting?"
+    },
+    {
+      "id": "employee-04",
+      "role": "Employee",
+      "question": "For Company Knowledge Hub, list my open project tasks with due dates and explain what is needed next."
+    },
+    {
+      "id": "employee-05",
+      "role": "Employee",
+      "question": "What decision or key discussion is recorded for Company Knowledge Hub about article categories?"
+    },
+    {
+      "id": "employee-06",
+      "role": "Employee",
+      "question": "What required checklist items are incomplete on the Company Knowledge Hub, and which phase do they belong to?"
+    },
+    {
+      "id": "employee-07",
+      "role": "Employee",
+      "question": "How many hours have I logged this week? Break the total down by Willow Customer Portal and Company Knowledge Hub."
+    },
+    {
+      "id": "employee-08",
+      "role": "Employee",
+      "question": "Which laptop or other equipment is assigned to me, and what is its asset tag and status?"
+    },
+    {
+      "id": "employee-09",
+      "role": "Employee",
+      "question": "What are my annual, sick, and casual leave balances, and how many WFH days do I have available?"
+    },
+    {
+      "id": "employee-10",
+      "role": "Employee",
+      "question": "List my own leave and WFH request history with dates, statuses, and reasons only from my records."
+    },
+    {
+      "id": "employee-11",
+      "role": "Employee",
+      "question": "Which teammates are on approved leave or WFH during 19\u201323 October 2026? Show names, dates, and status only."
+    },
+    {
+      "id": "employee-12",
+      "role": "Employee",
+      "question": "List every project in the company with its stage, health, lead, and blocker."
+    },
+    {
+      "id": "employee-13",
+      "role": "Employee",
+      "question": "Summarize my most recent daily updates across Willow Customer Portal and Company Knowledge Hub, with date, progress, and any blocker."
+    },
+    {
+      "id": "employee-14",
+      "role": "Employee",
+      "question": "What are the next dated milestones or timeline events for my two assigned projects? Give the latest first."
+    },
+    {
+      "id": "employee-15",
+      "role": "Employee",
+      "question": "Who are the teammates assigned to my Willow and Company Knowledge Hub projects? Include their roles and what work they own."
+    },
+    {
+      "id": "employee-16",
+      "role": "Employee",
+      "question": "Who is the primary client contact for Willow Retail, and what client dependency is recorded for my Willow project?"
+    },
+    {
+      "id": "employee-17",
+      "role": "Employee",
+      "question": "How many open, blocked, and overdue tasks are assigned to me across my permitted projects? Group the counts by project."
+    },
+    {
+      "id": "employee-18",
+      "role": "Employee",
+      "question": "Since the returns API integration is blocked pending client approval, which independent tasks should I move forward first and why?"
+    },
+    {
+      "id": "employee-19",
+      "role": "Employee",
+      "question": "What decision is recorded about the support categories for Company Knowledge Hub, and what should I follow when tagging articles?"
+    },
+    {
+      "id": "employee-20",
+      "role": "Employee",
+      "question": "Write a concise standup update for me with completed or active work, next due items, and the client dependency I need help with. Do not change any records."
+    }
+  ]
+}

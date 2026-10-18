@@ -1,6 +1,6 @@
 # Delivery Graph RAG: deployment constraints
 
-Status: local retrieval implemented, 17 October 2026. Deployment selection is deferred until after implementation, as requested.
+Status: local semantic retrieval verified, 18 October 2026. Deployment selection is deferred; production remains off-limits.
 
 ## Confirmed product scope
 
@@ -9,8 +9,9 @@ Status: local retrieval implemented, 17 October 2026. Deployment selection is de
 - Delivery knowledge is readable across projects by active employees, independent of
   project membership. This does not grant editing rights or access to private HR data.
 - Use FalkorDB's official GraphRAG SDK. Task assignment is a separate future tool.
-- Build retrieval first. A later task-plan flow will create approved task hierarchies
-  in a destination project with reference links, estimates, and assumptions.
+- Chat can propose editable destination tasks with verified historical references,
+  adapted estimates and assumptions. Each task requires confirmation. Preserving a
+  multi-level hierarchy in one bulk confirmation remains future work.
 - Cloudflare deployment compatibility and use of its Free plan must guide the design.
   Vercel is another hosting candidate; no paid hosting budget has been confirmed.
 - All development and verification remain local; production is off-limits.
@@ -46,7 +47,8 @@ Browser
 ```
 
 The SDK can share infrastructure with the existing graph backend. Document extraction,
-indexing, concept ranking, and graph expansion run there. This implementation uses model-expanded concepts and graph traversal, without a vector index. The Worker sends requests
+indexing, local CPU embeddings, vector/full-text ranking, and graph expansion run there.
+Derived semantic passages and indexes stay in FalkorDB. The Worker sends requests
 and returns evidence/streamed answers. Backend identity is derived from the signed
 session; the LLM cannot supply a different actor or arbitrary executable graph queries.
 

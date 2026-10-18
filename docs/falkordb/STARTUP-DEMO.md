@@ -2,6 +2,10 @@
 
 Open [the local role picker](http://localhost:3000/sign-in), choose a role and teammate, and continue into Company Brain. All identities and companies here are fictional. The picker requires `TEST_AUTH_ENABLED=true` and localhost. Sessions are signed; roles are resolved from the stored employee, never submitted by the browser.
 
+## Public hackathon demo
+
+For a public Worker deployment, role selection also requires `PUBLIC_DEMO_AUTH_ENABLED=true` alongside `TEST_AUTH_ENABLED=true`. This lets any visitor choose a fictional seeded identity, so enable it only while the graph contains synthetic demo data. Disable both flags after the hackathon.
+
 ## People and assignments
 
 | Person | Position | Project assignment |

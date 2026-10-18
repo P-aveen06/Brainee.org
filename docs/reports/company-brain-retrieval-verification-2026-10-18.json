@@ -1,0 +1,249 @@
+{
+  "environment": "disposable_local_graphs",
+  "date": "2026-10-18T04:37:10.658Z",
+  "retrieval": {
+    "cases": [
+      {
+        "query": "Collect money from a credit card",
+        "expected": "payment",
+        "returned": [
+          "payment",
+          "refund"
+        ],
+        "rank": 1,
+        "latencyMs": 40
+      },
+      {
+        "query": "Build online payment processing",
+        "expected": "payment",
+        "returned": [
+          "root",
+          "payment",
+          "refund",
+          "child",
+          "missing"
+        ],
+        "rank": 2,
+        "latencyMs": 56
+      },
+      {
+        "query": "Authorize and capture a purchase",
+        "expected": "payment",
+        "returned": [
+          "payment",
+          "refund",
+          "root",
+          "child",
+          "missing"
+        ],
+        "rank": 1,
+        "latencyMs": 58
+      },
+      {
+        "query": "Accept a customer's card at checkout",
+        "expected": "payment",
+        "returned": [
+          "root",
+          "payment",
+          "refund",
+          "notification",
+          "child"
+        ],
+        "rank": 2,
+        "latencyMs": 57
+      },
+      {
+        "query": "Give the customer their money back",
+        "expected": "refund",
+        "returned": [
+          "payment",
+          "refund",
+          "notification"
+        ],
+        "rank": 2,
+        "latencyMs": 47
+      },
+      {
+        "query": "Reverse a completed purchase",
+        "expected": "refund",
+        "returned": [
+          "refund"
+        ],
+        "rank": 1,
+        "latencyMs": 37
+      },
+      {
+        "query": "Refund to the original payment method",
+        "expected": "refund",
+        "returned": [
+          "refund",
+          "payment",
+          "root",
+          "child",
+          "missing"
+        ],
+        "rank": 1,
+        "latencyMs": 46
+      },
+      {
+        "query": "Reconcile refunded gateway events",
+        "expected": "refund",
+        "returned": [
+          "refund",
+          "root",
+          "payment",
+          "child",
+          "missing"
+        ],
+        "rank": 1,
+        "latencyMs": 43
+      },
+      {
+        "query": "Let staff use their corporate account",
+        "expected": "sso",
+        "returned": [
+          "sso"
+        ],
+        "rank": 1,
+        "latencyMs": 36
+      },
+      {
+        "query": "Single sign-on with OpenID Connect",
+        "expected": "sso",
+        "returned": [
+          "root",
+          "sso",
+          "child",
+          "missing"
+        ],
+        "rank": 2,
+        "latencyMs": 54
+      },
+      {
+        "query": "Authenticate through our identity provider",
+        "expected": "sso",
+        "returned": [
+          "child",
+          "sso",
+          "root",
+          "missing"
+        ],
+        "rank": 2,
+        "latencyMs": 61
+      },
+      {
+        "query": "Employee login federation",
+        "expected": "sso",
+        "returned": [
+          "root",
+          "sso",
+          "child",
+          "missing"
+        ],
+        "rank": 2,
+        "latencyMs": 72
+      },
+      {
+        "query": "Tell a customer that their package has left",
+        "expected": "notification",
+        "returned": [
+          "notification",
+          "payment"
+        ],
+        "rank": 1,
+        "latencyMs": 40
+      },
+      {
+        "query": "Send delivery status messages",
+        "expected": "notification",
+        "returned": [
+          "notification"
+        ],
+        "rank": 1,
+        "latencyMs": 32
+      },
+      {
+        "query": "Email shipment alerts",
+        "expected": "notification",
+        "returned": [
+          "notification"
+        ],
+        "rank": 1,
+        "latencyMs": 34
+      },
+      {
+        "query": "Notify users when an order ships",
+        "expected": "notification",
+        "returned": [
+          "notification"
+        ],
+        "rank": 1,
+        "latencyMs": 33
+      },
+      {
+        "query": "Make uploaded files searchable",
+        "expected": "ingestion",
+        "returned": [
+          "ingestion"
+        ],
+        "rank": 1,
+        "latencyMs": 32
+      },
+      {
+        "query": "Extract text from incoming attachments",
+        "expected": "ingestion",
+        "returned": [
+          "ingestion"
+        ],
+        "rank": 1,
+        "latencyMs": 36
+      },
+      {
+        "query": "Ingest documents into a knowledge base",
+        "expected": "ingestion",
+        "returned": [
+          "ingestion"
+        ],
+        "rank": 1,
+        "latencyMs": 52
+      },
+      {
+        "query": "Track file indexing failures",
+        "expected": "ingestion",
+        "returned": [
+          "ingestion"
+        ],
+        "rank": 1,
+        "latencyMs": 35
+      }
+    ],
+    "recallAt5": 1,
+    "mrrAt5": 0.85
+  },
+  "scale": {
+    "tasks": 1000,
+    "indexingMs": 4356,
+    "queries": 15,
+    "targetRecallAt10": 1,
+    "latencyMedianMs": 7,
+    "latencyP95Ms": 20
+  },
+  "limits": [
+    "Synthetic corpus; not a production quality estimate",
+    "Not the original 100-question chat rerun",
+    "Latency excludes chat model inference",
+    "Scale target recall is measured on fifteen queries across three paraphrases"
+  ],
+  "integrationChecks": {
+    "tests": 6,
+    "passed": 6,
+    "includes": [
+      "changed source rejection",
+      "superseded document rejection",
+      "irrelevant query rejection",
+      "cosine score contract",
+      "five-attempt exhaustion and checksum reset",
+      "HTTP authentication and access boundaries"
+    ]
+  }
+}

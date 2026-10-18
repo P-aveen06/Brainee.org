@@ -1,0 +1,96 @@
+{
+  "date": "2026-10-18T04:38:42.295Z",
+  "environment": "local_demo_read_only",
+  "checks": [
+    {
+      "check": "Aditi Deshmukh: empty optional filters retain 10 visible projects",
+      "success": true
+    },
+    {
+      "check": "Aditi Deshmukh: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Arjun Mehta: empty optional filters retain 0 visible projects",
+      "success": true
+    },
+    {
+      "check": "Arjun Mehta: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Aditi reporting structure includes all five roles",
+      "success": true
+    },
+    {
+      "check": "Maya Rao: empty optional filters retain 3 visible projects",
+      "success": true
+    },
+    {
+      "check": "Maya Rao: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Vikram Menon: empty optional filters retain 3 visible projects",
+      "success": true
+    },
+    {
+      "check": "Vikram Menon: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Priya Sen: empty optional filters retain 4 visible projects",
+      "success": true
+    },
+    {
+      "check": "Priya Sen: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Dev Malhotra: empty optional filters retain 10 visible projects",
+      "success": true
+    },
+    {
+      "check": "Dev Malhotra: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Portfolio tasks: all ten projects without dropped calls",
+      "success": true
+    },
+    {
+      "check": "Portfolio checklists: all ten projects without dropped calls",
+      "success": true
+    },
+    {
+      "check": "Portfolio documents: all ten projects without dropped calls",
+      "success": true
+    },
+    {
+      "check": "Portfolio decisions: all ten projects without dropped calls",
+      "success": true
+    },
+    {
+      "check": "Portfolio timeline: all ten projects without dropped calls",
+      "success": true
+    },
+    {
+      "check": "Anika Shah: empty optional filters retain 2 visible projects",
+      "success": true
+    },
+    {
+      "check": "Anika Shah: own assignments include assignee",
+      "success": true
+    },
+    {
+      "check": "Anika: own approved leave survives blank status",
+      "success": true
+    },
+    {
+      "check": "Leave history is a read-only intent",
+      "success": true
+    }
+  ],
+  "passed": 22,
+  "total": 22
+}
