@@ -1,4 +1,5 @@
 import { type ChatModelAdapter, useLocalRuntime } from "@assistant-ui/react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { sendAiMessage } from "@/api/ai-assistant";
 import {
@@ -58,9 +59,8 @@ function parseProposalPayload(payload: unknown): Record<string, unknown> {
 }
 
 /**
- * Drives one conversation's runtime. Callers must remount this hook (e.g. via a `key` on the
- * component that calls it) whenever the active conversation changes — assistant-ui's local
- * runtime owns its own message list internally and has no API to reset or re-seed it in place.
+ * Drives one conversation's runtime in a persistent session host. Changing the
+ * visible conversation must not unmount the host or abort its response.
  *
  * Citations and proposed actions are attached directly to each message's own
  * `metadata.custom` (the field assistant-ui provides for exactly this) rather than a
@@ -73,6 +73,8 @@ export function useAssistantUiBridge(
 	onConversationCreated?: (conversationId: string) => void,
 	pageContext?: AssistantPageContext,
 ) {
+	const conversationIdRef = useRef(conversationId);
+	conversationIdRef.current = conversationId ?? conversationIdRef.current;
 	const adapter: ChatModelAdapter = {
 		async *run({ messages, abortSignal }) {
 			const lastMessage = messages[messages.length - 1];
@@ -121,7 +123,7 @@ export function useAssistantUiBridge(
 			try {
 				const res = await sendAiMessage({
 					data: {
-						conversationId,
+						conversationId: conversationIdRef.current,
 						message: userText,
 						pageContext,
 					},
@@ -142,9 +144,15 @@ export function useAssistantUiBridge(
 				}
 
 				const createdConversationId =
-					!conversationId && "conversationId" in res && res.conversationId
+					!conversationIdRef.current &&
+					"conversationId" in res &&
+					res.conversationId
 						? String(res.conversationId)
 						: undefined;
+				if (createdConversationId) {
+					conversationIdRef.current = createdConversationId;
+					onConversationCreated?.(createdConversationId);
+				}
 
 				let result: Record<string, unknown> | undefined;
 				let receivedText = false;
@@ -283,11 +291,6 @@ export function useAssistantUiBridge(
 						} satisfies MessageCustomData,
 					},
 				};
-				// Changing the route key before the stream completes unmounts this
-				// runtime, which aborts the response.
-				if (createdConversationId) {
-					setTimeout(() => onConversationCreated?.(createdConversationId), 0);
-				}
 			} catch (err: unknown) {
 				const label = timedOut
 					? "Timeout"

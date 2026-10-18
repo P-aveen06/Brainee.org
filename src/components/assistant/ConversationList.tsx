@@ -1,11 +1,20 @@
 "use client";
 
-import { PanelLeftClose, Plus, Search, Trash2 } from "lucide-react";
+import {
+	CircleAlert,
+	CircleCheck,
+	LoaderCircle,
+	PanelLeftClose,
+	Plus,
+	Search,
+	Trash2,
+} from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAiConversation } from "@/api/ai-assistant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { AssistantSessionStatus } from "./AssistantSessions";
 
 interface ConversationItem {
 	id: string;
@@ -17,6 +26,7 @@ interface ConversationItem {
 interface ConversationListProps {
 	conversations: ConversationItem[];
 	activeId?: string;
+	statuses?: Record<string, AssistantSessionStatus>;
 	onSelect: (id: string) => void;
 	onNewChat: () => void;
 	onDeleted?: (id: string) => void;
@@ -26,6 +36,7 @@ interface ConversationListProps {
 export function ConversationList({
 	conversations,
 	activeId,
+	statuses = {},
 	onSelect,
 	onNewChat,
 	onDeleted,
@@ -117,6 +128,7 @@ export function ConversationList({
 					filtered.map((conv) => {
 						const isActive = conv.id === activeId;
 						const timeStr = formatDate(conv.lastMessageAt || conv.updatedAt);
+						const status = statuses[conv.id];
 
 						return (
 							<div
@@ -139,10 +151,39 @@ export function ConversationList({
 									<span className="truncate font-sans font-medium text-foreground flex-1">
 										{conv.title || "Untitled Chat"}
 									</span>
-									{timeStr && (
-										<span className="shrink-0 text-xs text-muted-foreground/70 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
-											{timeStr}
+									{status ? (
+										<span
+											className={`inline-flex shrink-0 items-center gap-1 text-xs ${status === "running" ? "text-accent" : status === "complete" ? "text-success" : "text-destructive"}`}
+											title={
+												status === "running"
+													? "Response in progress"
+													: status === "complete"
+														? "Response complete"
+														: "Response stopped or failed"
+											}
+										>
+											{status === "running" ? (
+												<LoaderCircle
+													className="size-3.5 animate-spin motion-reduce:animate-none"
+													aria-hidden="true"
+												/>
+											) : status === "complete" ? (
+												<CircleCheck className="size-3.5" aria-hidden="true" />
+											) : (
+												<CircleAlert className="size-3.5" aria-hidden="true" />
+											)}
+											{status === "running"
+												? "Running"
+												: status === "complete"
+													? "Ready"
+													: "Stopped"}
 										</span>
+									) : (
+										timeStr && (
+											<span className="shrink-0 text-xs text-muted-foreground/70 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+												{timeStr}
+											</span>
+										)
 									)}
 								</button>
 

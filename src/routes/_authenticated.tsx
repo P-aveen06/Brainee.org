@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { desc, eq } from "@/db/graph-query";
 import { checkOnboardingUser } from "../api/users";
+import { AssistantSessionsProvider } from "../components/assistant/AssistantSessions";
 import { Shell } from "../components/layout/Shell";
 import {
 	parseCollapsedGroups,
@@ -76,13 +77,15 @@ function AuthenticatedLayout() {
 		Route.useRouteContext();
 
 	return (
-		<Shell
-			user={user}
-			notifications={notifications}
-			pendingApprovalCount={pendingApprovalCount}
-			initialCollapsedGroups={collapsedGroups}
-		>
-			<Outlet />
-		</Shell>
+		<AssistantSessionsProvider key={user.id}>
+			<Shell
+				user={user}
+				notifications={notifications}
+				pendingApprovalCount={pendingApprovalCount}
+				initialCollapsedGroups={collapsedGroups}
+			>
+				<Outlet />
+			</Shell>
+		</AssistantSessionsProvider>
 	);
 }

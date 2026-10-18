@@ -15,7 +15,7 @@ import {
 } from "@/lib/ai/assistant-activity";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import { AssistantChartLoader } from "./AssistantChartLoader";
-import { AssistantMessageText } from "./AssistantMarkdown";
+import { assistantMessagePartComponents } from "./AssistantMarkdown";
 import { AssistantQuestionCard } from "./AssistantQuestionCard";
 import type { MessageCustomData } from "./AssistantRuntimeAdapter";
 import { AssistantToolProgress } from "./AssistantToolProgress";
@@ -47,16 +47,7 @@ export function AssistantMessages({
 				const custom = (message.metadata?.custom ||
 					{}) as Partial<MessageCustomData>;
 				const citations = uniqueCitations(custom.citations ?? []);
-				const messagePartComponents = {
-					Text: () => (
-						<AssistantMessageText
-							citations={citations}
-							messageId={message.id}
-						/>
-					),
-				};
 
-				// Extract raw text for copying
 				let rawText = "";
 				if (Array.isArray(message.content)) {
 					for (const part of message.content) {
@@ -99,7 +90,9 @@ export function AssistantMessages({
 									)}
 								</Button>
 								<div className="assistant-message-text rounded-2xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 shadow-xs font-sans select-text">
-									<MessagePrimitive.Parts components={messagePartComponents} />
+									<MessagePrimitive.Parts
+										components={assistantMessagePartComponents}
+									/>
 								</div>
 							</div>
 						</MessagePrimitive.Root>
@@ -181,9 +174,7 @@ export function AssistantMessages({
 							/>
 						</div>
 
-						{/* Content Area */}
 						<div className="flex-1 min-w-0 space-y-1.5">
-							{/* Assistant Meta Header */}
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-1.5 flex-wrap">
 									<span className="text-sm font-semibold text-foreground tracking-tight">
@@ -242,7 +233,7 @@ export function AssistantMessages({
 								<div className="pt-0.5 text-foreground">
 									<div className="assistant-prose prose dark:prose-invert max-w-none">
 										<MessagePrimitive.Parts
-											components={messagePartComponents}
+											components={assistantMessagePartComponents}
 										/>
 									</div>
 								</div>
@@ -289,7 +280,6 @@ export function AssistantMessages({
 								</div>
 							)}
 
-							{/* Proposed Action Cards */}
 							{custom.proposals && custom.proposals.length > 0 && (
 								<div className="pt-1 space-y-1.5">
 									{custom.proposals.map((prop) => (

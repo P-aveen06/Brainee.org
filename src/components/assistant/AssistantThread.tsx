@@ -5,6 +5,7 @@ import { PanelLeftClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AssistantComposer } from "./AssistantComposer";
 import { AssistantEmptyState } from "./AssistantEmptyState";
+import { AssistantLoading } from "./AssistantLoading";
 import { AssistantMessages } from "./AssistantMessages";
 import { AssistantSuggestions } from "./AssistantSuggestions";
 import { PitchWorkspace } from "./PitchWorkspace";
@@ -68,6 +69,7 @@ export function AssistantThread({
 
 					<div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8">
 						<AssistantMessages onProposalResolved={onProposalResolved} />
+						<AssistantLoading />
 						<AssistantSuggestions />
 					</div>
 				</ThreadPrimitive.Viewport>

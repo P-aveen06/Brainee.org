@@ -1,6 +1,8 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
-import type { PitchPackage } from "./pitch-types";
 import type { PitchExportFormat } from "./pitch-download.client";
+import type { PitchPackage } from "./pitch-types";
+
+export type { PitchExportFormat } from "./pitch-download.client";
 
 export const downloadPitchExport = createClientOnlyFn(
 	async (pitch: PitchPackage, format: PitchExportFormat) => {

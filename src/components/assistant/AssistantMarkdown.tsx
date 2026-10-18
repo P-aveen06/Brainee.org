@@ -1,8 +1,9 @@
 "use client";
 
+import { useAuiState } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import remarkGfm from "remark-gfm";
 import { getTaskCitationDetails } from "@/api/ai-assistant-citations";
 import {
@@ -12,9 +13,28 @@ import {
 } from "@/components/ui/tooltip";
 import type { CitationRef } from "@/lib/ai/citations";
 import { AssistantMarkdownTable } from "./AssistantDataTable";
-import { citationAnchorId, formatCitationMarkers } from "./citation-markers";
+import type { MessageCustomData } from "./AssistantRuntimeAdapter";
+import {
+	citationAnchorId,
+	formatCitationMarkers,
+	uniqueCitations,
+} from "./citation-markers";
 
 const remarkPlugins = [remarkGfm];
+
+function AssistantMessagePart() {
+	const message = useAuiState((state) => state.message);
+	const custom = message.metadata.custom as
+		| Partial<MessageCustomData>
+		| undefined;
+	const citations = useMemo(
+		() => uniqueCitations(custom?.citations ?? []),
+		[custom?.citations],
+	);
+	return <AssistantMessageText citations={citations} messageId={message.id} />;
+}
+
+export const assistantMessagePartComponents = { Text: AssistantMessagePart };
 
 interface RelatedTask {
 	id: string;
@@ -57,8 +77,11 @@ function CitationMarkerLink({
 	};
 
 	return (
-		<Tooltip onOpenChange={(open) => open && loadTaskDetails()}>
-			<TooltipTrigger render={link} closeDelay={300} />
+		<Tooltip
+			disableHoverablePopup={false}
+			onOpenChange={(open) => open && loadTaskDetails()}
+		>
+			<TooltipTrigger render={link} delay={200} closeDelay={350} />
 			<TooltipContent className="w-72 max-w-[min(24rem,calc(100vw-2rem))] flex-col items-start gap-2 rounded-xl border border-border bg-popover p-3 text-left text-popover-foreground shadow-lg">
 				<div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground">
 					<span className="shrink-0 rounded-sm bg-accent/10 px-1.5 py-0.5 font-medium capitalize text-accent">
@@ -164,7 +187,7 @@ function markdownComponents(citations: CitationRef[], messageId: string) {
 					}
 					className={
 						citation
-							? "mx-1 inline-flex min-w-6 items-center justify-center rounded-md border border-accent/15 bg-accent/10 px-1.5 py-0.5 align-super text-sm leading-none font-semibold text-accent no-underline transition-colors hover:bg-accent/20"
+							? "mx-0.5 inline-flex min-w-4 items-center justify-center rounded-sm bg-muted/60 px-1 py-0.5 align-super text-[10px] leading-none font-medium text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 							: "text-accent underline underline-offset-2 hover:text-accent/80"
 					}
 				/>
@@ -182,13 +205,17 @@ export function AssistantMessageText({
 	citations: CitationRef[];
 	messageId: string;
 }) {
+	const components = useMemo(
+		() => markdownComponents(citations, messageId),
+		[citations, messageId],
+	);
 	return (
 		<MarkdownTextPrimitive
 			preprocess={(text) =>
 				preprocessMarkdown(formatCitationMarkers(text, citations, messageId))
 			}
 			remarkPlugins={remarkPlugins}
-			components={markdownComponents(citations, messageId)}
+			components={components}
 			smooth={false}
 			defer
 		/>

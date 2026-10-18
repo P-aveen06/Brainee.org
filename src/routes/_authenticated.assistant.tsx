@@ -9,6 +9,7 @@ import { getAiConversation, getAiConversations } from "@/api/ai-assistant";
 import { getProjectsPageData } from "@/api/projects";
 import { AssistantPane } from "@/components/assistant/AssistantPane";
 import type { InitialAssistantMessage } from "@/components/assistant/AssistantRuntimeAdapter";
+import { useAssistantSessionHistory } from "@/components/assistant/AssistantSessions";
 import { ConversationList } from "@/components/assistant/ConversationList";
 import type { ProposedActionItem } from "@/components/assistant/ProposedActionCard";
 import { deriveAssistantPageContext } from "@/lib/ai/page-context";
@@ -20,6 +21,9 @@ const assistantSearchSchema = z.object({
 export const Route = createFileRoute("/_authenticated/assistant")({
 	validateSearch: (search) => assistantSearchSchema.parse(search),
 	loaderDeps: ({ search }) => ({ thread: search.thread }),
+	// Switching threads only changes the conversation data. Keep the chat mounted
+	// while that loader runs instead of flashing the app-wide pending skeleton.
+	pendingMs: Infinity,
 	loader: async ({ deps, context }) => {
 		const [convsRes, pageData] = await Promise.all([
 			getAiConversations(),
@@ -88,8 +92,15 @@ function AssistantRoute() {
 	const { thread: requestedThread } = Route.useSearch();
 	const navigate = useNavigate();
 	const router = useRouter();
+	const liveHistory = useAssistantSessionHistory();
+	const conversations = [
+		...liveHistory.conversations.filter(
+			(live) => !data.conversations.some((saved) => saved.id === live.id),
+		),
+		...data.conversations,
+	];
 
-	const activeThread = data.conversations.find((c) => c.id === data.activeId);
+	const activeThread = conversations.find((c) => c.id === data.activeId);
 
 	const goToThread = (threadId: string | undefined) => {
 		navigate({
@@ -105,6 +116,7 @@ function AssistantRoute() {
 		});
 
 	const handleDeleted = (deletedId: string) => {
+		liveHistory.forgetConversation(deletedId);
 		if (deletedId === data.activeId) {
 			handleNewChat();
 		} else {
@@ -113,6 +125,11 @@ function AssistantRoute() {
 	};
 
 	const handleConversationCreated = (conversationId: string) => {
+		if (
+			router.latestLocation.pathname !== "/assistant" ||
+			router.latestLocation.search.thread !== requestedThread
+		)
+			return;
 		navigate({
 			to: "/assistant",
 			search: { thread: conversationId },
@@ -121,6 +138,7 @@ function AssistantRoute() {
 	};
 
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [draftKey] = useState(() => `new-${Date.now()}`);
 
 	return (
 		<div className="relative flex h-full w-full min-w-0 overflow-hidden bg-background">
@@ -133,7 +151,8 @@ function AssistantRoute() {
 				}`}
 			>
 				<ConversationList
-					conversations={data.conversations}
+					conversations={conversations}
+					statuses={liveHistory.statuses}
 					activeId={data.activeId}
 					onSelect={goToThread}
 					onNewChat={handleNewChat}
@@ -146,6 +165,7 @@ function AssistantRoute() {
 			<main className="relative flex flex-1 flex-col h-full min-w-0 bg-background overflow-hidden">
 				<AssistantPane
 					key={data.activeId || requestedThread || "new"}
+					sessionKey={data.activeId || requestedThread || draftKey}
 					conversationId={data.activeId}
 					initialMessages={data.activeMessages}
 					threadTitle={activeThread?.title || undefined}
