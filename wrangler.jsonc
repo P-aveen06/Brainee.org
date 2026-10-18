@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brainee-org",
-  "compatibility_date": "2025-09-02",
+  "compatibility_date": "2026-10-16",
   "compatibility_flags": [
     "nodejs_compat"
   ],
