@@ -11,6 +11,8 @@ test("delivery boundary rejects arbitrary operations and actor injection", async
 	await assert.rejects(deliveryOperation(graph, "delivery.cypher", {}, employee));
 	await assert.rejects(deliveryOperation(graph, "delivery.search", { query: "payment", actorId: "admin" }, employee));
 	await assert.rejects(deliveryOperation(graph, "delivery.document_manifest", {}, employee));
+	await assert.rejects(deliveryOperation(graph, "delivery.index_queue", {}, employee));
+	await assert.rejects(deliveryOperation(graph, "delivery.index_failure", { documentId: "doc" }, employee));
 });
 
 test("document stream route requires token, signed subject and bounded body", async () => {

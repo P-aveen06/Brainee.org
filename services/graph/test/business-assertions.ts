@@ -49,6 +49,9 @@ export async function assertBusinessOperations(
 		before[0].name,
 	);
 	await db.delete(Sheet).where(eq(Sheet.id, "absent")); // Empty deletes preserve existing API behavior.
+	const baseline = await graph.query<{ maximum: number }>(
+		"MATCH (t:Task {projectId:'project'}) RETURN max(t.taskNumber) AS maximum",
+	);
 	const tasks = await Promise.all(
 		Array.from({ length: 8 }, (_, i) =>
 			createTaskOperation(
@@ -65,7 +68,7 @@ export async function assertBusinessOperations(
 		),
 	);
 	assert.equal(new Set(tasks.map((t) => t.taskNumber)).size, 8);
-	assert.equal(Math.max(...tasks.map((t) => t.taskNumber)), 9);
+	assert.equal(Math.max(...tasks.map((t) => t.taskNumber)), (baseline.data?.[0]?.maximum ?? 0) + 8);
 	const Kind = defineNode<Record<string, unknown>>("LeaveType"),
 		Balance = defineNode<Record<string, unknown>>("LeaveBalance"),
 		Leave = defineNode<Record<string, unknown>>("LeaveRequest");

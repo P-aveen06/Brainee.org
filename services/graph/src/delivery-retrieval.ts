@@ -37,6 +37,29 @@ export async function deliveryOperation(
 	payload: unknown,
 	actor: Actor,
 ) {
+	if (name === "delivery.index_queue") {
+		if (actor.role !== "admin") throw new Error("Administrator access required.");
+		const { data = [] } = await graph.roQuery<{ source: unknown }>(`
+MATCH (d:DocumentVersion)-[:IN_PROJECT]->(:Project)
+WHERE d.status<>'superseded' AND
+(d.deliveryTextChecksum IS NULL OR d.deliveryTextChecksum<>d.checksum OR d.deliveryIndexStatus IN ['pending','failed']) AND
+(d.deliveryAttemptChecksum IS NULL OR d.deliveryAttemptChecksum<>d.checksum OR
+(coalesce(d.deliveryIndexAttempts,0)<5 AND coalesce(d.deliveryRetryAt,0)<=$now))
+RETURN {id:d.id,r2Key:d.r2Key} AS source ORDER BY coalesce(d.deliveryRetryAt,0),d.id LIMIT 3`,
+			{ params: { now: Math.floor(Date.now() / 1000) }, TIMEOUT: 5000 });
+		return { documents: data.map(row => row.source) };
+	}
+	if (name === "delivery.index_failure") {
+		if (actor.role !== "admin") throw new Error("Administrator access required.");
+		const documentId = deliveryString(inputRecord(payload, ["documentId"]).documentId, "document ID");
+		await graph.query(`MATCH (d:DocumentVersion {id:$id}) WHERE d.status<>'superseded'
+WITH d,CASE WHEN d.deliveryAttemptChecksum=d.checksum THEN coalesce(d.deliveryIndexAttempts,0)+1 ELSE 1 END AS attempts
+SET d.deliveryIndexAttempts=attempts,d.deliveryAttemptChecksum=d.checksum,
+d.deliveryIndexStatus=CASE WHEN attempts>=5 THEN 'failed' ELSE 'pending' END,
+d.deliveryRetryAt=$now+60*pow(2,attempts-1),d.deliveryIndexError='source_unavailable' RETURN d.id`,
+			{ params: { id: documentId, now: Math.floor(Date.now() / 1000) }, TIMEOUT: 5000 });
+		return { status: "pending" };
+	}
 	if (name === "delivery.document_source") {
 		const documentId = deliveryString(
 			inputRecord(payload, ["documentId"]).documentId,

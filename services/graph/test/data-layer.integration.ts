@@ -189,6 +189,13 @@ test("native graph data layer: fields, relationships, queries, upserts and permi
 			.where(like(Task.title, "%task%"))
 			.orderBy(desc(Task.taskNumber));
 		assert.deepEqual(searched, [{ id: "task" }]);
+		await createTaskOperation(graph, { values: { id: "adapted", projectId: "project", title: "Adapted checkout",
+			sourceTaskId: "task", sourceProjectId: "project", adaptationAssumptions: "New currency", estimateHours: 12 } }, actor);
+		const derived = await graph.roQuery<{ id: string; hours: number; assumptions: string }>(
+			"MATCH (t:Task {id:'adapted'})-[:DERIVED_FROM]->(s:Task) RETURN s.id AS id,t.estimateHours AS hours,t.adaptationAssumptions AS assumptions");
+		assert.deepEqual(derived.data, [{ id: "task", hours: 12, assumptions: "New currency" }]);
+		await assert.rejects(createTaskOperation(graph, { values: { id: "bad-source", projectId: "project", title: "Invalid reference",
+			sourceTaskId: "task", sourceProjectId: "wrong-project" } }, actor));
 		await db.batch([
 			db.update(User).set({ name: "Batch" }).where(eq(User.id, "employee")),
 			db

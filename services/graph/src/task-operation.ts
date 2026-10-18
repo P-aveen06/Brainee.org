@@ -48,11 +48,14 @@ OPTIONAL MATCH (parent:Task {id:$parentId})
 WITH a,p,maxNumber,parent WHERE $parentId IS NULL OR parent.projectId=p.id
 OPTIONAL MATCH (assignee:Employee {id:$assigneeId})
 WITH a,p,maxNumber,parent,assignee WHERE $assigneeId IS NULL OR (assignee.isActive=true AND (p.ownerId=assignee.id OR size([(p)<-[:IN_PROJECT]-(:ProjectMembership {userId:$assigneeId,isCurrent:true}) | 1]) > 0))
+OPTIONAL MATCH (source:Task {id:$sourceTaskId})
+WITH a,p,maxNumber,parent,assignee,source WHERE $sourceTaskId IS NULL OR source.projectId=$sourceProjectId
 SET p.taskCounter=CASE WHEN coalesce(p.taskCounter,0)>maxNumber THEN p.taskCounter+1 ELSE maxNumber+1 END
 CREATE (t:Task) SET t += $values,t.taskNumber=p.taskCounter
 MERGE (p)-[:HAS_TASK]->(t) MERGE (t)-[:CREATED_BY]->(a)
 FOREACH (_ IN CASE WHEN parent IS NULL THEN [] ELSE [1] END | MERGE (t)-[:PARENT_TASK]->(parent))
 FOREACH (_ IN CASE WHEN assignee IS NULL THEN [] ELSE [1] END | MERGE (t)-[:ASSIGNED_TO]->(assignee))
+FOREACH (_ IN CASE WHEN source IS NULL THEN [] ELSE [1] END | MERGE (t)-[:DERIVED_FROM]->(source))
 CREATE (e:ProjectEvent) SET e += $event,e.details='{"taskNumber":'+toString(t.taskNumber)+',"title":'+$titleJson+'}' MERGE (e)-[:IN_PROJECT]->(p)
 CREATE (audit:AuditEvent) SET audit += $audit,audit.newData='{"projectId":'+$projectJson+',"taskNumber":'+toString(t.taskNumber)+',"title":'+$titleJson+'}' MERGE (audit)-[:ACTOR]->(a)
 RETURN collect({taskId:t.id,taskNumber:t.taskNumber}) AS rows`;
@@ -64,6 +67,8 @@ RETURN collect({taskId:t.id,taskNumber:t.taskNumber}) AS rows`;
 		projectId: values.projectId,
 		parentId: values.parentTaskId ?? null,
 		assigneeId: values.assigneeId ?? null,
+		sourceTaskId: values.sourceTaskId ?? null,
+		sourceProjectId: values.sourceProjectId ?? null,
 		titleJson: JSON.stringify(values.title),
 		projectJson: JSON.stringify(values.projectId),
 	};
