@@ -8,6 +8,7 @@ export interface AssistantQuestion {
 	id: string;
 	prompt: string;
 	type: "single_choice" | "multiple_choice" | "text";
+	suggestedAnswer?: string;
 	options?: AssistantQuestionOption[];
 	allowOther?: boolean;
 }
@@ -60,7 +61,13 @@ export function parseAssistantQuestionSet(
 		questionIds.add(id);
 
 		if (type === "text") {
-			questions.push({ id, prompt, type });
+			const suggestedAnswer = boundedString(item.suggestedAnswer, 1200);
+			questions.push({
+				id,
+				prompt,
+				type,
+				...(suggestedAnswer ? { suggestedAnswer } : {}),
+			});
 			continue;
 		}
 

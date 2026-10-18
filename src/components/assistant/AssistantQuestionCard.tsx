@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useId, useState } from "react";
 import {
 	ArrowRight,
 	CircleHelp,
@@ -9,8 +8,9 @@ import {
 	PencilLine,
 	X,
 } from "lucide-react";
+import { useCallback, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import type { AssistantQuestionSet } from "@/lib/ai/assistant-questions";
 
@@ -205,21 +205,47 @@ export function AssistantQuestionCard({
 					</div>
 				)}
 
-				<div className="mt-4 flex min-w-0 items-center gap-2 border-b border-border/70 pb-2">
+				{question.suggestedAnswer && (
+					<div className="mb-3 rounded-xl border border-border/70 bg-surface-alt/50 p-3">
+						<div className="mb-1 flex items-center justify-between gap-3">
+							<p className="text-sm font-medium">Suggested answer</p>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() =>
+									setFreeformAnswer(question.suggestedAnswer ?? "")
+								}
+							>
+								{answerText ? "Replace with suggestion" : "Use suggestion"}
+							</Button>
+						</div>
+						<p className="text-sm text-muted-foreground">
+							{question.suggestedAnswer}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							Draft from available project context. Review and edit before
+							sending.
+						</p>
+					</div>
+				)}
+
+				<div className="mt-4 flex min-w-0 items-start gap-2 border-b border-border/70 pb-2">
 					<PencilLine
-						className="size-5 shrink-0 text-muted-foreground"
+						className="mt-2 size-5 shrink-0 text-muted-foreground"
 						aria-hidden="true"
 					/>
-					<Input
+					<Textarea
 						aria-label={`Your response to: ${question.prompt}`}
 						value={answer.text}
 						onChange={(event) => setFreeformAnswer(event.target.value)}
+						rows={2}
 						placeholder={
 							question.options
 								? "Or write your own response"
 								: "Write your response"
 						}
-						className="h-11 min-w-0 flex-1 border-0 bg-transparent px-1 text-base shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
+						className="min-h-16 min-w-0 flex-1 resize-y border-0 bg-transparent px-1 text-base shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
 					/>
 					{isSupported && (
 						<Button

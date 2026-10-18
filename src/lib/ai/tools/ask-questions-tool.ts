@@ -4,7 +4,7 @@ import type { ToolHandler } from "./tool-types";
 export const askQuestionsTool: ToolHandler = {
 	name: "ask_questions",
 	description:
-		"Ask the user a small set of structured follow-up questions when required information is missing. Use only for details that block the requested work. Group related questions together, provide grounded options when available, and allow free-text answers for open-ended details. The assistant pauses and shows the questions inline in the chat.",
+		"Ask the user a small set of structured follow-up questions when required information is missing. Use only for details that block the requested work. Group related questions together and provide grounded options when available. For open-ended text questions, include suggestedAnswer only when directly supported by relevant project records, retrieved tool results, or verified screen context available this turn. Keep it as an editable draft, state assumptions or unknowns, and omit it when context does not support a useful answer. Never invent requirements. The assistant pauses and shows the questions inline in the chat.",
 	parameters: {
 		type: "object",
 		properties: {
@@ -19,6 +19,11 @@ export const askQuestionsTool: ToolHandler = {
 						prompt: {
 							type: "string",
 							description: "Question shown to the user",
+						},
+						suggestedAnswer: {
+							type: "string",
+							description:
+								"Optional editable draft for a text question; include only when grounded in relevant retrieved project context, otherwise omit",
 						},
 						type: {
 							type: "string",

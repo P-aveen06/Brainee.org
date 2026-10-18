@@ -58,7 +58,7 @@ function CitationMarkerLink({
 
 	return (
 		<Tooltip onOpenChange={(open) => open && loadTaskDetails()}>
-			<TooltipTrigger render={link} />
+			<TooltipTrigger render={link} closeDelay={300} />
 			<TooltipContent className="w-72 max-w-[min(24rem,calc(100vw-2rem))] flex-col items-start gap-2 rounded-xl border border-border bg-popover p-3 text-left text-popover-foreground shadow-lg">
 				<div className="flex w-full min-w-0 items-center gap-2 text-xs text-muted-foreground">
 					<span className="shrink-0 rounded-sm bg-accent/10 px-1.5 py-0.5 font-medium capitalize text-accent">
