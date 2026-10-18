@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ToolCall } from "./provider";
-import { selectToolCalls } from "./turn-budget";
+import {
+	MAX_TOOL_CALLS_PER_ROUND,
+	MAX_TOTAL_TOOL_CALLS,
+	selectToolCalls,
+} from "./turn-budget";
 
 function calls(count: number): ToolCall[] {
 	return Array.from({ length: count }, (_, index) => ({
@@ -11,20 +15,20 @@ function calls(count: number): ToolCall[] {
 }
 
 describe("selectToolCalls", () => {
-	it("limits a tool round to four calls", () => {
+	it("limits a tool round to the configured cap", () => {
 		const result = selectToolCalls({
-			calls: calls(6),
+			calls: calls(MAX_TOOL_CALLS_PER_ROUND + 2),
 			totalCalls: 0,
 			seenCallKeys: new Set(),
 		});
-		expect(result.accepted).toHaveLength(4);
+		expect(result.accepted).toHaveLength(MAX_TOOL_CALLS_PER_ROUND);
 		expect(result.dropped).toHaveLength(2);
 	});
 
 	it("respects the remaining per-turn budget", () => {
 		const result = selectToolCalls({
 			calls: calls(4),
-			totalCalls: 6,
+			totalCalls: MAX_TOTAL_TOOL_CALLS - 2,
 			seenCallKeys: new Set(),
 		});
 		expect(result.accepted).toHaveLength(2);

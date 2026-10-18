@@ -127,7 +127,7 @@ export function AppSidebar({
 					// First group (Workspace) is unlabelled and non-collapsible
 					if (group.id === "workspace") {
 						return (
-							<SidebarGroup key={group.id} className="py-1">
+							<SidebarGroup key={group.id} className="py-0.5">
 								<SidebarGroupContent>
 									<SidebarMenu>
 										{group.items.map((item) => (
@@ -155,7 +155,7 @@ export function AppSidebar({
 							key={group.id}
 							open={isGroupOpen}
 							onOpenChange={() => toggleGroup(group.id)}
-							className="group/collapsible py-1"
+							className="group/collapsible py-0.5"
 						>
 							<SidebarGroup className="py-0">
 								<CollapsibleTrigger
@@ -182,7 +182,7 @@ export function AppSidebar({
 									</span>
 								</CollapsibleTrigger>
 								<CollapsibleContent className="duration-[450ms] ease-bounce">
-									<SidebarGroupContent className="pt-1">
+									<SidebarGroupContent className="pt-2">
 										<SidebarGroupItems
 											items={group.items}
 											activeHref={activeHref}
@@ -203,7 +203,7 @@ export function AppSidebar({
 							userId={userId}
 							initialNotifications={initialNotifications}
 							showLabel
-							className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+							className="text-sidebar-foreground/70 hover:bg-card/60 hover:text-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
 						/>
 					</SidebarMenuItem>
 					<SidebarMenuItem>

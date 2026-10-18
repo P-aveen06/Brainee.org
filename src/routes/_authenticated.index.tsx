@@ -9,6 +9,7 @@ import {
 } from "#/api/dashboard-extras";
 import { getMyDashboardDailyUpdates } from "#/api/project-daily-updates";
 import { CalendarRail } from "#/components/dashboard/calendar/CalendarRail";
+import { CompanyBrainSpotlight } from "#/components/dashboard/CompanyBrainSpotlight";
 import { DashboardGrid } from "#/components/dashboard/DashboardGrid";
 import { DashboardHero } from "#/components/dashboard/DashboardHero";
 import { EditLayoutBar } from "#/components/dashboard/EditLayoutBar";
@@ -104,6 +105,7 @@ function DashboardPage() {
 					editing={editing}
 					onCustomize={() => setDraft(editing ? null : layout)}
 				/>
+				<CompanyBrainSpotlight />
 
 				{draft && (
 					<EditLayoutBar

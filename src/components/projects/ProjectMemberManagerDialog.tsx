@@ -44,23 +44,23 @@ export function ProjectMemberManagerDialog({
 }: ProjectMemberManagerDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
+			<DialogContent className="min-w-0 max-w-3xl max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-3xl">
+				<DialogHeader className="min-w-0">
+					<DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 						<Users className="size-4 text-primary" />
 						<span>Project Team & Members</span>
-						<span className="font-mono text-xs text-muted-foreground font-normal">
+						<span className="min-w-0 break-words font-mono text-xs font-normal text-muted-foreground">
 							({projectCode} · {projectName})
 						</span>
 					</DialogTitle>
-					<DialogDescription>
+					<DialogDescription className="min-w-0 break-words">
 						{access.canManage
 							? "Add team members, assign manager/contributor/viewer roles, and transfer project ownership."
 							: "View current active project members and roll-off history."}
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="pt-2">
+				<div className="min-w-0 pt-2">
 					<MemberManagerPanel
 						projectId={projectId}
 						members={members}

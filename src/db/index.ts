@@ -1,9 +1,7 @@
-import { drizzle } from "drizzle-orm/d1";
+import { GraphDatabase } from "../../shared/graph/query";
+import { graphOperation } from "./transport.server";
 
-import * as schema from "./schema.ts";
-
-export function createDb(d1: D1Database) {
-	return drizzle(d1, { schema });
+export function createDb() {
+	return new GraphDatabase(graphOperation);
 }
-
 export type Database = ReturnType<typeof createDb>;

@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import { leaveRequests, publicHolidays, timesheets } from "../db/schema";
@@ -40,7 +39,7 @@ export const logTimesheet = createServerFn({ method: "POST" })
 			};
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const dateParts = parsed.data.date.split("-");
 		const targetMonth = dateParts[1];
 		const targetDay = dateParts[2];

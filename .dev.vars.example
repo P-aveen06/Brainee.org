@@ -3,12 +3,20 @@
 TEST_AUTH_ENABLED=true
 SESSION_SECRET=
 
-# Sample administrator: test@example.com / TestLogin123!
-# The first login creates the test user; complete the normal profile onboarding.
+# Local startup demo: choose a role and teammate at /sign-in after graph:seed
+# Run bun run graph:seed to add the fictional team and an onboarded test administrator.
 
-# Optional AI providers. Empty values use the built-in stub provider.
-OPENROUTER_API_KEY=
-DEEPSEEK_API_KEY=
-AZURE_DEEPSEEK_API_KEY=
-AZURE_DEEPSEEK_ENDPOINT=https://open-model-resource.openai.azure.com/openai/v1
-AZURE_DEEPSEEK_MODEL=DeepSeek-V4-Flash
+# OpenCode inference provider. Empty values use the built-in stub provider.
+OPENCODE_API_KEY=
+OPENCODE_ENDPOINT=https://opencode.ai/inference/openai/v1
+OPENCODE_MODEL=deepseek-v4-flash
+
+# FalkorDB service. graph:setup writes the local URL and token to .dev.vars.
+GRAPH_SERVICE_URL=http://127.0.0.1:3100
+GRAPH_SERVICE_TOKEN=
+
+# Optional local browser research and pitch layout checks (bun run browser:serve).
+BROWSER_SERVICE_URL=http://127.0.0.1:3200
+BROWSER_SERVICE_TOKEN=
+# Optional comma-separated exact HTTPS host allowlist; defaults are in services/browser/public-page.ts.
+# BROWSER_PUBLIC_HOSTS=www.assistant-ui.com,example.com

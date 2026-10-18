@@ -1,5 +1,5 @@
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import { and, eq, gte, inArray, lte, or } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, or } from "@/db/graph-query";
 import {
 	ACTIVE_LEAVE_REQUEST_STATUSES,
 	getLeaveCoverageForDate,

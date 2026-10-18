@@ -1,4 +1,4 @@
-import { and, eq, inArray, like, lte, or } from "drizzle-orm";
+import { and, eq, inArray, like, lte, or } from "@/db/graph-query";
 import {
 	clientContacts,
 	companies,
@@ -69,8 +69,8 @@ export const listProjectsTool: ToolHandler = {
 							.where(inArray(projects.id, visibleIds));
 
 		const byStatus =
-			typeof args.status === "string"
-				? rows.filter((p) => p.status === args.status)
+			typeof args.status === "string" && args.status.trim()
+				? rows.filter((p) => p.status === String(args.status).trim())
 				: rows;
 
 		const query = typeof args.query === "string" ? args.query.trim() : "";
@@ -286,7 +286,7 @@ export const getProjectTasksTool: ToolHandler = {
 			.leftJoin(users, eq(projectTasks.assigneeId, users.id))
 			.where(and(...conditions))
 			.orderBy(projectTasks.taskNumber)
-			.limit(60);
+			.limit(100);
 
 		// Group subtasks under their parent tasks
 		type RawTask = (typeof rawTasks)[number];
@@ -432,12 +432,16 @@ export const getMyTasksTool: ToolHandler = {
 				projectId: projectTasks.projectId,
 				projectCode: projects.code,
 				projectName: projects.name,
+				assigneeId: projectTasks.assigneeId,
+				parentTaskId: projectTasks.parentTaskId,
+				estimateHours: projectTasks.estimateHours,
+				actualHours: projectTasks.actualHours,
 			})
 			.from(projectTasks)
 			.innerJoin(projects, eq(projectTasks.projectId, projects.id))
 			.where(and(...conditions))
 			.orderBy(projectTasks.dueDate)
-			.limit(50);
+			.limit(100);
 
 		return {
 			success: true,
@@ -450,6 +454,11 @@ export const getMyTasksTool: ToolHandler = {
 				dueDate: t.dueDate,
 				projectCode: t.projectCode,
 				projectName: t.projectName,
+				assigneeId: t.assigneeId,
+				assigneeName: ctx.user.name,
+				parentTaskId: t.parentTaskId,
+				estimateHours: t.estimateHours,
+				actualHours: t.actualHours,
 			})),
 			groundedRecordIds: tasks.map((t) => t.id),
 			groundedLabels: tasks.flatMap((t) => [

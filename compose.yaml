@@ -1,0 +1,76 @@
+name: brainee
+services:
+  falkordb:
+    image: falkordb/falkordb:6.0.2@sha256:107455e862a824e45e8e9f5a7fbfdf5e00a08b14e13eae2577c72fd9e3f59ba6
+    restart: unless-stopped
+    environment:
+      BROWSER: "1"
+      REDIS_ARGS: /etc/brainee/redis.conf
+      REDISCLI_AUTH: ${GRAPH_ADMIN_PASSWORD:?Run bun run graph:setup first}
+    volumes:
+      - graph-data:/var/lib/falkordb/data
+      - ./infra/falkordb/redis.conf:/etc/brainee/redis.conf:ro
+      - ./.local/falkordb/users.acl:/etc/brainee/users.acl:ro
+    ports:
+      - "127.0.0.1:3001:3000"
+    healthcheck:
+      test: [CMD-SHELL, "redis-cli --user admin ping | grep -qx PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [graph]
+  graph-service:
+    build:
+      context: .
+      dockerfile: services/graph/Dockerfile
+    restart: unless-stopped
+    environment: &graph-env
+      GRAPHRAG_SERVICE_URL: http://graphrag:3200
+      TEST_AUTH_ENABLED: "true"
+      GRAPH_HOST: falkordb
+      GRAPH_PORT: "6379"
+      GRAPH_NAME: brainee_dev
+      GRAPH_APP_PASSWORD: ${GRAPH_APP_PASSWORD:?Run bun run graph:setup first}
+      GRAPH_SERVICE_TOKEN: ${GRAPH_SERVICE_TOKEN:?Run bun run graph:setup first}
+    ports:
+      - "127.0.0.1:3100:3100"
+    depends_on:
+      falkordb: {condition: service_healthy}
+      graphrag: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/ready',{headers:{authorization:'Bearer '+process.env.GRAPH_SERVICE_TOKEN},signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 4s
+      retries: 3
+    networks: [graph]
+  graphrag:
+    build:
+      context: .
+      dockerfile: services/graphrag/Dockerfile
+    restart: unless-stopped
+    environment: *graph-env
+    depends_on:
+      falkordb: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:3200/ready',headers={'Authorization':'Bearer '+os.environ['GRAPH_SERVICE_TOKEN']}),timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      start_period: 30s
+      retries: 5
+    networks: [graph]
+  graph-tools:
+    build:
+      context: .
+      dockerfile: services/graph/Dockerfile
+    profiles: [tools]
+    environment:
+      <<: *graph-env
+      GRAPH_ADMIN_PASSWORD: ${GRAPH_ADMIN_PASSWORD:?Run bun run graph:setup first}
+    depends_on:
+      falkordb: {condition: service_healthy}
+    networks: [graph]
+    command: [node, --experimental-strip-types, src/migrate.ts]
+networks:
+  graph:
+volumes:
+  graph-data:

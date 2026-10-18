@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Company Brain · Role Question Report</title>
+<style>
+:root { color-scheme: light; --ink:#202124; --muted:#667085; --canvas:#f5f6f8; --card:#fff; --line:#e5e7eb; --blue:#155eef; --purple:#7612fa; --lav:#f2efff; --rose:#fff0fb; --green:#07805e; --amber:#a85b00; --red:#bc2c25; --shadow:0 2px 10px rgba(16,24,40,.055); }
+* { box-sizing:border-box; } body { margin:0; background:var(--canvas); color:var(--ink); font-family:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.5; }
+.page { width:min(1180px,calc(100% - 36px)); margin:30px auto 70px; }
+.hero { background:linear-gradient(135deg,#191a25 0%,#27233c 62%,#312c4b 100%); color:white; border-radius:24px; padding:30px 34px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.hero:after { content:""; width:270px; height:270px; border-radius:50%; background:radial-gradient(circle,rgba(118,18,250,.5),transparent 70%); position:absolute; right:-55px; top:-125px; pointer-events:none; }
+.kicker,.eyebrow { font:700 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.12em; text-transform:uppercase; }
+.kicker { color:#d7cbff; } h1 { margin:10px 0 6px; font-size:clamp(28px,4vw,42px); line-height:1.12; letter-spacing:-.04em; }
+.hero p { color:#d8dbe7; max-width:760px; margin:9px 0 0; } .meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; } .pill { border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); border-radius:999px; padding:6px 11px; font-size:12px; }
+.metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0; } .metric,.panel,.role-section { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); } .metric { padding:17px 19px; } .metric strong { display:block; font-size:28px; letter-spacing:-.04em; line-height:1.1; } .metric span { display:block; color:var(--muted); font-size:12px; margin-top:6px; }
+.panel { padding:22px; margin:14px 0; } .panel h2 { font-size:19px; margin:0 0 13px; letter-spacing:-.025em; } .findings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; } .finding { border:1px solid var(--line); border-radius:13px; padding:13px 15px; background:#fff; } .finding h3 { margin:0 0 5px; font-size:14px; } .finding p { margin:0; font-size:13px; color:#475467; } .finding.lookup { border-left:4px solid var(--red); } .finding.scope { border-left:4px solid var(--amber); } .finding.good { border-left:4px solid var(--green); } .finding.data { border-left:4px solid var(--purple); }
+.coverage-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; } .coverage { border:1px solid var(--line); border-radius:12px; padding:12px; min-width:0; } .coverage span,.coverage strong,.coverage small { display:block; } .coverage span { font-size:12px; color:var(--muted); } .coverage strong { font-size:14px; margin:3px 0; } .coverage small { font-size:11px; color:#667085; }
+.method { color:#475467; font-size:13px; margin:0; } .toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:20px 0 12px; } .toolbar input { flex:1 1 260px; min-width:230px; height:42px; border:1px solid #d0d5dd; border-radius:12px; padding:0 13px; font:inherit; font-size:13px; background:white; color:var(--ink); } .toolbar button { border:1px solid #d0d5dd; background:white; padding:9px 12px; border-radius:11px; font:600 12px inherit; color:var(--ink); cursor:pointer; } .toolbar button:hover,.toolbar button.active { background:var(--lav); border-color:#c9b9ff; color:var(--purple); } .toolbar .spacer { flex:1; } .filter-status { color:var(--muted); font-size:12px; width:100%; }
+.role-section { margin:14px 0; overflow:hidden; } .role-heading { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:20px 22px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,#fff,#fbfaff); } .role-heading .eyebrow { color:var(--purple); } .role-heading h2 { margin:4px 0 2px; font-size:21px; letter-spacing:-.03em; } .role-heading p { margin:0; color:var(--muted); font-size:12px; } .role-count { flex:0 0 auto; text-align:right; } .role-count strong { font-size:25px; } .role-count span,.role-count small { display:block; color:var(--muted); font-size:11px; } .role-count small { margin-top:3px; color:var(--red); }
+.qa-list { padding:5px 15px 13px; } .qa { border-bottom:1px solid #eef0f3; } .qa:last-child { border-bottom:0; } .qa summary { list-style:none; display:grid; grid-template-columns:32px max-content 1fr 20px; align-items:center; gap:9px; cursor:pointer; padding:12px 7px; } .qa summary::-webkit-details-marker { display:none; } .qa summary:hover .question { color:#3c2f79; } .q-number { display:grid; place-items:center; width:27px; height:27px; border-radius:8px; background:#f2f4f7; color:#667085; font:600 11px ui-monospace,monospace; } .question { font-size:13px; font-weight:600; } .chevron { color:#98a2b3; transition:transform .15s; text-align:center; } details[open] .chevron { transform:rotate(180deg); } .status { border-radius:999px; padding:3px 8px; white-space:nowrap; font-size:10px; font-weight:700; } .status.ok { background:#e9f8f1; color:#067647; } .status.lookup,.status.error,.status.incomplete { background:#fff0ef; color:#b42318; } .status.scope { background:#fff6e5; color:#93370d; } .answer { padding:0 43px 17px; } .answer-label { color:#7f56d9; font:700 10px ui-monospace,monospace; letter-spacing:.09em; text-transform:uppercase; margin-bottom:7px; } .answer pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:400 12.5px/1.65 ui-sans-serif,system-ui,sans-serif; color:#344054; background:#f8f9fc; border:1px solid #eaecf0; border-radius:12px; padding:14px 15px; }
+.footer { color:#667085; font-size:11px; text-align:center; padding:22px 0; } .empty { display:none; text-align:center; border:1px dashed #cfd4dc; border-radius:16px; padding:28px; color:var(--muted); background:#fff; }
+@media(max-width:850px) { .coverage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .page { width:calc(100% - 20px); margin-top:10px; } .hero { padding:23px 20px; border-radius:18px; } .panel { padding:16px; } .findings { grid-template-columns:1fr; } .coverage-grid { grid-template-columns:1fr 1fr; } .qa summary { grid-template-columns:28px 1fr 18px; } .qa summary .status { grid-column:2; grid-row:1; justify-self:start; } .qa summary .question { grid-column:1 / 3; grid-row:2; } .qa summary .chevron { grid-column:3; grid-row:1 / 3; } .answer { padding:0 8px 14px; } .role-heading { padding:16px; } }
+@media print { body { background:white; } .page { width:100%; margin:0; } .hero { background:#222; box-shadow:none; } .toolbar { display:none; } .metric,.panel,.role-section { box-shadow:none; break-inside:avoid; } .qa { break-inside:avoid; } details:not([open]) > .answer { display:block; } .role-section { break-before:page; } .role-section:first-of-type { break-before:auto; } .qa summary { padding:8px 4px; } .answer pre { font-size:10px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div class="kicker">Northstar Studio · Local startup demo</div>
+    <h1>Company Brain<br>role question report</h1>
+    <p>100 live questions submitted through the local role picker. Each question used a fresh chat so answers did not inherit context from the prior test.</p>
+    <div class="meta"><span class="pill">17 October 2026</span><span class="pill">5 role levels</span><span class="pill">20 questions per role</span><span class="pill">Fictional seed data</span><span class="pill">Local only</span></div>
+  </header>
+  <section class="metrics" aria-label="Test totals">
+    <div class="metric"><strong>100</strong><span>questions submitted</span></div>
+    <div class="metric"><strong>5</strong><span>role levels covered</span></div>
+    <div class="metric"><strong>22</strong><span>project lookup failures on permitted projects</span></div>
+    <div class="metric"><strong>4</strong><span>generic or incomplete answers (1 error · 3 mid-list)</span></div>
+  </section>
+  <section class="panel">
+    <h2>Coverage</h2>
+    <div class="coverage-grid"><div class="coverage"><span>CEO</span><strong>20 questions</strong><small>Aditi Deshmukh</small></div><div class="coverage"><span>HR</span><strong>20 questions</strong><small>Arjun Mehta</small></div><div class="coverage"><span>Project Lead</span><strong>20 questions</strong><small>Maya (8) · Vikram (6) · Priya (6)</small></div><div class="coverage"><span>Solution Architect</span><strong>20 questions</strong><small>Dev Malhotra</small></div><div class="coverage"><span>Employee</span><strong>20 questions</strong><small>Anika Shah</small></div></div>
+  </section>
+  <section class="panel">
+    <h2>What the run showed</h2>
+    <div class="findings">
+      <article class="finding lookup"><h3>Detailed project lookup is unreliable</h3><p>In 22 questions about projects the caller was allowed to see, Company Brain said it could not find the project. Portfolio briefs and task lists could still return those same projects. The other named “not found” reply was a correct refusal when Vikram asked for Maya’s Willow project.</p></article>
+      <article class="finding scope"><h3>Approved absence data crosses role boundaries</h3><p>Both the architect and employee received the same company-wide leave and WFH list when they asked about next week. HR can see approved availability, but the employee and architect prompts were not limited to their own project teams.</p></article>
+      <article class="finding good"><h3>Several role boundaries worked</h3><p>Leads received approvals for their own direct reports; HR was denied the pending approval queue; Vikram was denied Maya’s project; Anika’s company-wide portfolio request returned only her two permitted projects; Dev declined another employee’s leave balance and salary details.</p></article>
+      <article class="finding lookup"><h3>Some answers stop before finishing</h3><p>3 answers end mid-list, including a workload comparison and two architecture recommendations. One HR reporting-structure question returned a generic completion error.</p></article>
+      <article class="finding data"><h3>Seeded data limits are usually stated</h3><p>Company Brain correctly said contract values, revenue, compensation, birthdays, project documents, stack details, and service endpoints were not present in the retrieved records. HR also noted that active employment status was not available.</p></article>
+      <article class="finding data"><h3>HR reporting needs a consistency pass</h3><p>A directory answer listed only Dev as reporting to Aditi, while another HR answer listed Aditi’s five direct reports. The HR weekly brief also questioned approval status for leave entries that other availability answers called approved.</p></article>
+    </div>
+  </section>
+  <section class="panel"><h2>How to read this report</h2><p class="method">Questions and answers below are captured from the rendered Company Brain UI and kept verbatim, including refusals and failures. Test identities, employees, clients, project data, emails, and request records are fictional local demo data. This is a product-behavior review, not an independent verification of every business fact. The local demo stored each submitted turn in that persona’s chat history; no production environment was used.</p></section>
+  <div class="toolbar" aria-label="Report filters">
+    <input id="search" type="search" placeholder="Search questions and responses…" aria-label="Search questions and responses">
+    <button class="filter active" data-filter="all">All roles</button>
+    <button class="filter" data-filter="CEO">CEO</button><button class="filter" data-filter="HR">HR</button><button class="filter" data-filter="Project Lead">Project Lead</button><button class="filter" data-filter="Solution Architect">Solution Architect</button><button class="filter" data-filter="Employee">Employee</button>
+    <span class="spacer"></span><button id="expand">Expand visible</button><button id="collapse">Collapse all</button>
+    <div id="filter-status" class="filter-status" aria-live="polite">Showing all 100 questions.</div>
+  </div>
+  <div id="results"><section class="role-section" data-role="CEO">
+      <div class="role-heading"><div><div class="eyebrow">CEO</div><h2>Aditi Deshmukh</h2><p>Company portfolio, clients, delivery risk, approvals</p></div><div class="role-count"><strong>20</strong><span>questions</span><small>5 project lookup failures</small></div></div>
+      <div class="qa-list"><details class="qa" data-status="ok">
+          <summary><span class="q-number">01</span><span class="status ok">Answered</span><span class="question">Give me a concise portfolio briefing: how many projects are active, which are blocked, and what three actions should I prioritize today? Name the projects and accountable leads.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Portfolio
+10 active projects across the company-wide portfolio. 5 projects have blocked work; Atlas Fleet Visibility is the highest priority, with red health and both overdue tasks. [DEMO-FLEET]
+Blocked projects and accountable leads:
+Willow Customer Portal — Maya Rao [DEMO-PORTAL]
+Cedar Patient Scheduling — Maya Rao [DEMO-CARE]
+Atlas Fleet Visibility — Vikram Menon [DEMO-FLEET]
+Finch Risk Analytics — Vikram Menon [DEMO-FIN]
+Solstice Energy Insights — Priya Sen [DEMO-ENERGY]
+Three priorities for today
+Escalate Atlas’s GPS sandbox credentials and recover the overdue tracking work with Vikram; ingestion testing is delayed. [DEMO-FLEET]
+Get Willow’s revised onboarding copy approved so UAT can start; the blocked work is due Oct 20. [DEMO-PORTAL]
+Drive client responses on the remaining near-term blockers: Cedar’s retention policy, Finch’s September ledger reconciliation, and Solstice’s representative meter data—all due Oct 20. Maya Rao owns Cedar; Vikram Menon owns Finch; Priya Sen owns Solstice. [DEMO-CARE] [DEMO-FIN] [DEMO-ENERGY]
+
+These are recommended priorities based on recorded health, overdue work, blockers, and due dates.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">02</span><span class="status ok">Answered</span><span class="question">Separate the portfolio into internal and client work. List the counts and name the client accounts with an active project.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Portfolio
+Internal work: 4 active projects
+Client work: 6 active projects
+Total: 10 visible projects
+Client accounts with an active project
+Willow Retail (Sample) — Willow Customer Portal [DEMO-PORTAL]
+Cedar Health — Cedar Patient Scheduling [DEMO-CARE]
+Atlas Logistics — Atlas Fleet Visibility [DEMO-FLEET]
+Finch Finance — Finch Risk Analytics [DEMO-FIN]
+Lumina Learning — Lumina Learning Platform [DEMO-LEARN]
+Solstice Energy — Solstice Energy Insights [DEMO-ENERGY]</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">03</span><span class="status lookup">Project lookup failed</span><span class="question">Give me a concise Atlas Fleet Visibility brief: stage, health, open and overdue work, recorded blocker, and accountable lead.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Atlas Fleet Visibility, so I can’t verify its stage, health, open or overdue work, blocker, or accountable lead.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">04</span><span class="status ok">Answered</span><span class="question">Give me a compact table of all ten projects with their stage, health, and accountable lead.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Visible projects
+
+| Project | Stage | Health | Accountable lead | |---|---|---|---| | Willow Customer Portal [DEMO-PORTAL] | Development | Amber | Maya Rao | | Cedar Patient Scheduling [DEMO-CARE] | Discovery | Amber | Maya Rao | | Atlas Fleet Visibility [DEMO-FLEET] | Development | Red | Vikram Menon | | Finch Risk Analytics [DEMO-FIN] | Testing | Amber | Vikram Menon | | Lumina Learning Platform [DEMO-LEARN] | Deployment | Green | Priya Sen | | Solstice Energy Insights [DEMO-ENERGY] | Discovery | Amber | Priya Sen | | Company Knowledge Hub [DEMO-HUB] | Testing | Green | Maya Rao | | Operations Command Center [DEMO-OPS] | Development | Green | Vikram Menon | | Delivery Automation [DEMO-DELIVERY] | Development | Green | Priya Sen | | Northstar Design System [DEMO-DESIGN] | Development | Green | Priya Sen |</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">05</span><span class="status lookup">Project lookup failed</span><span class="question">For DEMO-PORTAL, summarize the current task progress, blockers, and the next milestone.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching DEMO-PORTAL, so I can’t verify its task progress, blockers, or next milestone. Please share the project’s name or client name and I’ll look it up.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">06</span><span class="status ok">Answered</span><span class="question">List each client project with a recorded blocker, the client dependency, the accountable lead, and any due date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Client Projects with Recorded Blockers
+
+Willow Customer Portal [DEMO-PORTAL #3]
+
+Client dependency: Willow approval of revised onboarding copy before UAT can start.
+Accountable lead: Maya Rao.
+Blocked task due: 20 Oct 2026.
+
+Cedar Patient Scheduling [DEMO-CARE #3]
+
+Client dependency: Cedar’s security team must confirm the retention policy before the data model is frozen.
+Accountable lead: Maya Rao.
+Blocked task due: 20 Oct 2026.
+
+Atlas Fleet Visibility [DEMO-FLEET #3]
+
+Client dependency: Atlas must provision GPS sandbox credentials; ingestion testing is delayed.
+Accountable lead: Vikram Menon.
+Blocked task due: 16 Oct 2026 — overdue.
+
+Finch Risk Analytics [DEMO-FIN #3]
+
+Client dependency: Finch must reconcile the September source ledger before model validation can close.
+Accountable lead: Vikram Menon.
+Blocked task due: 20 Oct 2026.
+
+Solstice Energy Insights [DEMO-ENERGY #3]
+
+Client dependency: Solstice must provide representative meter data covering a full operating week.
+Accountable lead: Priya Sen.
+Blocked task due: 20 Oct 2026.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">07</span><span class="status ok">Answered</span><span class="question">Which tasks are overdue across the company? Group them by project and name each assignee.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Overdue tasks — company-wide
+
+As of 17 Oct 2026, there are 2 overdue tasks, both in Atlas Fleet Visibility [DEMO-FLEET].
+
+Build the live tracking service — Ishan Gupta; In Progress; due 16 Oct 2026. [DEMO-FLEET #2]
+
+Connect the GPS provider sandbox — Leena Das; Blocked; due 16 Oct 2026. Atlas has not provided the sandbox credentials, delaying ingestion testing. [DEMO-FLEET #3]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">08</span><span class="status ok">Answered</span><span class="question">Summarize the recorded architecture decisions for all client projects and name each project lead.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Recorded decisions for client projects
+Willow Customer Portal [DEMO-PORTAL] — Keep the first release focused on the customer onboarding path. Project lead: Maya Rao.
+Cedar Patient Scheduling [DEMO-CARE] — Separate patient identifiers from scheduling events, and audit every access. Project lead: Maya Rao.
+Atlas Fleet Visibility [DEMO-FLEET] — Use an event queue with idempotent consumers to handle duplicate GPS events. Project lead: Vikram Menon.
+Finch Risk Analytics [DEMO-FIN] — Version feature definitions and reconcile every aggregate against the ledger. Project lead: Vikram Menon.
+Lumina Learning Platform [DEMO-LEARN] — Release to the pilot cohort first and monitor completion and error rates. Project lead: Priya Sen.
+Solstice Energy Insights [DEMO-ENERGY] — Store raw meter readings separately and normalize timestamps to UTC. Project lead: Priya Sen.
+
+The Willow and Lumina notes are release-scope decisions; the others specify data handling, system behavior, or validation practices.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">09</span><span class="status lookup">Project lookup failed</span><span class="question">What milestones or dated events are recorded for the Company Knowledge Hub? Give the latest first.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project named Company Knowledge Hub, so I can’t verify its recorded milestones or dated events.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">10</span><span class="status lookup">Project lookup failed</span><span class="question">What project documents are available for the Company Knowledge Hub? Include titles and document status if shown.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Company Knowledge Hub, so I can’t retrieve its documents. Could it be listed under a different project name?</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">11</span><span class="status ok">Answered</span><span class="question">Show my company-wide pending approvals, grouped by request type with applicant and date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Pending approvals (4)
+
+Leave requests (3)
+
+Rohan Nair — Casual leave, 20 Oct 2026. [Rohan Nair]
+Aditi Deshmukh — Annual leave, 21 Oct 2026. [Aditi Deshmukh]
+Neha Iyer — Annual leave, 23 Oct 2026. [Neha Iyer]
+
+Work-from-home requests (1)
+
+Kiran Patel — WFH, 21 Oct 2026 (full day). [Kiran Patel]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">12</span><span class="status ok">Answered</span><span class="question">Which teammates are out, working remotely, or on approved leave during 19–23 October? Give names, dates, and status only.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Anika Shah — 19 Oct — Annual leave
+Kiran Patel — 22 Oct — Annual leave (half day)
+Leena Das — 19 Oct — Working remotely
+Neha Iyer — 20 Oct — Working remotely</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">13</span><span class="status ok">Answered</span><span class="question">Summarize the approved leave and WFH coverage for the next seven days. Count each status and list who is affected.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Approved Leave
+2 people
+Anika Shah — annual leave, 19 Oct (1 day) [Anika Shah]
+Kiran Patel — annual leave, 22 Oct (half day) [Kiran Patel]
+Working From Home
+2 people
+Leena Das — 19 Oct [Leena Das]
+Neha Iyer — 20 Oct [Neha Iyer]
+
+Coverage is for 18–24 Oct 2026.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">14</span><span class="status ok">Answered</span><span class="question">Which project teams have missing daily updates for the current work week? Name the people and projects where the record shows a gap.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I can’t reliably identify the full set of project-team gaps from the records checked so far. For the week of 12–16 Oct 2026, the records show missing daily updates on Willow Customer Portal from Maya Rao, Anika Shah, Rohan Nair, and Dev Malhotra on each weekday checked. Cedar Patient Scheduling also shows missing updates from Maya Rao, Rohan Nair, Sara Thomas, and Dev Malhotra on 12 and 16 Oct 2026. [DEMO-PORTAL] [DEMO-CARE]
+
+These are confirmed gaps for those dates; I don’t have enough checked records to say whether other projects had missing updates that week.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">15</span><span class="status ok">Answered</span><span class="question">Compare the project workload across Maya, Vikram, and Priya: project counts, visible allocation, and any capacity concern supported by the data.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Workload comparison
+
+Maya Rao: 3 visible projects; 99% visible allocation. Projects: Willow Customer Portal, Cedar Patient Scheduling, and Company Knowledge Hub. [Willow Customer Portal] [Cedar Patient Scheduling] [Company Knowledge Hub]
+
+Vikram Menon: 3 visible projects; 99% visible allocation. Projects: Atlas Fleet Visibility, Finch Risk Analytics, and Operations Command Center. [Atlas Fleet Visibility] [Finch Risk Analytics] [Operations Command Center]
+
+Priya Sen: 4 visible projects; 100% visible allocation. Projects: Lumina Learning Platform, Solstice Energy Insights, Delivery Automation, and Northstar Design System. [Lumina Learning Platform] [Solstice Energy Insights] [Delivery Automation] [Northstar Design System]
+
+Capacity signals
+
+All three are at or very near full visible allocation, so there appears to be little recorded allocation headroom. Priya has the largest project count at four; that alone does not establish overload.
+
+The clearest delivery pressure is in Vikram’s portfolio: Atlas Fleet Visibility is marked red, with two overdue tasks and one blocked task. That supports an immediate capacity and delivery review there. The allocation figures are not hours or utilization measurements, so they do not by themselves prove anyone is over capacity. [Atlas Fleet Visibility]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">16</span><span class="status ok">Answered</span><span class="question">List the four internal projects with their current stage, health, and lead.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Internal Projects
+Company Knowledge Hub [DEMO-HUB] — Stage: Testing | Health: Green | Lead: Maya Rao
+Operations Command Center [DEMO-OPS] — Stage: Development | Health: Green | Lead: Vikram Menon
+Delivery Automation [DEMO-DELIVERY] — Stage: Development | Health: Green | Lead: Priya Sen
+Northstar Design System [DEMO-DESIGN] — Stage: Development | Health: Green | Lead: Priya Sen</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">17</span><span class="status lookup">Project lookup failed</span><span class="question">Who is the primary client contact for Finch Risk Analytics, and what project dependency is currently recorded?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Finch Risk Analytics, so I can’t verify its primary client contact or recorded dependency.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">18</span><span class="status ok">Answered</span><span class="question">What are my own leave balances and pending leave requests? Use only my account record.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Leave balances
+Annual Leave: 18 days remaining (18 allocated, 0 used)
+Sick Leave: 8 days remaining (8 allocated, 0 used)
+Casual Leave: 6 days remaining (6 allocated, 0 used)
+Annual WFH allowance: 12 days
+
+The balance record returned each leave type twice with identical figures; each is listed once above. Aditi Deshmukh
+
+Pending leave requests
+Annual Leave: 21 Oct 2026 (1 day) — Reason: Personal appointment. Aditi Deshmukh</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">19</span><span class="status ok">Answered</span><span class="question">Do the seeded records include contract values, budgets, revenue, or margin by client? Tell me what is present and what is not, without estimating missing figures.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>The seeded records I checked identify six client projects and their clients, but do not provide contract values, budgets, revenue, or margins by client. No figures for those categories were returned, so I can’t report or estimate them.
+
+Willow Retail — Willow Customer Portal [DEMO-PORTAL]
+Cedar Health — Cedar Patient Scheduling [DEMO-CARE]
+Atlas Logistics — Atlas Fleet Visibility [DEMO-FLEET]
+Finch Finance — Finch Risk Analytics [DEMO-FIN]
+Lumina Learning — Lumina Learning Platform [DEMO-LEARN]
+Solstice Energy — Solstice Energy Insights [DEMO-ENERGY]
+
+The checked project document results were also empty.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">20</span><span class="status ok">Answered</span><span class="question">Recommend three follow-ups for the coming week based on the most urgent recorded client and internal delivery risks. Name an owner and a measurable outcome for each.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I found a few matches: Willow Customer Portal, Cedar Patient Scheduling, Atlas Fleet Visibility, Finch Risk Analytics, Lumina Learning Platform, Solstice Energy Insights, Company Knowledge Hub, Operations Command Center. Which one did you mean?</pre></div>
+        </details></div>
+    </section><section class="role-section" data-role="HR">
+      <div class="role-heading"><div><div class="eyebrow">HR</div><h2>Arjun Mehta</h2><p>Directory, reporting lines, availability, personal requests</p></div><div class="role-count"><strong>20</strong><span>questions</span><small>0 project lookup failures</small></div></div>
+      <div class="qa-list"><details class="qa" data-status="ok">
+          <summary><span class="q-number">01</span><span class="status ok">Answered</span><span class="question">Give me a people overview: active headcount, counts by role or job family, and the names and titles of the project leads.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>People overview
+People in company-wide scope: 14. The available records don’t include employment status, so I can’t verify how many are currently active.
+Role/job-family breakdown: The directory doesn’t provide precomputed counts by role or job family. The listed titles include engineering, design, architecture, executive, and People &amp; Culture roles.
+Leads
+Maya Rao — Product Engineering Lead [Maya Rao]
+Vikram Menon — Platform Engineering Lead [Vikram Menon]
+Priya Sen — Delivery Engineering Lead [Priya Sen]
+
+These are the lead titles in the company-wide roster; no project-specific lead assignments are visible in the</pre></div>
+        </details><details class="qa" data-status="error">
+          <summary><span class="q-number">02</span><span class="status error">Completion error</span><span class="question">Summarize the reporting structure from the CEO through each lead to their direct reports.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Unable to complete response — Error: Company Brain could not complete this response. Please retry; do not assume the requested action was performed.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">03</span><span class="status ok">Answered</span><span class="question">Find Dev Malhotra in the staff directory and give his title, manager, and work email.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Dev Malhotra — Solution Architect
+Manager: Aditi Deshmukh
+Work email: dev@northstar.example.test</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">04</span><span class="status ok">Answered</span><span class="question">Which teammates have approved leave or approved WFH between 19 and 23 October 2026? List only names, status, and dates.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>| Name | Status | Date(s) | |---|---|---| | Anika Shah | Approved leave | 19 Oct 2026 | | Kiran Patel | Approved leave | 22 Oct 2026 (half day) | | Leena Das | Approved WFH | 19 Oct 2026 | | Neha Iyer | Approved WFH | 20 Oct 2026 |</pre></div>
+        </details><details class="qa" data-status="scope">
+          <summary><span class="q-number">05</span><span class="status scope">Access boundary applied</span><span class="question">Show pending leave and WFH approvals for the company. If HR cannot access approval details, explain the limit and say which role can.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I can’t view pending leave or WFH approval details; access is limited to team leads and administrators. Please ask a team lead or administrator to check the company approvals queue.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">06</span><span class="status ok">Answered</span><span class="question">What are my own annual, sick, and casual leave balances, and my annual WFH allowance?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Leave balances
+Annual Leave: 18 days remaining of 18 allocated; 0 used.
+Sick Leave: 8 days remaining of 8 allocated; 0 used.
+Casual Leave: 6 days remaining of 6 allocated; 0 used.
+
+Annual WFH allowance: 12 days. Leave balances</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">07</span><span class="status ok">Answered</span><span class="question">List my own pending leave and WFH requests, with dates and status; do not include anyone else’s requests.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>No pending leave or WFH requests are listed for you.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">08</span><span class="status ok">Answered</span><span class="question">Show the startup team directory with each teammate’s name, title, and manager. Include all 14 people.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Startup Team Directory
+
+Aditi Deshmukh — CEO &amp; Co-founder; Manager: None. [Aditi Deshmukh]
+
+Arjun Mehta — People &amp; Culture Manager; Manager: Aditi Deshmukh. [Arjun Mehta]
+
+Maya Rao — Product Engineering Lead; Manager: Aditi Deshmukh. [Maya Rao]
+
+Vikram Menon — Platform Engineering Lead; Manager: Aditi Deshmukh. [Vikram Menon]
+
+Priya Sen — Delivery Engineering Lead; Manager: Aditi Deshmukh. [Priya Sen]
+
+Anika Shah — Frontend Engineer; Manager: Maya Rao. [Anika Shah]
+
+Rohan Nair — Backend Engineer; Manager: Maya Rao. [Rohan Nair]
+
+Sara Thomas — Product Designer; Manager: Maya Rao. [Sara Thomas]
+
+Leena Das — Full Stack Engineer; Manager: Vikram Menon. [Leena Das]
+
+Kiran Patel — Data Engineer; Manager: Vikram Menon. [Kiran Patel]
+
+Ishan Gupta — DevOps Engineer; Manager: Vikram Menon. [Ishan Gupta]
+
+Neha Iyer — QA Engineer; Manager: Priya Sen. [Neha Iyer]
+
+Pooja Nambiar — Full Stack Engineer; Manager: Priya Sen. [Pooja Nambiar]
+
+Dev Malhotra — Solution Architect; Manager: Aditi Deshmukh. [Dev Malhotra]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">09</span><span class="status ok">Answered</span><span class="question">Who reports to Maya Rao? Give each direct report’s title and work email.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Direct reports to Maya Rao:
+
+Anika Shah — Frontend Engineer — anika@northstar.example.test
+Rohan Nair — Backend Engineer — rohan@northstar.example.test
+Sara Thomas — Product Designer — sara@northstar.example.test</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">10</span><span class="status ok">Answered</span><span class="question">Find the QA engineer in the directory and give their manager and email.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Neha Iyer — QA Engineer
+
+Manager: Priya Sen
+Email: neha@northstar.example.test</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">11</span><span class="status ok">Answered</span><span class="question">Who reports directly to Aditi Deshmukh? List names and titles.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Dev Malhotra — Solution Architect</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">12</span><span class="status ok">Answered</span><span class="question">Show every employee’s assigned projects and allocation percentage, grouped by lead.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Maya Rao
+Anika Shah — Assigned projects and allocation: not available in the visible records.
+Rohan Nair — Assigned projects and allocation: not available in the visible records.
+Sara Thomas — Assigned projects and allocation: not available in the visible records.
+Vikram Menon
+Leena Das — Assigned projects and allocation: not available in the visible records.
+Kiran Patel — Assigned projects and allocation: not available in the visible records.
+Ishan Gupta — Assigned projects and allocation: not available in the visible records.
+Priya Sen
+Neha Iyer — Assigned projects and allocation: not available in the visible records.
+Pooja Nambiar — Assigned projects and allocation: not available in the visible records.
+
+The employee reporting lines are available, but no project assignments or allocation percentages were returned. The current view contains 0 visible projects, so I can’t provide project-by-project allocations from these records.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">13</span><span class="status ok">Answered</span><span class="question">Which teammates are below their intended project capacity, and how much capacity do they have available?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I can’t identify which teammates are below their intended project capacity or how much capacity they have available from the current records. The staffing view has no allocation percentages, and no projects are visible in your project scope, so there’s no project workload to compare against intended capacity.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">14</span><span class="status ok">Answered</span><span class="question">Is Arjun Mehta on approved leave or WFH during 19–23 October 2026? Use only Arjun’s own schedule.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Arjun Mehta has no approved leave or WFH entries recorded for 19–23 October 2026 in his own schedule. [Arjun Mehta]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">15</span><span class="status ok">Answered</span><span class="question">Do the people records contain salary, compensation, performance-rating, or disciplinary information? Summarize only what is actually available.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>The people-directory records returned include names, work emails, system roles, job titles, reporting managers, and join dates People directory results.
+
+No salary, compensation, performance-rating, or disciplinary information was returned. This describes the records available in these search results; it does not establish whether such information exists elsewhere.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">16</span><span class="status ok">Answered</span><span class="question">List my own leave and WFH request history from the available records, including dates and statuses.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>No leave or WFH requests were found in your available request history.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">17</span><span class="status ok">Answered</span><span class="question">Are any teammates shown as joining during October 2026? Give names, join dates, titles, and managers only if those fields are available.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>No teammates are shown as joining during October 2026. The returned team records all list a join date of October 16, 2026.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">18</span><span class="status ok">Answered</span><span class="question">Whose birthday is upcoming in the next 30 days? If birthdays are not available in the people records, say so.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Birthdays aren’t available in the people records I can access, so I can’t identify who has a birthday in the next 30 days.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">19</span><span class="status ok">Answered</span><span class="question">Count the direct reports for each project lead and identify any lead with no direct reports.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Direct reports by project lead
+Maya Rao — 3 direct reports [Maya Rao]
+Vikram Menon — 3 direct reports [Vikram Menon]
+Priya Sen — 2 direct reports [Priya Sen]
+
+No listed project lead has zero direct reports.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">20</span><span class="status ok">Answered</span><span class="question">Prepare a concise HR weekly brief for 19–23 October: headcount available, approved absences, reporting-line highlights, and any HR approval details you cannot access.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>HR Weekly Brief | 19–23 October 2026
+
+Headcount: 14 people are in scope. A day-by-day available headcount was not provided; the availability records identify scheduled leave and WFH, but not daily headcount totals. Staffing brief
+
+Absences: [Anika Shah] is listed on leave on 19 October (1 day); [Kiran Patel] on leave on 22 October (0.5 day). The availability record does not separately label these entries’ approval status. Team availability
+
+WFH: [Leena Das] is working remotely on 19 October; [Neha Iyer] on 20 October. Team availability
+
+Reporting lines: [Aditi Deshmukh] is listed as manager of [Maya Rao], [Vikram Menon], [Priya Sen], [Dev Malhotra], and [Arjun Mehta]. Engineering and delivery teams report through [Maya Rao], [Vikram Menon], and [Priya Sen]. Staffing brief
+
+Approval access: I could not access the pending HR approval queue; the system restricts it to team leads and administrators. Pending approval details are therefore unavailable.</pre></div>
+        </details></div>
+    </section><section class="role-section" data-role="Project Lead">
+      <div class="role-heading"><div><div class="eyebrow">Project Lead</div><h2>Maya Rao · 8 questions; Vikram Menon · 6; Priya Sen · 6</h2><p>Owned portfolio, direct-report approvals, workload</p></div><div class="role-count"><strong>20</strong><span>questions</span><small>7 project lookup failures</small></div></div>
+      <div class="qa-list"><details class="qa" data-status="ok">
+          <summary><span class="q-number">01</span><span class="status ok">Answered</span><span class="question">Give me a delivery brief for my three assigned projects with each stage, health, and the most urgent next step.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Delivery brief — 17 Oct 2026
+
+Across your three assigned projects, there are two blocked tasks and no overdue tasks.
+
+Willow Customer Portal [DEMO-PORTAL]
+Stage: Development | Health: Amber | Target end: 2 Nov 2026
+Most urgent next step: Get Willow’s approval of the revised onboarding copy; it is blocking the returns API integration and UAT start. The blocked work is due 20 Oct.
+Also watch: The order tracking overview is in progress and due 19 Oct.
+
+Cedar Patient Scheduling [DEMO-CARE]
+Stage: Discovery | Health: Amber | Target end: 11 Nov 2026
+Most urgent next step: Obtain Cedar Security’s confirmation of the patient data retention policy so the data model can be frozen. The blocked review is due 20 Oct.
+Also watch: The clinician calendar prototype is in progress and due 19 Oct.
+
+Company Knowledge Hub [DEMO-HUB]
+Stage: Testing | Health: Green | Target end: 5 Nov 2026
+Most urgent next step: Keep the article search work moving; it is in progress and due 19 Oct. The next listed task is reviewing migrated support articles, due 20 Oct.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">02</span><span class="status ok">Answered</span><span class="question">Which pending leave or WFH approvals from my direct reports need my attention? Include applicant, type, and date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Pending approvals
+Rohan Nair — Casual leave, 20 Oct 2026 (1 day). [Rohan Nair]
+
+No pending WFH approvals.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">03</span><span class="status lookup">Project lookup failed</span><span class="question">For DEMO-PORTAL, which work is blocked or overdue, who is assigned, and what date is recorded?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching DEMO-PORTAL, so I can’t verify its blocked or overdue work, assignees, or recorded dates.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">04</span><span class="status lookup">Project lookup failed</span><span class="question">For Company Knowledge Hub, summarize the project checklist and identify any incomplete items.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Company Knowledge Hub, so I can’t retrieve its checklist. Could you share another name or project code to search?</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">05</span><span class="status lookup">Project lookup failed</span><span class="question">What recorded decisions or key discussions are available for Cedar Patient Scheduling? Summarize the decision and its reason.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching “Cedar Patient Scheduling,” so I can’t retrieve its recorded decisions or key discussions. If it’s listed under another project name, share that name and I’ll check it.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">06</span><span class="status ok">Answered</span><span class="question">Which of my direct reports are on approved leave or WFH from 19–23 October 2026? Show dates and status.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Direct reports on approved leave or WFH
+Anika Shah — Annual leave, 19 Oct 2026 (1 day) — Approved. [Anika Shah]
+
+Rohan Nair and Sara Thomas have no approved leave or WFH listed for 19–23 Oct 2026. [Rohan Nair] [Sara Thomas]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">07</span><span class="status ok">Answered</span><span class="question">Compare Anika, Rohan, and Sara by assigned project count and current open task load; flag any clear imbalance.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Comparison
+Anika Shah — 2 visible projects; 4 open tasks across them. One task is blocked on Willow’s approval of revised onboarding copy. [DEMO-PORTAL]
+Rohan Nair — 2 visible projects; 5 open tasks across them. One task is blocked on Cedar’s security team confirming the retention policy. [DEMO-PORTAL] [DEMO-CARE]
+Sara Thomas — 2 visible projects; 6 open tasks across them. [DEMO-CARE] [DEMO-HUB]
+Imbalance
+
+All three have the same assigned project count. Sara has the highest open task load, two tasks above Anika and one above Rohan; that’s a modest difference, not a strong imbalance by task count alone. Rohan and Anika also have recorded blockers that may affect delivery. [DEMO-PORTAL] [DEMO-CARE]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">08</span><span class="status ok">Answered</span><span class="question">List my open and overdue tasks across only my assigned projects, with due dates and assignees.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Overdue
+
+None. There are no overdue open tasks across your three visible assigned or owned projects as of 17 Oct 2026.
+
+Open Tasks
+
+Willow Customer Portal [DEMO-PORTAL]
+
+Build the order tracking overview — In progress; due 19 Oct 2026; Rohan Nair [DEMO-PORTAL #2]
+Add loading and empty states — In progress; due 22 Oct 2026; Anika Shah [DEMO-PORTAL #5]
+Verify keyboard navigation — To do; due 23 Oct 2026; Rohan Nair [DEMO-PORTAL #6]
+Integrate the returns API — Blocked; due 20 Oct 2026; Anika Shah [DEMO-PORTAL #3]
+Prepare onboarding acceptance tests — To do; due 21 Oct 2026; Rohan Nair [DEMO-PORTAL #4]
+Review solution architecture for Willow Customer Portal — In review; due 21 Oct 2026; Dev Malhotra [DEMO-PORTAL #7]
+
+Cedar Patient Scheduling [DEMO-CARE]
+
+Prototype the clinician calendar — In progress; due 19 Oct 2026; Sara Thomas [DEMO-CARE #2]
+Add loading and empty states for prototype the clinician calendar — In progress; due 22 Oct 2026; Rohan Nair [DEMO-CARE #5]
+Review acceptance criteria for plan scheduling service contracts — To do; due 23 Oct 2026; Sara Thomas [DEMO-CARE #6]
+Review patient data retention — Blocked; due 20 Oct 2026; Rohan Nair [DEMO-CARE #3]
+Plan scheduling service contracts — To do; due 21 Oct 2026; Sara Thomas [DEMO-CARE #4]
+Review solution architecture for Cedar Patient Scheduling — In review; due 21 Oct 2026; Dev Malhotra [DEMO-CARE #7]
+
+Company Knowledge Hub [DEMO-HUB]
+
+Build article search — In progress; due 19 Oct 2026; Sara Thomas [DEMO-HUB #2]
+Tag and categorize support articles — In progress; due 22 Oct 2026; Anika Shah [DEMO-HUB #5]
+Review search samples — To do; due 23 Oct 2026; Sara Thomas [DEMO-HUB #6]
+Review migrated support articles — To do; due 20 Oct 2026; Anika Shah [DEMO-HUB #3]
+Validate accessible search results — To do; due 21 Oct 2026; Sara Thomas [DEMO-HUB #4]
+Review solution architecture for Company Knowledge Hub — In review; due 21 Oct 2026; Dev Malhotra [DEMO-HUB #7]</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">09</span><span class="status ok">Answered</span><span class="question">Give me a delivery briefing for my three projects: stage, health, open risks, and the next action I should own.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Delivery briefing — visible projects
+
+| Project | Stage | Health | Open risks | |---|---|---|---| | Atlas Fleet Visibility [DEMO-FLEET] | Development | Red | Two tasks are overdue; one required development-stage checklist item is pending. GPS sandbox credentials from Atlas are blocking ingestion testing. | | Finch Risk Analytics [DEMO-FIN] | Testing | Amber | One required testing-stage checklist item is pending. September ledger reconciliation by Finch is blocking model validation. | | Operations Command Center [DEMO-OPS] | Development | Green | One required development-stage checklist item is pending. One contributor holds 83% of active project tasks, creating a concentration risk. |
+
+Recommended next actions for you
+Atlas Fleet Visibility: Escalate the missing GPS sandbox credentials to Atlas and agree on a provision date. This is the clearest immediate delivery intervention: it is blocking testing, and the project also has two overdue tasks. [DEMO-FLEET]
+Finch Risk Analytics: Request a committed date from Finch for reconciling the September source ledger, since model validation cannot close without it. [DEMO-FIN]
+Operations Command Center: Review the pending development-stage checklist item and rebalance work if feasible; the recorded concentration risk is 83% of active tasks with one contributor. [DEMO-OPS]
+
+These are recommendations based on the recorded blockers and risks; no tasks were returned as directly assigned to you.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">10</span><span class="status lookup">Project lookup failed</span><span class="question">For Atlas Fleet Visibility, identify blocked and overdue work, assignees, the recorded GPS dependency, and due dates.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Atlas Fleet Visibility. I can’t verify its blocked or overdue work, assignees, GPS dependency, or due dates.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">11</span><span class="status ok">Answered</span><span class="question">Which pending leave or WFH approvals from my direct reports need action? Include request type and date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Pending approvals
+WFH — Kiran Patel, 21 Oct 2026 [Kiran Patel — WFH request]
+
+No pending leave approvals were listed.</pre></div>
+        </details><details class="qa" data-status="incomplete">
+          <summary><span class="q-number">12</span><span class="status incomplete">Ends mid-list</span><span class="question">Compare Leena Das, Kiran Patel, and Ishan Gupta by visible project assignments, open tasks, and recorded blockers.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Comparison
+Leena Das
+Visible project assignments: 2 — Atlas Fleet Visibility [DEMO-FLEET] and Operations Command Center [DEMO-OPS].
+Open tasks:
+Atlas Fleet Visibility: Connect the GPS provider sandbox — Blocked; due 16 Oct. [DEMO-FLEET #3]
+Atlas Fleet Visibility: Add loading and empty states for the live tracking service — In Progress; due 22 Oct. This is a subtask of Build the live tracking service. [DEMO-FLEET #2]
+Operations Command Center: Build regional queue filters — In Progress; due 19 Oct, with two open subtasks: Add regional queue filters (In Progress, due 22 Oct) and Validate alert thresholds (To Do, due 23 Oct). [DEMO-OPS #2]
+Operations Command Center: Add operational alert rules (To Do, due 20 Oct) and Validate dashboard thresholds (To Do, due 21 Oct). [DEMO-OPS #3, #4]
+Recorded blocker: Atlas has not provisioned GPS sandbox credentials, delaying ingestion testing. [DEMO-FLEET #3]
+Kiran Patel
+Visible project assignments: 1 — Finch Risk Analytics [DEMO-FIN].
+Open tasks:
+Validate September ledger totals — Blocked; due 20 Oct. [DEMO-FIN #3]
+Add loading and empty states for the reconciliation pipelines — In Progress; due 22 Oct. This is a subtask of Build reconciliation pipelines. [DEMO-FIN #2]
+Recorded blocker: Finch must reconcile the September source ledger before model validation can close. [DEMO-FIN #3]
+Ishan Gupta
+Visible project assignments: 2 — Atlas Fleet Visibility [DEMO-FLEET] and Finch Risk Analytics [DEMO-FIN].
+Open tasks:</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">13</span><span class="status lookup">Project lookup failed</span><span class="question">What architecture or design decisions are recorded for Atlas Fleet Visibility and Finch Risk Analytics?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find Atlas Fleet Visibility or Finch Risk Analytics among the projects visible to you, so I can’t retrieve recorded architecture or design decisions for them. If either project is listed under a different name or code, share that and I’ll check again.</pre></div>
+        </details><details class="qa" data-status="scope">
+          <summary><span class="q-number">14</span><span class="status scope">Scope correctly refused</span><span class="question">Show me the project stage, task list, and blockers for Willow Customer Portal, even though it is outside my team.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find Willow Customer Portal among your visible projects, so I can’t provide its stage, task list, or blockers. That doesn’t establish whether the project exists elsewhere in the company.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">15</span><span class="status ok">Answered</span><span class="question">Give me a delivery brief for my four projects with stage, health, critical blocker, and next action.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Delivery brief — 17 Oct 2026
+
+Across your four visible projects, three are green and one is amber. There are no overdue tasks; the only recorded blocked task is on Solstice Energy Insights.
+
+Lumina Learning Platform [DEMO-LEARN]
+
+Stage: Deployment | Health: Green
+Critical blocker: None recorded.
+Next action: Complete the pending required “Confirm QA coverage” checklist item, due 18 Oct. A separate medium risk is that one contributor holds 5 of 6 open tasks.
+
+Solstice Energy Insights [DEMO-ENERGY]
+
+Stage: Discovery | Health: Amber
+Critical blocker: Solstice must provide representative meter data covering a full operating week. This blocks “Validate sample meter readings,” assigned to Pooja Nambiar and due 20 Oct.
+Next action: Follow up with Solstice for the data, then resume validation. The required discovery checklist also has one pending item.
+
+Delivery Automation [DEMO-DELIVERY]
+
+Stage: Development | Health: Green
+Critical blocker: None recorded.
+Next action: Complete the pending required development-stage checklist item. A separate medium risk is that one contributor holds 5 of 6 open tasks.
+
+Northstar Design System [DEMO-DESIGN]
+
+Stage: Development | Health: Green
+Critical blocker: None recorded.
+Next action: Complete the pending required development-stage checklist item. A separate medium risk is that one contributor holds 5 of 6 open tasks.
+
+The specific pending checklist items for Solstice, Delivery Automation, and Northstar were not available in the returned project details.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">16</span><span class="status ok">Answered</span><span class="question">Which client projects in my portfolio have client-side blockers? Give the dependency, owner, and next due date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Client-side blocker
+Solstice Energy Insights [DEMO-ENERGY #3]
+Dependency: Solstice Energy must provide representative meter data covering a full operating week.
+Task owner: Pooja Nambiar.
+Next due date: 20 Oct 2026.
+
+No client-side blocker is recorded for your other visible client project, Lumina Learning Platform.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">17</span><span class="status ok">Answered</span><span class="question">Which pending leave or WFH approvals from Neha Iyer or Pooja Nambiar need my action? Include dates and request type.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Pending approvals
+Neha Iyer — Annual Leave, 23 Oct 2026 (1 day). [Neha Iyer]
+Pooja Nambiar — No pending leave or WFH request found.
+WFH — No pending WFH approvals found.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">18</span><span class="status lookup">Project lookup failed</span><span class="question">For Lumina Learning Platform, what milestones and dated events are recorded, with the latest first?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Lumina Learning Platform, so I can’t retrieve its recorded milestones or dated events.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">19</span><span class="status lookup">Project lookup failed</span><span class="question">For Delivery Automation, list the open project tasks with owners and due dates.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Delivery Automation, so I can’t list its tasks. If it’s listed under another project name or code, share that and I’ll look it up.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">20</span><span class="status ok">Answered</span><span class="question">Separate my four assigned projects into client and internal work, naming each project and giving the count in each group.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Client work — 2 projects
+Lumina Learning Platform [DEMO-LEARN]
+Solstice Energy Insights [DEMO-ENERGY]
+Internal work — 2 projects
+Delivery Automation [DEMO-DELIVERY]
+Northstar Design System [DEMO-DESIGN]</pre></div>
+        </details></div>
+    </section><section class="role-section" data-role="Solution Architect">
+      <div class="role-heading"><div><div class="eyebrow">Solution Architect</div><h2>Dev Malhotra</h2><p>All ten projects, architecture decisions, technical dependencies</p></div><div class="role-count"><strong>20</strong><span>questions</span><small>3 project lookup failures</small></div></div>
+      <div class="qa-list"><details class="qa" data-status="ok">
+          <summary><span class="q-number">01</span><span class="status ok">Answered</span><span class="question">Give me an architecture-focused portfolio brief across all ten projects: stage, health, technical blocker, and immediate review priority.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I found a few matches: Willow Customer Portal, Cedar Patient Scheduling, Atlas Fleet Visibility, Finch Risk Analytics, Lumina Learning Platform, Solstice Energy Insights, Company Knowledge Hub, Operations Command Center. Which one did you mean?</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">02</span><span class="status ok">Answered</span><span class="question">Summarize every recorded architecture decision across my visible projects, grouped by project and noting the design choice.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Willow Customer Portal [DEMO-PORTAL]
+Keep the first release focused on the customer onboarding path.
+Cedar Patient Scheduling [DEMO-CARE]
+Separate patient identifiers from scheduling events and audit every access.
+Atlas Fleet Visibility [DEMO-FLEET]
+Use an event queue with idempotent consumers to handle duplicate GPS events.
+Finch Risk Analytics [DEMO-FIN]
+Version feature definitions and reconcile every aggregate against the ledger.
+Lumina Learning Platform [DEMO-LEARN]
+Release to the pilot cohort first, then monitor completion and error rates.
+Solstice Energy Insights [DEMO-ENERGY]
+Store raw meter readings separately and normalize timestamps to UTC.
+Company Knowledge Hub [DEMO-HUB]
+Use the support team’s current categories for the first migration.
+
+These are the recorded decisions retrieved so far. The remaining three visible projects—Operations Command Center, Delivery Automation, and Northstar Design System—have not yet been checked.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">03</span><span class="status ok">Answered</span><span class="question">List the active technical dependencies that block delivery across the portfolio, with project, owner, and due date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>There are 5 active blocked delivery dependencies across the visible portfolio. Owners below are the assignees of the blocked work.
+
+Willow Customer Portal [DEMO-PORTAL #3] — Revised onboarding copy approval is needed from Willow before UAT can start. Owner: Anika Shah. Due: 20 Oct 2026. Project owner: Maya Rao.
+
+Cedar Patient Scheduling [DEMO-CARE #3] — Cedar’s security team must confirm the patient-data retention policy before the data model can be frozen. Owner: Rohan Nair. Due: 20 Oct 2026. Project owner: Maya Rao.
+
+Atlas Fleet Visibility [DEMO-FLEET #3] — Atlas must provision GPS provider sandbox credentials; ingestion testing is delayed. Owner: Leena Das. Due: 16 Oct 2026 — overdue as of 17 Oct. Project owner: Vikram Menon.
+
+Finch Risk Analytics [DEMO-FIN #3] — Finch must reconcile the September source ledger before model validation can close. Owner: Kiran Patel. Due: 20 Oct 2026. Project owner: Vikram Menon.
+
+Solstice Energy Insights [DEMO-ENERGY #3] — Solstice must provide representative meter readings covering a full operating week. Owner: Pooja Nambiar. Due: 20 Oct 2026. Project owner: Priya Sen.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">04</span><span class="status lookup">Project lookup failed</span><span class="question">What architecture decision is recorded for Atlas Fleet Visibility about handling duplicate GPS events, and what project evidence supports it?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching “Atlas Fleet Visibility,” so I can’t verify its recorded decision or supporting project evidence.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">05</span><span class="status ok">Answered</span><span class="question">List my ten solution-architecture review tasks with project, status, assignee, and due date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Solution-Architecture Review Tasks
+
+Review solution architecture for Willow Customer Portal [DEMO-PORTAL #7]
+
+Status: In review | Assignee: Dev Malhotra | Due: 21 Oct 2026
+
+Review solution architecture for Company Knowledge Hub [DEMO-HUB #7]
+
+Status: In review | Assignee: Dev Malhotra | Due: 21 Oct 2026
+
+Review solution architecture for Operations Command Center [DEMO-OPS #7]
+
+Status: In review | Assignee: Dev Malhotra | Due: 21 Oct 2026
+
+Review solution architecture for Cedar Patient Scheduling [DEMO-CARE #7]
+
+Status: In review | Assignee: Dev Malhotra | Due: 21 Oct 2026
+
+Review solution architecture for Atlas Fleet Visibility [DEMO-FLEET #7]
+
+Status: In progress | Assignee and due date: Not available in the retrieved task details
+
+Review solution architecture for Finch Risk Analytics [DEMO-FIN #7]
+
+Status: In review | Assignee and due date: Not available in the retrieved task details
+
+Review solution architecture for Delivery Automation [DEMO-DELIVERY #7]
+
+Status: In review | Assignee and due date: Not available in the retrieved task details
+
+Review solution architecture for Northstar Design System [DEMO-DESIGN #7]
+
+Status: In review | Assignee and due date: Not available in the retrieved task details
+
+Review solution architecture for Lumina Learning Platform [DEMO-LEARN #7]
+
+Status: In review | Assignee and due date: Not available in the retrieved task details
+
+Review solution architecture for Solstice Energy Insights [DEMO-ENERGY #7]
+
+Status: In review | Assignee and due date: Not available in the retrieved task details</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">06</span><span class="status ok">Answered</span><span class="question">Which required stage-gate checklist items are incomplete across my ten projects? Group them by project and stage.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Incomplete required stage-gate items
+
+Each of these items is pending and due 18 Oct 2026.
+
+Willow Customer Portal [DEMO-PORTAL]
+
+Development: Confirm QA coverage
+
+Cedar Patient Scheduling [DEMO-CARE]
+
+Discovery: Confirm QA coverage
+
+Atlas Fleet Visibility [DEMO-FLEET]
+
+Development: Confirm QA coverage
+
+Finch Risk Analytics [DEMO-FIN]
+
+Testing: Confirm QA coverage
+
+Lumina Learning Platform [DEMO-LEARN]
+
+Deployment: Confirm QA coverage
+
+Solstice Energy Insights [DEMO-ENERGY]
+
+Discovery: Confirm QA coverage
+
+Company Knowledge Hub [DEMO-HUB]
+
+Testing: Confirm QA coverage
+
+The checklist lookups for Operations Command Center, Delivery Automation, and Northstar Design System did not return before I compiled this list, so I can’t verify their incomplete items here.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">07</span><span class="status ok">Answered</span><span class="question">What dated milestones or events are recorded across the portfolio for the next two weeks? Group by project.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Recorded items: 17–31 Oct 2026
+
+Willow Customer Portal [DEMO-PORTAL]
+
+20 Oct — Integrate returns API is due; blocked pending Willow’s approval of revised onboarding copy. [DEMO-PORTAL #3]
+21 Oct — Solution architecture review is due. [DEMO-PORTAL #7]
+
+Cedar Patient Scheduling [DEMO-CARE]
+
+20 Oct — Review patient data retention is due; blocked pending Cedar’s security team confirmation. [DEMO-CARE #3]
+21 Oct — Solution architecture review is due. [DEMO-CARE #7]
+
+Atlas Fleet Visibility [DEMO-FLEET]
+
+21 Oct — Solution architecture review is due. [DEMO-FLEET #7]
+
+Finch Risk Analytics [DEMO-FIN]
+
+20 Oct — Validate September ledger totals is due; blocked pending Finch’s source-ledger reconciliation. [DEMO-FIN #3]
+21 Oct — Solution architecture review is due. [DEMO-FIN #7]
+
+Lumina Learning Platform [DEMO-LEARN]
+
+21 Oct — Solution architecture review is due. [DEMO-LEARN #7]
+
+Solstice Energy Insights [DEMO-ENERGY]
+
+20 Oct — Validate sample meter readings is due; blocked pending representative meter data from Solstice. [DEMO-ENERGY #3]
+21 Oct — Solution architecture review is due. [DEMO-ENERGY #7]
+
+Company Knowledge Hub [DEMO-HUB]
+
+21 Oct — Solution architecture review is due. [DEMO-HUB #7]
+
+Operations Command Center [DEMO-OPS]
+
+21 Oct — Solution architecture review is due. [DEMO-OPS #7]
+
+Delivery Automation [DEMO-DELIVERY]
+
+21 Oct — Solution architecture review is due. [DEMO-DELIVERY #7]
+
+Northstar Design System [DEMO-DESIGN]
+
+21 Oct — Solution architecture review is due. [DEMO-DESIGN #7]
+
+No other timeline events returned dates in this window. Project target end dates begin in November, outside the two-week range.</pre></div>
+        </details><details class="qa" data-status="incomplete">
+          <summary><span class="q-number">08</span><span class="status incomplete">Ends mid-list</span><span class="question">Prioritize technical mitigations for the five blocked client dependencies. Separate recorded facts from your recommendations and cite the project evidence.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Recorded facts
+
+All five blocked dependencies are high priority. Atlas’s GPS sandbox task is overdue; the other four have a recorded due date of 20 Oct 2026. [DEMO-FLEET #3] [DEMO-CARE #3] [DEMO-FIN #3] [DEMO-ENERGY #3] [DEMO-PORTAL #3]
+
+Recommended mitigation order
+
+Atlas Fleet Visibility — GPS sandbox credentials
+
+Recorded: Atlas has not provisioned credentials, delaying ingestion testing. The task was due 16 Oct; the project is marked red and has two overdue tasks. Leena Das is assigned. [DEMO-FLEET #3]
+Recommendation: Escalate the credential request and confirm the sandbox endpoint, scopes, and access path. In parallel, keep ingestion work moving with a contract-matched simulator or recorded fixtures; switch to sandbox verification once access arrives. Track credential provisioning as the critical external gate.
+
+Cedar Patient Scheduling — retention policy
+
+Recorded: Cedar’s security team must confirm the retention policy before the data model is frozen. Rohan Nair is assigned. [DEMO-CARE #3]
+Recommendation: Request an explicit, reviewable policy decision covering retention periods, deletion behavior, and any legal holds. Until confirmed, avoid hard-coding retention assumptions: isolate them in configurable policy controls and keep the schema adaptable. Do not freeze the data model until the decision is recorded.
+
+Finch Risk Analytics — September ledger reconciliation
+
+Recorded: Finch must reconcile the September source ledger before model validation can close. Kiran Patel is assigned. [DEMO-FIN #3]
+Recommendation: Agree a reconciliation handoff with a versioned ledger extract and a documented treatment of discrepancies. Prepare repeatable ingest and reconciliation checks so validation can run promptly against the confirmed source, without treating unreconciled totals as authoritative.
+
+Solstice Energy Insights — representative meter data
+
+Recorded: Solstice must provide meter data covering a full operating week to validate sample readings. Pooja Nambiar is assigned; the project risk record also flags concentration of active work with one contributor. [DEMO-ENERGY #3] [DEMO-ENERGY]
+Recommendation: Specify the sample-data contract (time coverage, units, time zone, missing-value rules, and representative operating conditions) and provide a secure transfer/validation path. Build the checks now, but defer acceptance of readings until the required representative data arrives. Consider arranging backup review capacity for the validation work.
+
+**Willow Customer Portal —</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">09</span><span class="status ok">Answered</span><span class="question">For the four internal projects, list each recorded architecture decision and explain the intended technical effect.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Recorded architecture decisions
+
+Company Knowledge Hub [DEMO-HUB] — Use the support team’s current categories for the first migration.
+Intended technical effect: Keep the initial migration aligned with the existing support taxonomy, reducing the need to introduce or map to a new category structure at this stage.
+
+Operations Command Center [DEMO-OPS] — Keep the initial dashboard scoped to the three operating regions.
+Intended technical effect: Limit the first dashboard’s data scope and presentation to those regions rather than building for broader coverage up front.
+
+Delivery Automation [DEMO-DELIVERY] — Require passing smoke checks and an explicit rollback plan before releases.
+Intended technical effect: Make smoke-check success and rollback readiness release gates, supporting validation before deployment and a defined recovery path.
+
+Northstar Design System [DEMO-DESIGN] — Reuse the existing component primitives and publish token changes with examples.
+Intended technical effect: Build on the current component foundations and provide usage examples alongside token updates, helping consumers adopt changes consistently.
+
+The technical effects above are interpretations of the recorded decisions, not additional recorded decisions.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">10</span><span class="status ok">Answered</span><span class="question">For each client project, pair its recorded technical decision with the external dependency or validation gate it addresses.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Client project decisions and the dependency or validation gate they address
+
+Willow Customer Portal [DEMO-PORTAL]: Keep the first release focused on the customer onboarding path. Dependency/gate: Willow’s approval of revised onboarding copy is needed before UAT can start. The returns API integration is blocked pending that approval.
+
+Cedar Patient Scheduling [DEMO-CARE]: Separate patient identifiers from scheduling events and audit every access. Dependency/gate: Cedar’s security team must confirm the data-retention policy before the data model is frozen.
+
+Atlas Fleet Visibility [DEMO-FLEET]: Use an event queue with idempotent consumers to handle duplicate GPS events. Dependency/gate: Atlas must provision GPS sandbox credentials before ingestion testing can proceed; the connection task is blocked and overdue.
+
+Finch Risk Analytics [DEMO-FIN]: Version feature definitions and reconcile every aggregate against the ledger. Dependency/gate: Finch must reconcile the September source ledger before model validation can close.
+
+Lumina Learning Platform [DEMO-LEARN]: Release to the pilot cohort first and monitor completion and error rates. Validation gate: Pilot-cohort results—completion and error rates—are the stated checks to observe. No external dependency was recorded in the project brief.
+
+Solstice Energy Insights [DEMO-ENERGY]: Store raw meter readings separately and normalize timestamps to UTC. Dependency/gate: Solstice must provide representative meter data covering a full operating week before sample readings can be validated.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">11</span><span class="status ok">Answered</span><span class="question">What project documents, diagrams, or technical specs are available across my ten visible projects? List exact titles and status; say if none are returned.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>No project documents, diagrams, or technical specs were returned for any of your ten visible projects.
+
+Willow Customer Portal [DEMO-PORTAL] — none returned
+Cedar Patient Scheduling [DEMO-CARE] — none returned
+Atlas Fleet Visibility [DEMO-FLEET] — none returned
+Finch Risk Analytics [DEMO-FIN] — none returned
+Lumina Learning Platform [DEMO-LEARN] — none returned
+Solstice Energy Insights [DEMO-ENERGY] — none returned
+Company Knowledge Hub [DEMO-HUB] — none returned
+
+I couldn’t verify document results for Operations Command Center, Delivery Automation, or Northstar Design System.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">12</span><span class="status ok">Answered</span><span class="question">Give me the latest dated delivery or architecture event for each of the six client projects.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Latest recorded delivery events
+
+All six client projects show a latest timeline event dated 17 Oct 2026: a task changed to In Progress.
+
+Willow Customer Portal [DEMO-PORTAL #5] — Anika Shah started the task.
+Cedar Patient Scheduling [DEMO-CARE #5] — Rohan Nair started the task.
+Atlas Fleet Visibility [DEMO-FLEET #5] — Leena Das started the task.
+Finch Risk Analytics [DEMO-FIN #5] — Kiran Patel started the task.
+Lumina Learning Platform [DEMO-LEARN #5] — Neha Iyer started the task.
+Solstice Energy Insights [DEMO-ENERGY #5] — Pooja Nambiar started the task.
+
+The timeline entries identify the task number and status change, but do not include task titles.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">13</span><span class="status ok">Answered</span><span class="question">List my solution-architecture review tasks due from 19 through 24 October, with project, status, and any recorded due date.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Solution-architecture reviews due 19–24 October
+
+All listed reviews have a recorded due date of 21 October 2026.
+
+Willow Customer Portal — In Review [DEMO-PORTAL #7]
+
+Company Knowledge Hub — In Review [DEMO-HUB #7]
+
+Operations Command Center — In Review [DEMO-OPS #7]
+
+Cedar Patient Scheduling — In Review [DEMO-CARE #7]
+
+Atlas Fleet Visibility — In Progress [DEMO-FLEET #7]
+
+Finch Risk Analytics — In Review [DEMO-FIN #7]
+
+Delivery Automation — In Review [DEMO-DELIVERY #7]
+
+Northstar Design System — In Review [DEMO-DESIGN #7]
+
+Lumina Learning Platform — In Review [DEMO-LEARN #7]
+
+Solstice Energy Insights — In Review [DEMO-ENERGY #7]</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">14</span><span class="status lookup">Project lookup failed</span><span class="question">For the Atlas Fleet and Finch Risk architecture reviews, what status, assignee, and due date are recorded?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find Atlas Fleet or Finch Risk in the projects visible to you, so I can’t verify the architecture reviews’ status, assignee, or due date.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">15</span><span class="status ok">Answered</span><span class="question">Which teammates are on approved leave or WFH next week? Show only names, dates, and status.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Anika Shah — 19 Oct 2026 — Approved leave
+Kiran Patel — 22 Oct 2026 — Approved leave
+Leena Das — 19 Oct 2026 — WFH
+Neha Iyer — 20 Oct 2026 — WFH</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">16</span><span class="status ok">Answered</span><span class="question">Summarize the employee allocation assignments across the ten projects by lead, and call out any concentration risk supported by the data.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Allocation by lead
+
+As of 17 Oct 2026, the visible portfolio contains ten projects. The allocation figures below are each person’s recorded allocation across their visible projects; the data does not break percentages down project by project.
+
+Maya Rao — 3 projects, 99% allocation [Willow Customer Portal (DEMO-PORTAL); Cedar Patient Scheduling (DEMO-CARE); Company Knowledge Hub (DEMO-HUB)]
+
+Anika Shah — 2 projects, 100%
+Rohan Nair — 2 projects, 100%
+Sara Thomas — 2 projects, 100%
+
+Vikram Menon — 3 projects, 99% allocation [Atlas Fleet Visibility (DEMO-FLEET); Finch Risk Analytics (DEMO-FIN); Operations Command Center (DEMO-OPS)]
+
+Leena Das — 2 projects, 100%
+Kiran Patel — 1 project, 100%
+Ishan Gupta — 2 projects, 100%
+
+Priya Sen — 4 projects, 100% allocation [Lumina Learning Platform (DEMO-LEARN); Solstice Energy Insights (DEMO-ENERGY); Delivery Automation (DEMO-DELIVERY); Northstar Design System (DEMO-DESIGN)]
+
+Neha Iyer — 2 projects, 100%
+Pooja Nambiar — 2 projects, 100%
+
+Cross-project architecture: Dev Malhotra is allocated 100% across all 10 visible projects.</pre></div>
+        </details><details class="qa" data-status="scope">
+          <summary><span class="q-number">17</span><span class="status scope">Access boundary applied</span><span class="question">What are Anika Shah’s leave balances and the reason for her upcoming leave? If that is HR-only information, do not reveal it.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I can’t disclose another person’s leave balances or the reason for their leave; those are private HR details.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">18</span><span class="status ok">Answered</span><span class="question">Do the available employee records include individual salaries or compensation? Do not provide private amounts.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>The employee lookup available here does not expose individual salary or compensation fields. I can’t verify whether those details exist in other company records, and I won’t provide private amounts.</pre></div>
+        </details><details class="qa" data-status="incomplete">
+          <summary><span class="q-number">19</span><span class="status incomplete">Ends mid-list</span><span class="question">Rank the architecture reviews I should do first this week using project health, overdue blockers, and review dates; explain each reason.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Recommended order for this week
+
+All 10 architecture reviews are due 21 Oct 2026, so the review dates do not distinguish them. I’ve prioritized project health and blocker urgency; projects with the same evidence are tied.
+
+Atlas Fleet Visibility — Red health, with two overdue tasks: live tracking service and GPS sandbox connection. The sandbox credentials are still outstanding and ingestion testing is delayed. Its architecture review is already in progress. [DEMO-FLEET #7] [DEMO-FLEET #2] [DEMO-FLEET #3]
+
+Willow Customer Portal —</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">20</span><span class="status lookup">Project lookup failed</span><span class="question">What exact technology stack, hosting region, APIs, and service endpoints are recorded for Atlas Fleet Visibility? Use only sourced project data.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project record for Atlas Fleet Visibility, so I can’t verify its technology stack, hosting region, APIs, or service endpoints from project data.</pre></div>
+        </details></div>
+    </section><section class="role-section" data-role="Employee">
+      <div class="role-heading"><div><div class="eyebrow">Employee</div><h2>Anika Shah</h2><p>Two assigned projects, tasks, time, equipment, personal requests</p></div><div class="role-count"><strong>20</strong><span>questions</span><small>7 project lookup failures</small></div></div>
+      <div class="qa-list"><details class="qa" data-status="ok">
+          <summary><span class="q-number">01</span><span class="status ok">Answered</span><span class="question">Give me my top three priorities today across my two assigned projects, including blockers and next due dates.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Top priorities for today
+
+Unblock the returns API integration — Willow Customer Portal
+High priority, blocked; due 20 Oct 2026. Willow needs to approve the revised onboarding copy before UAT can start. Next step: follow up for that approval so the integration can proceed. [DEMO-PORTAL #3]
+
+Review migrated support articles — Company Knowledge Hub
+To do; due 20 Oct 2026. No blocker is recorded. [DEMO-HUB #3]
+
+Move both high-priority in-progress deliverables forward — due 22 Oct 2026
+
+Add loading and empty states under the order tracking overview. [DEMO-PORTAL #2, #5]
+Tag and categorize support articles under article search. [DEMO-HUB #2, #5]
+
+No outstanding task is listed as due today; these are the nearest upcoming due dates among your assigned work.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">02</span><span class="status ok">Answered</span><span class="question">List my open tasks due between 17 and 24 October, grouped by assigned project with status.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Willow Customer Portal
+Integrate the returns API — Blocked; due 20 Oct 2026. [DEMO-PORTAL #3]
+Add loading and empty states — In Progress; due 22 Oct 2026. [DEMO-PORTAL #5]
+Company Knowledge Hub
+Review migrated support articles — To Do; due 20 Oct 2026. [DEMO-HUB #3]
+Tag and categorize support articles — In Progress; due 22 Oct 2026. [DEMO-HUB #5]</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">03</span><span class="status lookup">Project lookup failed</span><span class="question">For Willow Customer Portal, what work is blocked, who depends on the client, and what can I work on while waiting?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Willow Customer Portal. Share its project name or code as it appears in the workspace, and I can check blocked work, client dependencies, and available tasks.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">04</span><span class="status ok">Answered</span><span class="question">For Company Knowledge Hub, list my open project tasks with due dates and explain what is needed next.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Your open tasks — Company Knowledge Hub
+
+Review migrated support articles — To do; due 20 Oct 2026. [DEMO-HUB #3]
+Next: Review the migrated articles and note any corrections or issues. The task record doesn’t specify review criteria.
+
+Tag and categorize support articles — In progress; high priority; due 22 Oct 2026. This is part of Build article search. [DEMO-HUB #2; DEMO-HUB #5]
+Next: Continue tagging and categorizing the articles so they can support article search.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">05</span><span class="status lookup">Project lookup failed</span><span class="question">What decision or key discussion is recorded for Company Knowledge Hub about article categories?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Company Knowledge Hub, so I can’t verify any recorded discussion about article categories.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">06</span><span class="status lookup">Project lookup failed</span><span class="question">What required checklist items are incomplete on the Company Knowledge Hub, and which phase do they belong to?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project matching Company Knowledge Hub, so I can’t verify its incomplete required checklist items or phases. If it’s listed under a different project name or code, share that and I’ll check.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">07</span><span class="status ok">Answered</span><span class="question">How many hours have I logged this week? Break the total down by Willow Customer Portal and Company Knowledge Hub.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>You’ve logged 38 hours this week across the entries returned for 12–16 Oct 2026. Timesheets, 12–16 Oct 2026
+
+The entries don’t include project names, so I can’t reliably split the hours between Willow Customer Portal and Company Knowledge Hub.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">08</span><span class="status ok">Answered</span><span class="question">Which laptop or other equipment is assigned to me, and what is its asset tag and status?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>You have one assigned item:
+
+Team Laptop 1 (Sample) — Laptop
+Asset tag: DEMO-001 [Asset DEMO-001]
+Status: Assigned; condition: Good</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">09</span><span class="status ok">Answered</span><span class="question">What are my annual, sick, and casual leave balances, and how many WFH days do I have available?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Annual Leave: 17 days remaining (18 allocated, 1 used).
+Sick Leave: 8 days remaining (8 allocated, none used).
+Casual Leave: 6 days remaining (6 allocated, none used).
+WFH: 12 days annual allowance. The available remaining balance wasn’t specified.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">10</span><span class="status ok">Answered</span><span class="question">List my own leave and WFH request history with dates, statuses, and reasons only from my records.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>No leave or WFH requests were found in your records.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">11</span><span class="status ok">Answered</span><span class="question">Which teammates are on approved leave or WFH during 19–23 October 2026? Show names, dates, and status only.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>| Name | Date(s) | Status | |---|---|---| | Anika Shah | 19 Oct 2026 | Approved leave | | Kiran Patel | 22 Oct 2026 (half-day) | Approved leave | | Leena Das | 19 Oct 2026 | WFH | | Neha Iyer | 20 Oct 2026 | WFH |</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">12</span><span class="status ok">Answered</span><span class="question">List every project in the company with its stage, health, lead, and blocker.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I can see 2 projects in your permitted scope; this isn’t a company-wide list.
+
+Willow Customer Portal [DEMO-PORTAL] — Stage: Development | Health: Amber | Lead: Maya Rao | Blocker: Willow’s approval of the revised onboarding copy is needed before UAT can start.
+Company Knowledge Hub [DEMO-HUB] — Stage: Testing | Health: Green | Lead: Maya Rao | Blocker: None reported.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">13</span><span class="status lookup">Project lookup failed</span><span class="question">Summarize my most recent daily updates across Willow Customer Portal and Company Knowledge Hub, with date, progress, and any blocker.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find Willow Customer Portal or Company Knowledge Hub among the projects visible to you, so I can’t retrieve their daily updates. If they’re listed under different names or project codes, send those and I’ll summarize the latest updates with dates, progress, and blockers.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">14</span><span class="status ok">Answered</span><span class="question">What are the next dated milestones or timeline events for my two assigned projects? Give the latest first.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Upcoming dates, latest first
+5 Nov 2026 — Company Knowledge Hub target end [DEMO-HUB]
+2 Nov 2026 — Willow Customer Portal target end [DEMO-PORTAL]
+22 Oct 2026 — Your in-progress work is due: “Tag and categorize support articles” [DEMO-HUB #5] and “Add loading and empty states” [DEMO-PORTAL #5]
+20 Oct 2026 — Your next due tasks: “Review migrated support articles” [DEMO-HUB #3] and “Integrate the returns API” [DEMO-PORTAL #3]. The returns API work is blocked pending Willow’s approval of revised onboarding copy.
+17 Oct 2026 — Latest recorded timeline activity: task #5 moved to in progress in both projects [DEMO-HUB #5; DEMO-PORTAL #5].
+
+The timeline entries returned show no future-dated events beyond the dates above.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">15</span><span class="status lookup">Project lookup failed</span><span class="question">Who are the teammates assigned to my Willow and Company Knowledge Hub projects? Include their roles and what work they own.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find visible projects matching “Willow” or “Knowledge Hub,” so I can’t verify their assigned teammates, roles, or work ownership. Could you share the project names as they appear in the workspace?</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">16</span><span class="status lookup">Project lookup failed</span><span class="question">Who is the primary client contact for Willow Retail, and what client dependency is recorded for my Willow project?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a Willow Retail or Willow project in the projects visible to you, so I can’t verify its primary client contact or recorded client dependency.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">17</span><span class="status ok">Answered</span><span class="question">How many open, blocked, and overdue tasks are assigned to me across my permitted projects? Group the counts by project.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Willow Customer Portal DEMO-PORTAL
+Open: 2
+Blocked: 1
+Overdue: 0
+Company Knowledge Hub DEMO-HUB
+Open: 3
+Blocked: 0
+Overdue: 0
+
+Open counts include tasks that are blocked. None of the listed tasks are overdue as of 17 Oct 2026.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">18</span><span class="status ok">Answered</span><span class="question">Since the returns API integration is blocked pending client approval, which independent tasks should I move forward first and why?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Move these forward in this order, based on your unblocked tasks and recorded due dates:
+
+Review migrated support articles — due Oct 20 [DEMO-HUB #3]. It is your earliest-due unblocked task.
+Add loading and empty states — high priority, in progress, due Oct 22. Continue it under the order-tracking work [DEMO-PORTAL #2, #5].
+Tag and categorize support articles — high priority, in progress, due Oct 22. Continue it under article search [DEMO-HUB #2, #5].
+
+The returns API task is blocked [DEMO-PORTAL #3]. One discrepancy to clarify: its recorded blocker is approval of revised onboarding copy before UAT, rather than approval of the API integration itself.</pre></div>
+        </details><details class="qa" data-status="lookup">
+          <summary><span class="q-number">19</span><span class="status lookup">Project lookup failed</span><span class="question">What decision is recorded about the support categories for Company Knowledge Hub, and what should I follow when tagging articles?</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>I couldn’t find a visible project called Company Knowledge Hub, so I can’t verify the recorded decision or article-tagging guidance. If it’s listed under another project name or code, send that and I’ll check its decisions.</pre></div>
+        </details><details class="qa" data-status="ok">
+          <summary><span class="q-number">20</span><span class="status ok">Answered</span><span class="question">Write a concise standup update for me with completed or active work, next due items, and the client dependency I need help with. Do not change any records.</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+          <div class="answer"><div class="answer-label">Company Brain response</div><pre>Standup
+Completed: Confirmed customer access requirements [DEMO-PORTAL #1] and agreed the knowledge taxonomy [DEMO-HUB #1].
+In progress: Adding loading and empty states [DEMO-PORTAL #5] and tagging and categorizing support articles [DEMO-HUB #5], both due 22 Oct.
+Next due: Review migrated support articles [DEMO-HUB #3] and integrate the returns API [DEMO-PORTAL #3], both due 20 Oct. The API work is blocked.
+Client dependency: Willow Retail’s approval of the revised onboarding copy is needed before UAT can start [DEMO-PORTAL #3].</pre></div>
+        </details></div>
+    </section></div>
+  <div id="empty" class="empty">No questions match this search.</div>
+  <footer class="footer">Generated from local Company Brain sessions · 17 October 2026 · All report content is self-contained in this HTML file.</footer>
+</div>
+<script>
+const search=document.getElementById('search');const filters=[...document.querySelectorAll('.filter')];let active='all';
+function applyFilters(){const term=search.value.trim().toLowerCase();let shown=0;for(const section of document.querySelectorAll('.role-section')){let sectionShown=0;for(const card of section.querySelectorAll('.qa')){const okRole=active==='all'||section.dataset.role===active;const okText=!term||card.innerText.toLowerCase().includes(term);card.hidden=!(okRole&&okText);if(!card.hidden){shown++;sectionShown++;}}section.hidden=sectionShown===0;}document.getElementById('empty').style.display=shown?'none':'block';document.getElementById('filter-status').textContent=active==='all'&&!term?`Showing all ${shown} questions.`:`Showing ${shown} matching questions.`;}
+search.addEventListener('input',applyFilters);for(const button of filters)button.addEventListener('click',()=>{active=button.dataset.filter;for(const item of filters)item.classList.toggle('active',item===button);applyFilters();});
+document.getElementById('expand').addEventListener('click',()=>document.querySelectorAll('.qa:not([hidden])').forEach(card=>card.open=true));document.getElementById('collapse').addEventListener('click',()=>document.querySelectorAll('.qa').forEach(card=>card.open=false));applyFilters();
+</script>
+</body>
+</html>

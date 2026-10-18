@@ -1,7 +1,6 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, count, desc, eq, gte, lte } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte } from "@/db/graph-query";
 import {
 	Calendar,
 	CalendarDays,
@@ -41,7 +40,7 @@ export const getEmployeePageData = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.inputValidator((data: unknown) => z.string().parse(data))
 	.handler(async ({ data: id }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [user] = await db
 			.select()

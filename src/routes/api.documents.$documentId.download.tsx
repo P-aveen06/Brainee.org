@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import { createDb } from "@/db";
 import { projectDocuments } from "@/db/schema";
 import { getCurrentUserWithState } from "@/lib/current-user.server";
@@ -22,7 +22,7 @@ async function handleDownload({
 		return new Response("Unauthorized", { status: 401 });
 	}
 
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const [doc] = await db
 		.select()
 		.from(projectDocuments)

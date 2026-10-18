@@ -6,8 +6,8 @@ describe("parseProposedAction", () => {
 		expect(
 			parseProposedAction("request_leave", {
 				leaveType: "sick-leave",
-				startDate: "2026-08-31",
-				endDate: "2026-08-31",
+				startDate: "2026-10-16",
+				endDate: "2026-10-16",
 			}),
 		).toMatchObject({ success: true });
 	});
@@ -26,7 +26,7 @@ describe("parseProposedAction", () => {
 				projectId: "project-1",
 				title: "Confirm revised launch date",
 				priority: "high",
-				dueDate: "2026-09-03",
+				dueDate: "2026-10-16",
 			}),
 		).toMatchObject({ success: true });
 	});

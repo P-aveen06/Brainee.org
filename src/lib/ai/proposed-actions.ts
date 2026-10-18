@@ -33,6 +33,9 @@ const createTaskPayload = z.object({
 	startDate: z.string().optional().nullable(),
 	dueDate: z.string().optional().nullable(),
 	estimateHours: z.number().min(0).max(100_000).optional().nullable(),
+	sourceTaskId: z.string().min(1).optional(),
+	sourceProjectId: z.string().min(1).optional(),
+	adaptationAssumptions: z.string().max(10000).optional(),
 });
 
 const reportAssetIssuePayload = z.object({

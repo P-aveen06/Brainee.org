@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq } from "@/db/graph-query";
 import type { Database } from "@/db";
 import { projectTasks, users } from "@/db/schema";
 import { assertProjectAccess } from "@/lib/project-access";

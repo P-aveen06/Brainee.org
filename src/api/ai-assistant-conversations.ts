@@ -1,9 +1,13 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray } from "drizzle-orm";
 import { createDb } from "@/db";
+import { and, desc, eq, inArray } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiProposedActions } from "@/db/schema";
+import { parseAssistantQuestionSet } from "@/lib/ai/assistant-questions";
+import { isAssistantChartSpec } from "@/lib/ai/chart-types";
+import { restorePitchState } from "@/lib/ai/pitch-evidence";
+import { loadWorkBrief } from "@/lib/ai/tools/work-brief-data";
 import { recoverStaleAssistantTurns } from "@/lib/ai/turn-failure.server";
+import { visibleProjectIdsFor } from "@/lib/project-access";
 import { authMiddleware } from "@/lib/server-fn";
 import {
 	deleteConversationSchema,
@@ -19,10 +23,14 @@ function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
 	}
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const getAiConversations = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const threads = await db
 			.select()
 			.from(aiConversations)
@@ -37,7 +45,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getConversationSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [conv] = await db
 			.select()
@@ -60,6 +68,79 @@ export const getAiConversation = createServerFn({ method: "GET" })
 			.from(aiMessages)
 			.where(eq(aiMessages.conversationId, data.conversationId))
 			.orderBy(aiMessages.createdAt);
+		const visibleProjects = await visibleProjectIdsFor(db, context.user);
+		const pitchState = restorePitchState(
+			allRows,
+			(id) => visibleProjects === "all" || visibleProjects.includes(id),
+		);
+		const questionsByTurnId = new Map<
+			string,
+			NonNullable<ReturnType<typeof parseAssistantQuestionSet>>[]
+		>();
+		for (const row of allRows) {
+			if (row.role !== "assistant" || !row.turnId || !row.toolCalls) continue;
+			const calls = safeJsonParse<
+				Array<{
+					id?: string;
+					name?: string;
+					arguments?: unknown;
+				}>
+			>(row.toolCalls, []);
+			const questions = calls.flatMap((call) => {
+				if (call.name !== "ask_questions") return [];
+				const parsed = parseAssistantQuestionSet(
+					call.arguments,
+					typeof call.id === "string" ? call.id : undefined,
+				);
+				return parsed ? [parsed] : [];
+			});
+			if (questions.length > 0) questionsByTurnId.set(row.turnId, questions);
+		}
+		const storedCharts = allRows.flatMap((row) => {
+			if (row.role !== "tool" || !row.content || !row.turnId) return [];
+			const stored = safeJsonParse<Record<string, unknown> | null>(
+				row.content,
+				null,
+			);
+			const result = stored && isRecord(stored.result) ? stored.result : null;
+			const chart = result?.chart;
+			if (
+				!isAssistantChartSpec(chart) ||
+				!Array.isArray(stored?.scopeProjectIds) ||
+				!stored.scopeProjectIds.every((id) => typeof id === "string") ||
+				!Array.isArray(stored?.scopeUserIds) ||
+				!stored.scopeUserIds.every((id) => typeof id === "string")
+			) {
+				return [];
+			}
+			return [
+				{
+					turnId: row.turnId,
+					chart,
+					projectIds: stored.scopeProjectIds as string[],
+					userIds: stored.scopeUserIds as string[],
+				},
+			];
+		});
+		const chartsByTurnId = new Map<string, (typeof storedCharts)[number][]>();
+		if (storedCharts.length > 0) {
+			const currentBrief = await loadWorkBrief({ db, user: context.user });
+			const currentProjects = new Set(currentBrief.projectIds);
+			const currentPeople = new Set(
+				currentBrief.relevantPeople.map((person) => person.id),
+			);
+			for (const stored of storedCharts) {
+				if (
+					!stored.projectIds.every((id) => currentProjects.has(id)) ||
+					!stored.userIds.every((id) => currentPeople.has(id))
+				) {
+					continue;
+				}
+				const charts = chartsByTurnId.get(stored.turnId) || [];
+				charts.push(stored);
+				chartsByTurnId.set(stored.turnId, charts);
+			}
+		}
 
 		// Tool-call placeholders and raw tool-result rows exist only so the next turn can
 		// replay a valid provider conversation; the UI only ever shows user/assistant turns.
@@ -111,6 +192,36 @@ export const getAiConversation = createServerFn({ method: "GET" })
 				citations: safeJsonParse(m.citations, []),
 				toolCalls: safeJsonParse(m.toolCalls, undefined),
 				proposals: proposalsByMessageId.get(m.id) || [],
+				questions:
+					m.role === "assistant"
+						? questionsByTurnId.get(m.turnId ?? "") || []
+						: [],
+				charts:
+					m.role === "assistant"
+						? (chartsByTurnId.get(m.turnId ?? "") || []).map(
+								(stored) => stored.chart,
+							)
+						: [],
+				pitches:
+					m.role === "assistant"
+						? allRows.flatMap((row) => {
+								if (
+									row.role !== "tool" ||
+									row.turnId !== m.turnId ||
+									!row.content
+								)
+									return [];
+								const payload = safeJsonParse<{
+									result?: { pitch?: { draftId?: string; revision?: number } };
+								}>(row.content, {});
+								const stored = payload.result?.pitch;
+								return pitchState.drafts.filter(
+									(pitch) =>
+										pitch.draftId === stored?.draftId &&
+										pitch.revision === stored?.revision,
+								);
+							})
+						: [],
 				modelId: m.modelId,
 				latencyMs: m.latencyMs,
 				createdAt: m.createdAt,
@@ -121,7 +232,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 export const createAiConversation = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const id = `cnv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 		await db.insert(aiConversations).values({
@@ -137,7 +248,7 @@ export const deleteAiConversation = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => deleteConversationSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		// ai_proposed_actions has no FK to the conversation, so the cascade that removes
 		// messages and turns leaves pending proposals behind — still confirmable by id.

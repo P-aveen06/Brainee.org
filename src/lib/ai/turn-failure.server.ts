@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, lt } from "drizzle-orm";
+import { and, eq, isNotNull, lt } from "@/db/graph-query";
 import type { Database } from "@/db";
 import {
 	aiMessages,

@@ -1,9 +1,9 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@/db/graph-query";
 import { checkOnboardingUser } from "../api/users";
+import { AssistantSessionsProvider } from "../components/assistant/AssistantSessions";
 import { Shell } from "../components/layout/Shell";
 import {
 	parseCollapsedGroups,
@@ -18,7 +18,7 @@ export const getMyNotifications = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const items = await db
 			.select()
 			.from(notifications)
@@ -77,13 +77,15 @@ function AuthenticatedLayout() {
 		Route.useRouteContext();
 
 	return (
-		<Shell
-			user={user}
-			notifications={notifications}
-			pendingApprovalCount={pendingApprovalCount}
-			initialCollapsedGroups={collapsedGroups}
-		>
-			<Outlet />
-		</Shell>
+		<AssistantSessionsProvider key={user.id}>
+			<Shell
+				user={user}
+				notifications={notifications}
+				pendingApprovalCount={pendingApprovalCount}
+				initialCollapsedGroups={collapsedGroups}
+			>
+				<Outlet />
+			</Shell>
+		</AssistantSessionsProvider>
 	);
 }

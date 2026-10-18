@@ -1,9 +1,13 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte } from "drizzle-orm";
+import { RawStream } from "@tanstack/router-core";
 import { createDb } from "@/db";
+import { and, eq, gte } from "@/db/graph-query";
 import { aiConversations, aiMessages } from "@/db/schema";
 import { classifyAssistantFailure } from "@/lib/ai/ai-errors";
+import type {
+	AssistantActivity,
+	AssistantToolProgress,
+} from "@/lib/ai/assistant-activity";
 import { runAssistantTurn } from "@/lib/ai/assistant-turn";
 import { verifyAssistantPageContext } from "@/lib/ai/page-context.server";
 import {
@@ -19,13 +23,13 @@ export * from "./ai-assistant-schema";
 
 const HOURLY_MESSAGE_LIMIT = 60;
 const DAILY_MESSAGE_LIMIT = 500;
-const DAILY_TOKEN_LIMIT = 2_000_000;
+const DAILY_TOKEN_LIMIT = 5_000_000;
 
 export const sendAiMessage = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => sendMessageSchema.parse(data))
 	.handler(async ({ data, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		// 1. Rate limiting: max messages and total tokens per user per 24 hours (and hourly burst protection)
 		const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -105,66 +109,109 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 			await recoverStaleAssistantTurns(db, conversationId, context.user.id);
 		}
 
-		// 3. Execute turn
+		// 3. Return a byte stream so the assistant UI can render answer text as it arrives.
 		const turnId = crypto.randomUUID();
 		const assistantMessageId = `msg-ast-${crypto.randomUUID()}`;
 		const turnStartedAt = Date.now();
-		try {
-			const pageContext = await verifyAssistantPageContext(
-				db,
-				context.user,
-				data.pageContext,
-			);
-			const turnResult = await runAssistantTurn(
-				{
-					conversationId,
-					userMessage: data.message,
-					customModelId: data.modelId,
-					pageContext,
-					turnId,
-					assistantMessageId,
-				},
-				{ user: context.user, db },
-			);
+		const abortController = new AbortController();
+		const encoder = new TextEncoder();
+		let cancelled = false;
+		const stream = new ReadableStream<Uint8Array>({
+			start(streamController) {
+				const emit = (event: Record<string, unknown>) => {
+					if (!cancelled) {
+						streamController.enqueue(
+							encoder.encode(`${JSON.stringify(event)}\n`),
+						);
+					}
+				};
+				const emitActivity = (activity: AssistantActivity) =>
+					emit({ type: "activity", activity });
+				const emitToolProgress = (progress: AssistantToolProgress) =>
+					emit({ type: "tool-progress", progress });
+				void (async () => {
+					try {
+						emitActivity("preparing");
+						const pageContext = await verifyAssistantPageContext(
+							db,
+							context.user,
+							data.pageContext,
+						);
+						const turnResult = await runAssistantTurn(
+							{
+								conversationId,
+								userMessage: data.message,
+								customModelId: data.modelId,
+								pageContext,
+								turnId,
+								assistantMessageId,
+								signal: abortController.signal,
+								onActivity: emitActivity,
+								onToolProgress: emitToolProgress,
+								onTextDelta: (text) => emit({ type: "delta", text }),
+							},
+							{ user: context.user, db },
+						);
+						emit({
+							type: "result",
+							result: { conversationId, ...turnResult },
+						});
+					} catch (err: unknown) {
+						console.error("AI assistant turn failed", err);
+						const failure = classifyAssistantFailure(err);
+						let proposals: Awaited<ReturnType<typeof persistTurnFailure>> = [];
+						try {
+							proposals = await persistTurnFailure({
+								db,
+								turnId,
+								conversationId,
+								assistantMessageId,
+								code: failure.code,
+								label: failure.label,
+								publicMessage: failure.publicMessage,
+								latencyMs: Date.now() - turnStartedAt,
+							});
+						} catch (persistenceError) {
+							console.error(
+								"Failed to persist assistant failure",
+								persistenceError,
+							);
+						}
+						emit({
+							type: "result",
+							result: {
+								conversationId,
+								messageId: assistantMessageId,
+								content: `⚠️ ${failure.label}: ${failure.publicMessage}`,
+								citations: [],
+								proposedActions: proposals.map((proposal) => ({
+									id: proposal.id,
+									actionType: proposal.actionType,
+									targetEntityType: proposal.targetEntityType,
+									targetEntityId: proposal.targetEntityId,
+									payload: proposal.payload || "{}",
+									status: proposal.status,
+								})),
+								errorCode: failure.code,
+								tokens: { in: 0, out: 0 },
+								latencyMs: Date.now() - turnStartedAt,
+							},
+						});
+					} finally {
+						if (!cancelled) streamController.close();
+					}
+				})();
+			},
+			cancel(reason) {
+				cancelled = true;
+				abortController.abort(reason);
+			},
+		});
 
-			return {
-				conversationId,
-				...turnResult,
-			};
-		} catch (err: unknown) {
-			console.error("AI assistant turn failed", err);
-			const failure = classifyAssistantFailure(err);
-			let proposals: Awaited<ReturnType<typeof persistTurnFailure>> = [];
-			try {
-				proposals = await persistTurnFailure({
-					db,
-					turnId,
-					conversationId,
-					assistantMessageId,
-					code: failure.code,
-					label: failure.label,
-					publicMessage: failure.publicMessage,
-					latencyMs: Date.now() - turnStartedAt,
-				});
-			} catch (persistenceError) {
-				console.error("Failed to persist assistant failure", persistenceError);
-			}
-			return {
-				conversationId,
-				messageId: assistantMessageId,
-				content: `⚠️ ${failure.label}: ${failure.publicMessage}`,
-				citations: [],
-				proposedActions: proposals.map((proposal) => ({
-					id: proposal.id,
-					actionType: proposal.actionType,
-					targetEntityType: proposal.targetEntityType,
-					targetEntityId: proposal.targetEntityId,
-					payload: proposal.payload || "{}",
-					status: proposal.status,
-				})),
-				errorCode: failure.code,
-				tokens: { in: 0, out: 0 },
-				latencyMs: Date.now() - turnStartedAt,
-			};
-		}
+		return {
+			conversationId,
+			stream: new RawStream(stream, {
+				hint: "text",
+			}) as unknown as ReadableStream<Uint8Array>,
+		};
 	});

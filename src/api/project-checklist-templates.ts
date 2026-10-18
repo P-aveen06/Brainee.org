@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "@/db";
 import { projectChecklistTemplates } from "@/db/schema";
@@ -22,7 +21,7 @@ const templateSchema = z.object({
 export const getChecklistTemplates = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const templates = await db
 			.select()
 			.from(projectChecklistTemplates)
@@ -39,7 +38,7 @@ export const upsertChecklistTemplate = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => templateSchema.parse(data))
 	.handler(async ({ data: input }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			if (input.id) {
 				await db
 					.update(projectChecklistTemplates)
@@ -72,7 +71,7 @@ export const deleteChecklistTemplate = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => z.object({ id: z.string() }).parse(data))
 	.handler(async ({ data: input }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await db
 				.update(projectChecklistTemplates)
 				.set({ isActive: false, updatedAt: new Date() })

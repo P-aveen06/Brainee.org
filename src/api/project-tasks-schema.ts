@@ -32,6 +32,9 @@ export const createTaskSchema = z.object({
 	dueDate: z.string().optional().nullable(),
 	estimateHours: z.number().min(0).optional().nullable(),
 	parentTaskId: z.string().optional().nullable(),
+	sourceTaskId: z.string().optional().nullable(),
+	sourceProjectId: z.string().optional().nullable(),
+	adaptationAssumptions: z.string().max(10000).optional().nullable(),
 });
 
 export const updateTaskSchema = z

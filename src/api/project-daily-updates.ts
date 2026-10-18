@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, desc, eq, ne } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, sql } from "drizzle-orm";
 import { createDb } from "../db";
 import {
 	projectDailyUpdateItems,
@@ -33,7 +32,7 @@ export const previewTaskFromDailySummary = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => previewTaskFromSummarySchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const tasks = await extractTasksWithAi(input.summary, input.blockers);
@@ -47,7 +46,7 @@ export const confirmAndCreateAiTask = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => confirmAiTaskSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const created = await persistConfirmedTask(db, context.user, {
@@ -69,7 +68,7 @@ export const confirmMultipleAiTasks = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => confirmMultipleAiTasksSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const createdTasks = [];
@@ -94,7 +93,7 @@ export const generateTaskFromDailySummary = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => generateTaskFromSummarySchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const targetDate = input.date || getTodayIsoDate();
@@ -117,7 +116,7 @@ export const getMyDailyUpdate = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getMyUpdateSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const targetDate = input.date || getTodayIsoDate();
@@ -182,7 +181,7 @@ export const getMyDailyUpdate = createServerFn({ method: "GET" })
 				and(
 					eq(projectTasks.projectId, input.projectId),
 					eq(projectTasks.assigneeId, context.user.id),
-					sql`${projectTasks.status} != 'cancelled'`,
+					ne(projectTasks.status, "cancelled"),
 				),
 			)
 			.orderBy(desc(projectTasks.updatedAt));
@@ -200,7 +199,7 @@ export const saveDailyUpdate = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => saveDailyUpdateSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const isSubmitting = input.status === "submitted";

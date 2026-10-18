@@ -1,24 +1,24 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tcc-tower",
-  "compatibility_date": "2025-09-02",
+  "name": "brainee-org",
+  "compatibility_date": "2026-10-16",
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "main": "@tanstack/react-start/server-entry",
-  "d1_databases": [
-    {
-      "binding": "DATABASE",
-      "database_name": "tcc-tower",
-      "database_id": "aecabc48-8c27-4b9b-9916-fdacfec56510",
-      "migrations_dir": "drizzle",
-    },
-  ],
+  "main": "src/server.ts",
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    // Temporary hackathon demo only: all selectable identities and data are synthetic.
+    "GRAPH_SERVICE_URL": "https://braineeorg-production.up.railway.app",
+    "OPENCODE_ENDPOINT": "https://opencode.ai/inference/go/openai/v1",
+    "OPENCODE_MODEL": "gpt-6-luna",
+    "TEST_AUTH_ENABLED": "true",
+    "PUBLIC_DEMO_AUTH_ENABLED": "true",
+  },
   "r2_buckets": [
     {
       "binding": "PROJECT_DOCS",
-      "bucket_name": "tcc-tower-project-docs",
-      "preview_bucket_name": "tcc-tower-project-docs-dev"
+      "bucket_name": "brainee-org-docs",
     }
   ],
   "observability": {

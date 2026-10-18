@@ -80,7 +80,7 @@ describe("searchTeamMembersTool", () => {
 			role: "user",
 			peerLeadId: null,
 			isActive: true,
-			joinDate: "2026-01-01",
+			joinDate: "2026-10-16",
 		}));
 
 		const ctx = createMockContext({ users: manyUsers });

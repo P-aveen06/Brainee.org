@@ -1,9 +1,11 @@
 import { useLocation } from "@tanstack/react-router";
+import * as React from "react";
 import { GlobalBrainDrawer } from "#/components/assistant/GlobalBrainDrawer";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
+	useSidebar,
 } from "#/components/ui/sidebar";
 import type { NotificationRow } from "#/hooks/useNotifications";
 import type { Role } from "#/lib/navigation";
@@ -23,6 +25,45 @@ interface ShellProps {
 	children: React.ReactNode;
 }
 
+function AssistantSidebarSync({
+	isAssistantPage,
+}: {
+	isAssistantPage: boolean;
+}) {
+	const { open, setOpen } = useSidebar();
+	const prevAssistantPageRef = React.useRef(isAssistantPage);
+	const wasOpenRef = React.useRef<boolean>(false);
+	const initialMountRef = React.useRef<boolean>(true);
+
+	React.useEffect(() => {
+		if (initialMountRef.current) {
+			initialMountRef.current = false;
+			if (isAssistantPage && open) {
+				wasOpenRef.current = true;
+				setOpen(false);
+			}
+			return;
+		}
+
+		const wasAssistant = prevAssistantPageRef.current;
+		prevAssistantPageRef.current = isAssistantPage;
+
+		if (!wasAssistant && isAssistantPage) {
+			wasOpenRef.current = open;
+			if (open) {
+				setOpen(false);
+			}
+		} else if (wasAssistant && !isAssistantPage) {
+			if (wasOpenRef.current) {
+				setOpen(true);
+				wasOpenRef.current = false;
+			}
+		}
+	}, [isAssistantPage, open, setOpen]);
+
+	return null;
+}
+
 export function Shell({
 	user,
 	notifications,
@@ -36,7 +77,8 @@ export function Shell({
 	const isDashboard = pathname === "/" || pathname === "";
 
 	return (
-		<SidebarProvider>
+		<SidebarProvider defaultOpen={!isAssistantPage}>
+			<AssistantSidebarSync isAssistantPage={isAssistantPage} />
 			<AppSidebar
 				role={role}
 				userId={user?.id}
@@ -60,8 +102,8 @@ export function Shell({
 				</header>
 
 				{isAssistantPage ? (
-					<div className="h-[calc(100vh-3rem)] w-full min-w-0 px-2.5 py-3 sm:px-4 sm:py-3.5 md:h-screen lg:px-4.5">
-						<div className="h-full overflow-hidden rounded-2xl bg-background shadow-[0_4px_24px_rgba(9,12,29,0.08)] ring-1 ring-border">
+					<div className="h-[calc(100dvh-3rem)] w-full min-w-0 md:h-dvh">
+						<div className="h-full overflow-hidden bg-background">
 							{children}
 						</div>
 					</div>

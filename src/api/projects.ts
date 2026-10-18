@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, desc, eq, inArray, ne } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createDb, type Database } from "../db";
 import {
@@ -278,7 +277,7 @@ export const getProjectsPageData = createServerFn({ method: "GET" })
 			.parse(data),
 	)
 	.handler(async ({ data: filter, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultStages(db);
 
 		const visibleIds = await visibleProjectIdsFor(db, context.user);
@@ -391,7 +390,7 @@ export const getProjectDetail = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => z.string().parse(data))
 	.handler(async ({ data: projectId, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultStages(db);
 
 		const access = await assertProjectAccess(
@@ -542,7 +541,7 @@ export const getProjectTimeline = createServerFn({ method: "GET" })
 			.parse(data),
 	)
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "viewer");
 
 		const events = await db
@@ -571,7 +570,7 @@ export const createProject = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => createProjectSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await ensureDefaultStages(db);
 
 			const projectId = crypto.randomUUID();
@@ -663,7 +662,7 @@ export const updateProject = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateProjectSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.id, "manager");
 
 			const [existing] = await db
@@ -742,7 +741,7 @@ export const archiveProject = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "owner");
 
 			await db
@@ -781,7 +780,7 @@ export const transferProjectOwnership = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => transferOwnershipSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "owner");
 
 			const [targetUser] = await db
@@ -871,7 +870,7 @@ export const addProjectMember = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => addMemberSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "manager");
 
 			const [targetUser] = await db
@@ -944,7 +943,7 @@ export const updateProjectMember = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateMemberSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "manager");
 
 			const [targetMember] = await db
@@ -972,7 +971,7 @@ export const updateProjectMember = createServerFn({ method: "POST" })
 							eq(projectMembers.projectId, input.projectId),
 							eq(projectMembers.role, "owner"),
 							eq(projectMembers.isCurrent, true),
-							sql`${projectMembers.id} != ${input.memberId}`,
+							ne(projectMembers.id, input.memberId),
 						),
 					);
 
@@ -1015,7 +1014,7 @@ export const removeProjectMember = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => removeMemberSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "manager");
 
 			const [targetMember] = await db
@@ -1043,7 +1042,7 @@ export const removeProjectMember = createServerFn({ method: "POST" })
 							eq(projectMembers.projectId, input.projectId),
 							eq(projectMembers.role, "owner"),
 							eq(projectMembers.isCurrent, true),
-							sql`${projectMembers.id} != ${input.memberId}`,
+							ne(projectMembers.id, input.memberId),
 						),
 					);
 
@@ -1116,7 +1115,7 @@ export const advanceProjectStage = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => advanceStageSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(db, context.user, input.projectId, "manager");
 
 			const [project] = await db
@@ -1266,7 +1265,7 @@ export const advanceProjectStage = createServerFn({ method: "POST" })
 export const getProjectStageConfig = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultStages(db);
 
 		const stages = await db
@@ -1294,7 +1293,7 @@ export const upsertProjectStage = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const now = new Date();
 
 			if (input.id) {

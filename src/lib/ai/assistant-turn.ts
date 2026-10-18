@@ -1,28 +1,43 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiTurns } from "@/db/schema";
 import { getEnvVar } from "@/lib/auth.server";
 import { visibleProjectIdsFor } from "@/lib/project-access";
+import type {
+	AssistantActivity,
+	AssistantToolProgress,
+} from "./assistant-activity";
+import type { AssistantQuestionSet } from "./assistant-questions";
+import type { AssistantChartSpec } from "./chart-types";
+import type { GroundedLabel } from "./citations";
 import {
 	type CitationRef,
 	matchGroundedCitation,
+	sanitizeModelOutputDelta,
 	sanitizeModelOutputText,
 	validateCitations,
 } from "./citations";
-import { completeWithinDeadline, TURN_TIMEOUT_MS } from "./completion-timeout";
+import {
+	completeWithinDeadline,
+	streamWithinDeadline,
+	TURN_TIMEOUT_MS,
+} from "./completion-timeout";
 import { getForcedToolForIntent } from "./intent-routing";
 import type { AssistantPageContext } from "./page-context";
+import { restorePitchState } from "./pitch-evidence";
+import type { PitchPackage } from "./pitch-types";
 import {
 	ALLOWED_MODEL_IDS,
 	type ChatCompletionResult,
 	type ChatMessage,
 	type ChatProvider,
 } from "./provider";
-import { AzureDeepSeekProvider } from "./providers/azure-deepseek";
-import { OpenRouterProvider } from "./providers/openrouter";
+import { OpenCodeProvider } from "./providers/opencode";
 import { StubProvider } from "./providers/stub";
 import type { ToolContext } from "./tools/tool-types";
+import { loadWorkBrief } from "./tools/work-brief-data";
 import { getAssistantSystemPrompt, getToolDefinitions } from "./tools-registry";
 import {
+	MAX_CONVERSATION_HISTORY_ROWS,
 	MAX_TOOL_RESULT_BYTES,
 	MAX_TOOL_ROUNDS,
 	MAX_TOTAL_TOOL_CALLS,
@@ -42,6 +57,10 @@ export interface AssistantTurnInput {
 	pageContext?: AssistantPageContext;
 	turnId?: string;
 	assistantMessageId?: string;
+	signal?: AbortSignal;
+	onActivity?: (activity: AssistantActivity) => void;
+	onToolProgress?: (progress: AssistantToolProgress) => void;
+	onTextDelta?: (delta: string) => void;
 }
 
 export interface AssistantTurnOutput {
@@ -56,6 +75,9 @@ export interface AssistantTurnOutput {
 		payload: string;
 		status: string;
 	}>;
+	charts: AssistantChartSpec[];
+	questions: AssistantQuestionSet[];
+	pitches?: PitchPackage[];
 	modelId?: string;
 	tokens: { in: number; out: number };
 	latencyMs: number;
@@ -72,49 +94,28 @@ export async function runAssistantTurn(
 	const startTime = Date.now();
 	const deadlineMs = startTime + TURN_TIMEOUT_MS;
 
-	const deepseekKey =
-		getEnvVar("DEEPSEEK_API_KEY") || getEnvVar("AZURE_DEEPSEEK_API_KEY") || "";
-	const deepseekEndpoint =
-		getEnvVar("AZURE_DEEPSEEK_ENDPOINT") ||
-		"https://open-model-resource.openai.azure.com/openai/v1";
-	const deepseekModel =
-		getEnvVar("AZURE_DEEPSEEK_MODEL") || "DeepSeek-V4-Flash";
-	const openRouterKey = getEnvVar("OPENROUTER_API_KEY");
+	const opencodeKey = getEnvVar("OPENCODE_API_KEY") || "";
+	const opencodeEndpoint =
+		getEnvVar("OPENCODE_ENDPOINT") ||
+		getEnvVar("OPENCODE_BASE_URL") ||
+		"https://opencode.ai/inference/openai/v1";
+	const opencodeModel = getEnvVar("OPENCODE_MODEL") || "deepseek-v4-flash";
 
 	const requestedModelId =
 		input.customModelId && ALLOWED_MODEL_IDS.has(input.customModelId)
 			? input.customModelId
-			: deepseekKey
-				? deepseekModel
-				: undefined;
-
-	// Provider routing:
-	// - If a specific model is requested, route to the provider that actually supports it!
-	//   * OpenRouter models (gemini, gpt, claude, or contains '/') -> OpenRouterProvider
-	//   * DeepSeek models -> AzureDeepSeekProvider (or OpenRouter if no Azure key)
-	// - Otherwise fall back based on available API keys
-	const isRequestedOpenRouterModel =
-		requestedModelId &&
-		(requestedModelId.includes("/") ||
-			requestedModelId.startsWith("google/") ||
-			requestedModelId.startsWith("openai/") ||
-			requestedModelId.startsWith("anthropic/"));
+			: opencodeModel;
 
 	const provider: ChatProvider =
 		input.providerOverride ||
-		(isRequestedOpenRouterModel && openRouterKey
-			? new OpenRouterProvider(openRouterKey)
-			: deepseekKey &&
-					(!requestedModelId ||
-						requestedModelId.toLowerCase().includes("deepseek"))
-				? new AzureDeepSeekProvider(
-						deepseekKey,
-						deepseekEndpoint,
-						deepseekModel,
-					)
-				: openRouterKey
-					? new OpenRouterProvider(openRouterKey)
-					: new StubProvider());
+		(opencodeKey
+			? new OpenCodeProvider(
+					opencodeKey,
+					opencodeEndpoint,
+					requestedModelId,
+					input.conversationId,
+				)
+			: new StubProvider());
 
 	// Fetch complete recent multi-hop history. Sequence disambiguates rows written in one second.
 	// to a project the caller can no longer see is redacted before it reaches the model.
@@ -127,12 +128,43 @@ export async function runAssistantTurn(
 		.from(aiMessages)
 		.where(eq(aiMessages.conversationId, input.conversationId))
 		.orderBy(desc(aiMessages.createdAt), desc(aiMessages.sequence))
-		.limit(40);
+		.limit(MAX_CONVERSATION_HISTORY_ROWS);
 
+	const hasAvailabilityCharts = historyRows.some((row) => {
+		if (row.role !== "tool" || !row.content) return false;
+		try {
+			const stored = JSON.parse(row.content) as { scopeUserIds?: unknown };
+			return (
+				Array.isArray(stored.scopeUserIds) && stored.scopeUserIds.length > 0
+			);
+		} catch {
+			return false;
+		}
+	});
+	const currentBrief = hasAvailabilityCharts
+		? await loadWorkBrief(ctx)
+		: undefined;
+	const canSeeChartScope = (projectIds: string[], userIds: string[]) => {
+		if (!currentBrief) return false;
+		const projects = new Set(currentBrief.projectIds);
+		const people = new Set(
+			currentBrief.relevantPeople.map((person) => person.id),
+		);
+		return (
+			projectIds.every((id) => projects.has(id)) &&
+			userIds.every((id) => people.has(id))
+		);
+	};
 	const conversationHistory: ChatMessage[] = reconstructHistory(
 		historyRows.reverse(),
 		canSeeProject,
+		canSeeChartScope,
 	);
+	ctx = {
+		...ctx,
+		pitchState: restorePitchState(historyRows, canSeeProject),
+		onToolProgress: input.onToolProgress,
+	};
 	const forcedInitialTool = getForcedToolForIntent(
 		input.userMessage,
 		conversationHistory,
@@ -160,10 +192,17 @@ export async function runAssistantTurn(
 	conversationHistory.push({ role: "user", content: input.userMessage });
 
 	const tools = getToolDefinitions();
-	const systemPrompt = getAssistantSystemPrompt(input.pageContext);
+	const pitchRequest =
+		!!ctx.pitchState?.drafts.length ||
+		/pitch|case stud|proposal|presentation/i.test(input.userMessage);
+	const toolRoundLimit = pitchRequest ? 6 : MAX_TOOL_ROUNDS;
+	const systemPrompt = getAssistantSystemPrompt(input.pageContext, ctx.user);
 	const groundedRecordIds = new Set<string>();
-	const groundedLabels: Array<{ id: string; label: string }> = [];
+	const groundedLabels: GroundedLabel[] = [];
 	const createdProposals: AssistantTurnOutput["proposedActions"] = [];
+	let questionSets: AssistantQuestionSet[] = [];
+	const charts: AssistantChartSpec[] = [];
+	const pitches: PitchPackage[] = [];
 	const assistantMsgId = input.assistantMessageId ?? newId("msg-ast");
 	const usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 	const addUsage = (result: ChatCompletionResult) => {
@@ -171,30 +210,80 @@ export async function runAssistantTurn(
 		usage.completionTokens += result.usage.completionTokens;
 		usage.totalTokens += result.usage.totalTokens;
 	};
+	let streamBuffer = "";
+	let streamedRawText = "";
+	let streamStarted = false;
+	const emitSafeText = (delta: string, final = false) => {
+		streamBuffer += delta;
+		let boundary = final ? streamBuffer.length : -1;
+		if (!final) {
+			for (let index = streamBuffer.length - 1; index >= 0; index -= 1) {
+				if (/\s/.test(streamBuffer[index])) {
+					boundary = index + 1;
+					break;
+				}
+			}
+		}
+		if (boundary <= 0) return;
+		let safeDelta = sanitizeModelOutputDelta(streamBuffer.slice(0, boundary));
+		streamBuffer = streamBuffer.slice(boundary);
+		if (!streamStarted) safeDelta = safeDelta.trimStart();
+		if (final) safeDelta = safeDelta.trimEnd();
+		if (safeDelta) {
+			streamStarted = true;
+			input.onTextDelta?.(safeDelta);
+		}
+	};
+	const streamFinalAnswer = async () => {
+		input.onActivity?.("answering");
+		const result = await streamWithinDeadline(
+			provider,
+			{
+				system: systemPrompt,
+				messages: conversationHistory,
+				maxTokens: 4096,
+				modelId: requestedModelId,
+				signal: input.signal,
+			},
+			deadlineMs,
+			(delta) => {
+				streamedRawText += delta;
+				emitSafeText(delta);
+			},
+		);
+		addUsage(result);
+		return result;
+	};
 	const seenCallKeys = new Set<string>();
 	let totalToolCalls = 0;
 	let completedToolRounds = 0;
 	let toolResultBytes = 0;
+	const coverageNotices = new Set<string>();
 	let completion: ChatCompletionResult | undefined;
 
-	for (let toolRound = 0; toolRound < MAX_TOOL_ROUNDS; toolRound += 1) {
+	for (let toolRound = 0; toolRound < toolRoundLimit; toolRound += 1) {
+		input.onActivity?.(toolRound === 0 ? "analyzing" : "reviewing");
 		completion = await completeWithinDeadline(
 			provider,
 			{
 				system: systemPrompt,
 				messages: conversationHistory,
 				tools,
-				maxTokens: 1024,
+				maxTokens: pitchRequest ? 8000 : 2048,
 				toolChoice:
 					toolRound === 0 && forcedInitialTool
 						? { name: forcedInitialTool }
 						: undefined,
 				modelId: requestedModelId,
+				signal: input.signal,
 			},
 			deadlineMs,
 		);
 		addUsage(completion);
-		if (!completion.toolCalls?.length) break;
+		if (!completion.toolCalls?.length) {
+			completion = await streamFinalAnswer();
+			break;
+		}
 
 		const selected = selectToolCalls({
 			calls: completion.toolCalls,
@@ -206,6 +295,11 @@ export async function runAssistantTurn(
 			toolRound,
 		});
 		if (selected.accepted.length === 0) break;
+		input.onActivity?.(
+			selected.accepted.some((call) => call.name.startsWith("propose_"))
+				? "drafting"
+				: "searching",
+		);
 
 		sequence += 1;
 		const round = await executeAndPersistToolRound({
@@ -222,56 +316,75 @@ export async function runAssistantTurn(
 		totalToolCalls += selected.accepted.length;
 		completedToolRounds += 1;
 		toolResultBytes += round.resultBytes;
+		for (const notice of round.coverageNotices ?? [])
+			coverageNotices.add(notice);
 		for (const id of round.groundedIds) groundedRecordIds.add(id);
 		groundedLabels.push(...round.groundedLabels);
 		createdProposals.push(...round.proposals);
+		charts.push(...round.charts);
+		pitches.push(...round.pitches);
+		if (round.questionSets.length > 0) {
+			questionSets = round.questionSets;
+			completion = {
+				text: "I need a few details before I can continue.",
+				usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+				modelId: completion.modelId,
+				latencyMs: 0,
+			};
+			break;
+		}
 
 		const mustSynthesize =
-			toolRound === MAX_TOOL_ROUNDS - 1 ||
+			toolRound === toolRoundLimit - 1 ||
 			totalToolCalls >= MAX_TOTAL_TOOL_CALLS ||
 			toolResultBytes >= MAX_TOOL_RESULT_BYTES;
 		if (mustSynthesize) {
-			completion = await completeWithinDeadline(
-				provider,
-				{
-					system: systemPrompt,
-					messages: conversationHistory,
-					maxTokens: 1024,
-					modelId: requestedModelId,
-				},
-				deadlineMs,
-			);
-			addUsage(completion);
+			completion = await streamFinalAnswer();
 			break;
 		}
 	}
 
-	if (!completion || completion.toolCalls?.length) {
-		completion = await completeWithinDeadline(
-			provider,
-			{
-				system: systemPrompt,
-				messages: conversationHistory,
-				maxTokens: 1024,
-				modelId: requestedModelId,
-			},
-			deadlineMs,
-		);
-		addUsage(completion);
+	if (
+		(!completion || completion.toolCalls?.length) &&
+		questionSets.length === 0
+	) {
+		completion = await streamFinalAnswer();
 	}
+	if (!completion)
+		throw new Error("Assistant turn ended without a completion.");
+	const finalCompletion = completion;
 
 	// 4. Citation validation & hygiene — citations are matched by content against this
 	// turn's real grounded labels, never guessed by bracket position.
-	const rawContent = completion.text || fallbackAnswer(groundedLabels);
+	const rawContent =
+		(finalCompletion.text || fallbackAnswer(groundedLabels)) +
+		(coverageNotices.size ? `\n\n${[...coverageNotices].join("\n\n")}` : "");
+	if (!streamedRawText) {
+		streamedRawText = rawContent;
+		emitSafeText(rawContent);
+	} else if (rawContent.startsWith(streamedRawText)) {
+		const missingText = rawContent.slice(streamedRawText.length);
+		if (missingText) emitSafeText(missingText);
+	}
+	emitSafeText("", true);
 	const sanitized = sanitizeModelOutputText(rawContent);
 
 	const citationMatches = sanitized.match(/\[([^\]]+)\]/g) || [];
 	const claimedCitations: CitationRef[] = citationMatches.map((m) => {
 		const label = m.slice(1, -1);
 		const matchedId = matchGroundedCitation(label, groundedLabels);
+		const grounded =
+			groundedLabels.find(
+				(entry) =>
+					entry.id === matchedId &&
+					entry.label.toLowerCase() === label.toLowerCase(),
+			) ?? groundedLabels.find((entry) => entry.id === matchedId);
 		return {
 			id: matchedId ?? `unverified:${label}`,
-			type: label.includes("#") ? "task" : "project",
+			projectId: grounded?.projectId,
+			url: grounded?.url,
+			description: grounded?.description,
+			type: grounded?.type ?? (label.includes("#") ? "task" : "project"),
 			label,
 		};
 	});
@@ -291,7 +404,7 @@ export async function runAssistantTurn(
 		role: "assistant",
 		content: citationCheck.sanitizedText,
 		citations: JSON.stringify(citationCheck.verifiedCitations),
-		modelId: completion.modelId,
+		modelId: finalCompletion.modelId,
 		tokensIn: usage.promptTokens,
 		tokensOut: usage.completionTokens,
 		latencyMs: Date.now() - startTime,
@@ -301,7 +414,7 @@ export async function runAssistantTurn(
 		.update(aiTurns)
 		.set({
 			status: "completed",
-			modelId: completion.modelId,
+			modelId: finalCompletion.modelId,
 			toolRounds: completedToolRounds,
 			toolCalls: totalToolCalls,
 			promptTokens: usage.promptTokens,
@@ -326,7 +439,10 @@ export async function runAssistantTurn(
 		content: citationCheck.sanitizedText,
 		citations: citationCheck.verifiedCitations,
 		proposedActions: createdProposals,
-		modelId: completion.modelId,
+		charts,
+		pitches,
+		questions: questionSets,
+		modelId: finalCompletion.modelId,
 		tokens: {
 			in: usage.promptTokens,
 			out: usage.completionTokens,

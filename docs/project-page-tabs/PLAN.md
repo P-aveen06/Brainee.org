@@ -75,7 +75,7 @@ Five tabs fit at any width with room to spare. No horizontal scroller, no hidden
 One date control at the top, shared by both date-scoped panels instead of each rendering its own:
 
 ```
-[ ‹ ]  Thu 4 Sep 2026  [ › ]  [ Today ]
+[ ‹ ]  Thu 16 Oct 2026  [ › ]  [ Today ]
 
 ( Flags ⁴ )  ( Updates )  ( EOD )     ← segmented control
 ─────────────────────────────────────

@@ -1,7 +1,12 @@
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "@/db/graph-query";
 import { leaveRequests, users, wfhRequests } from "@/db/schema";
+import {
+	ACTIONABLE_LEAVE_APPROVAL_STATUSES,
+	ACTIONABLE_WFH_APPROVAL_STATUSES,
+} from "@/lib/approval-count.server";
 import { addIsoDays, getTodayIsoDate } from "@/lib/leave-policy";
 import { resolveRelativeDate } from "../normalization/relative-date";
+import { callerPersona, callerTitle } from "../persona-context";
 import type { ToolHandler } from "./tool-types";
 
 export const getTeamAvailabilityTool: ToolHandler = {
@@ -120,19 +125,43 @@ export const getPendingApprovalsTool: ToolHandler = {
 			};
 		}
 
-		const [leaves, wfhs, team] = await Promise.all([
-			ctx.db
-				.select()
-				.from(leaveRequests)
-				.where(eq(leaveRequests.status, "pending")),
-			ctx.db
-				.select()
-				.from(wfhRequests)
-				.where(eq(wfhRequests.status, "pending")),
-			ctx.db
-				.select({ id: users.id, name: users.name, email: users.email })
-				.from(users),
-		]);
+		const team = await ctx.db
+			.select({ id: users.id, name: users.name, email: users.email })
+			.from(users)
+			.where(
+				and(
+					eq(users.isActive, true),
+					ctx.user.role === "lead"
+						? eq(users.peerLeadId, ctx.user.id)
+						: undefined,
+				),
+			);
+		const ids = team.map((person) => person.id);
+		const [leaves, wfhs] = ids.length
+			? await Promise.all([
+					ctx.db
+						.select()
+						.from(leaveRequests)
+						.where(
+							and(
+								inArray(
+									leaveRequests.status,
+									ACTIONABLE_LEAVE_APPROVAL_STATUSES,
+								),
+								inArray(leaveRequests.userId, ids),
+							),
+						),
+					ctx.db
+						.select()
+						.from(wfhRequests)
+						.where(
+							and(
+								inArray(wfhRequests.status, ACTIONABLE_WFH_APPROVAL_STATUSES),
+								inArray(wfhRequests.userId, ids),
+							),
+						),
+				])
+			: [[], []];
 
 		const userMap = new Map(team.map((u) => [u.id, u]));
 
@@ -186,7 +215,7 @@ export const searchTeamMembersTool: ToolHandler = {
 			},
 			role: {
 				type: "string",
-				enum: ["admin", "lead", "user"],
+				enum: ["admin", "lead", "user", "hr"],
 				description: "Filter by system role",
 			},
 			leadName: {
@@ -199,6 +228,7 @@ export const searchTeamMembersTool: ToolHandler = {
 		const allUsers = await ctx.db
 			.select({
 				id: users.id,
+				authId: users.authId,
 				name: users.name,
 				email: users.email,
 				role: users.role,
@@ -220,7 +250,10 @@ export const searchTeamMembersTool: ToolHandler = {
 			const q = args.query.trim().toLowerCase();
 			filtered = filtered.filter(
 				(u) =>
-					u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+					u.name.toLowerCase().includes(q) ||
+					u.email.toLowerCase().includes(q) ||
+					callerTitle(u).toLowerCase().includes(q) ||
+					callerPersona(u).includes(q),
 			);
 		}
 
@@ -244,6 +277,7 @@ export const searchTeamMembersTool: ToolHandler = {
 				name: u.name,
 				email: u.email,
 				role: u.role,
+				jobTitle: callerTitle(u),
 				manager: u.peerLeadId ? userMap.get(u.peerLeadId) || "Unknown" : "None",
 				joinDate: u.joinDate,
 			})),

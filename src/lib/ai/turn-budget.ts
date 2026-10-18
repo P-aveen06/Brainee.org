@@ -1,9 +1,10 @@
 import type { ToolCall } from "./provider";
 
 export const MAX_TOOL_ROUNDS = 3;
-export const MAX_TOTAL_TOOL_CALLS = 8;
-export const MAX_TOOL_CALLS_PER_ROUND = 4;
-export const MAX_TOOL_RESULT_BYTES = 64_000;
+export const MAX_TOTAL_TOOL_CALLS = 16;
+export const MAX_TOOL_CALLS_PER_ROUND = 6;
+export const MAX_TOOL_RESULT_BYTES = 128_000;
+export const MAX_CONVERSATION_HISTORY_ROWS = 80;
 
 export interface DroppedToolCall {
 	call: ToolCall;

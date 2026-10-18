@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "@/db/graph-query";
 import {
 	leaveBalances,
 	leaveRequests,
@@ -68,7 +68,7 @@ export const getMyLeaveRequestsTool: ToolHandler = {
 	},
 	async execute(args, ctx) {
 		const conditions = [eq(leaveRequests.userId, ctx.user.id)];
-		if (typeof args.status === "string") {
+		if (typeof args.status === "string" && args.status.trim()) {
 			conditions.push(
 				eq(
 					leaveRequests.status,
@@ -96,13 +96,13 @@ export const getMyLeaveRequestsTool: ToolHandler = {
 				)
 				.where(and(...conditions))
 				.orderBy(desc(leaveRequests.createdAt))
-				.limit(10),
+				.limit(20),
 			ctx.db
 				.select()
 				.from(wfhRequests)
 				.where(eq(wfhRequests.userId, ctx.user.id))
 				.orderBy(desc(wfhRequests.createdAt))
-				.limit(10),
+				.limit(20),
 		]);
 
 		return {
@@ -117,11 +117,12 @@ export const getMyLeaveRequestsTool: ToolHandler = {
 					status: l.status,
 					reason: l.reason,
 				})),
-				wfh: wfhs.map((w) => ({
+				wfh: wfhs.filter(w => !args.status || w.status === args.status).map((w) => ({
 					id: w.id,
 					date: w.date,
 					isHalfDay: w.isHalfDay,
 					status: w.status,
+					reason: w.reason,
 				})),
 			},
 			groundedRecordIds: [...leaves.map((l) => l.id), ...wfhs.map((w) => w.id)],

@@ -1,249 +1,121 @@
-Welcome to your new TanStack Start app! 
+# 🧠 Brainee.org ✨
 
-# Getting Started
+🚀 **Projects** · 📄 **Documents** · 🤝 **People** · 💡 **Company Brain**
 
-To run this application:
+Understand how your company works as a system at any given moment, so you can adjust individual parts to improve overall performance.
 
-```bash
+Brainee is a workspace for a team's projects, tasks, documents and people. Company Brain is the assistant inside it. It uses the team's records to help prepare client pitches, plan work and find colleagues who have worked on similar features.
+
+![Brainee.org Company Brain: turn shared context into pitches, task plans, assignments and peer help](docs/assets/company-brain.png)
+
+For example, if a new project needs checkout, you can look up related work, read the decisions behind it and use the old task breakdown as a starting point. You can then review the new tasks, assign them and find someone to ask about the implementation.
+
+The workspace also handles daily updates, leave, WFH requests and equipment.
+
+## Try the demo
+
+The local demo uses Northstar Studio, a fictional company with 14 people, 10 projects and 70 tasks. Sign in as CEO Aditi Deshmukh to try the steps below. You can switch to another teammate to see their view of the workspace.
+
+1. Ask for a client pitch: “Put together a pitch for a checkout project using our past work. Show the sources and flag anything we still need to verify.” The assistant opens a draft with presentation and document views. You can export PowerPoint, Word or PDF files.
+2. Ask for a task plan: “Find similar checkout work and draft a task breakdown for [project]. Show the old estimates and explain what needs to change.” Use an existing project name. Review the proposals before confirming them.
+3. Open the tasks in the project and choose their assignees. Assignment is a separate step from drafting the plan; owners and managers can reassign existing tasks.
+4. Ask: “Who was assigned to the earlier checkout tasks? Show me their work and the decisions I should ask them about.” The linked tasks help you decide which colleague to approach.
+
+Pitch drafts need review before sharing with a client. Old estimates can be incomplete, and being assigned to a task does not establish that someone built every part of it. The assistant includes source links so you can check the context.
+
+See the [demo roster and projects](docs/falkordb/STARTUP-DEMO.md). For more document content, `bun run graph:enrich` adds project documents and expands the sample to 170 tasks. Back up first and read the [enrichment notes](docs/falkordb/STARTUP-DEMO.md#detailed-project-content). All of this data is fictional.
+
+## Run locally
+
+You need Bun and Docker Desktop with Docker Compose available. Start Docker, then run these commands from the repository root:
+
+```sh
 bun install
-bun --bun run dev
+cp .dev.vars.example .dev.vars
+openssl rand -hex 32
 ```
 
-# Building For Production
+Put the generated value in `SESSION_SECRET` in `.dev.vars`. Keep `TEST_AUTH_ENABLED=true`. If you already have a `.dev.vars` file, edit it instead of replacing it.
 
-To build this application for production:
+Set `OPENCODE_API_KEY` to use the assistant with a live model. The example file also has `OPENCODE_ENDPOINT` and `OPENCODE_MODEL`. Without a key, the app runs with a stub that returns basic responses; it won't carry out the demo conversation.
 
-```bash
-bun --bun run build
+```sh
+bun run graph:setup
+bun run graph:up
+bun run graph:health
+bun run graph:seed
+bun run dev
 ```
 
-## Testing
+Open [localhost:3000](http://localhost:3000) and choose a teammate. The local demo doesn't need a password.
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+`graph:setup` creates local database credentials and writes the service connection to `.dev.vars`. It keeps existing graph passwords. `graph:up` starts FalkorDB, runs migrations and starts the Node and Python services. The first build downloads dependencies and an embedding model, which can take several minutes. Node and Python run in Docker; you don't need to install them separately for this setup.
 
-```bash
-bun --bun run test
+Seeding only runs when you ask for it. Back up an existing graph before running `graph:seed` or `graph:enrich`. The first upgrade of the old sample updates known demo accounts and staffing once; later seed runs preserve edits. Details are in the [local setup guide](docs/falkordb/LOCAL-SETUP.md).
+
+FalkorDB Browser is at [localhost:3001](http://localhost:3001). The setup guide explains how to connect. Uploaded files use local R2 storage during development. Live assistant conversations send prompts and selected records to the configured chat provider; embeddings are calculated locally.
+
+Public research for pitches is optional. To enable it, run `bunx playwright install chromium`, set a random `BROWSER_SERVICE_TOKEN` of at least 32 characters in `.dev.vars`, keep `BROWSER_SERVICE_URL=http://127.0.0.1:3200`, and start `bun run browser:serve` in another terminal. It reads approved HTTPS hosts; `BROWSER_PUBLIC_HOSTS` adds hosts to that list. Public searches use generic terms without project details. Layout checks cover the preview, not the exported Word or PowerPoint file.
+
+## Graph data model
+
+FalkorDB stores the application data, and R2 stores uploaded files. The app runs on TanStack Start, React and Cloudflare Workers. Server functions call a private Node service that turns typed operations into parameterized Cypher. A Python service uses `graphrag-sdk==1.4.0` to search the same graph.
+
+Projects connect to their members, tasks, decisions and documents. Tasks connect to assignees, parent tasks and any earlier task they were adapted from.
+
+```mermaid
+flowchart LR
+  Employee -->|HAS_MEMBERSHIP| Membership[ProjectMembership]
+  Membership -->|IN_PROJECT| Project
+  Project -->|OWNED_BY| Owner[Employee: owner]
+  Project -->|HAS_TASK| Task
+  Task -->|ASSIGNED_TO| Employee
+  Task -->|PARENT_TASK| Parent[Task: parent]
+  Task -->|DERIVED_FROM| Source[Task: earlier work]
+  Comment -->|IN_PROJECT| Project
+  DocumentVersion -->|IN_PROJECT| Project
+  DailyUpdate -->|IN_PROJECT| Project
 ```
 
-## Styling
+Membership is a node because it has its own role, allocation and history. `PARENT_TASK` points from child to parent; `DERIVED_FROM` points from a new task to its source. Leave requests link to employees, leave types and balances. Equipment assignments link assets to employees and preserve custody history.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+Each business record has a label and a string ID. Reference IDs stay on the record, and writes maintain the corresponding edges. Required and unique constraints cover identities and business keys, including one current membership per employee/project and one current assignment per asset. Timestamp fields use epoch milliseconds; calendar dates use ISO date strings.
 
-### Removing Tailwind CSS
+Search adds `DeliverySearchEntry` nodes containing passage text, embeddings and source fingerprints. These link back to the original records with `EVIDENCE_FOR`. Search checks the current source before returning a hit, so changed or superseded content is rejected. Original files stay in R2.
 
-If you prefer not to use Tailwind CSS:
+The full model is in [models.json](shared/graph/models.json), with TypeScript declarations in [src/db/models](src/db/models). See [relationship definitions](shared/graph/relationships.ts) for edge names and directions, and the [graph model reference](docs/falkordb/GRAPH-MODEL.md) for every label and its integrity rules.
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
+Sessions identify the current employee; graph credentials stay on the server. Project access follows administrator status, ownership and current membership. Delivery search lets active employees find delivery records across projects, with HR fields omitted. Changes still require the relevant project permissions, and assistant task proposals require confirmation.
 
-## Linting & Formatting
+## Queries and algorithms
 
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
+The [Cypher reference](docs/falkordb/QUERIES-AND-ALGORITHMS.md) has query examples and links to the code. The main pieces are:
 
+- Full-text and local vector search find related work. Reciprocal rank fusion combines the results, then bounded task and comment traversals add context.
+- Task-family queries follow parent links. Effort totals sum leaf tasks to avoid counting both a parent estimate and its children.
+- Assignee and membership lookups identify colleagues connected to the work.
+- Document checks compare versions, checksums and fingerprints before returning source passages.
+- Briefings calculate task counts, staffing and availability before the model writes the answer.
+- Task creation writes the task number, links, event and audit together. Leave approval updates the request and balance in one write.
 
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
+The [GraphRAG README](services/graphrag/README.md) covers extraction formats, indexing, search limits and tests.
+
+## Checks and local data
+
+```sh
+bun run typecheck
+bun run test
+bun run build
+bun run graph:test
+bun run graph:health
 ```
 
+Graph integration tests use disposable graphs. Standalone service checks are described in the [local setup guide](docs/falkordb/LOCAL-SETUP.md) and [GraphRAG README](services/graphrag/README.md#verification).
 
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-
-## Temporary test login
-
-WorkOS has been replaced with an email/password form and signed, HttpOnly sessions.
-
-1. Copy `.dev.vars.example` to `.dev.vars`.
-2. Generate a random signing secret with `openssl rand -hex 32` and put it in `SESSION_SECRET`.
-3. Leave `TEST_AUTH_ENABLED=true` in your local `.dev.vars`.
-4. Run `bun run db:migrate:local` and `bun run dev`.
-5. Sign in at `/sign-in` with **test@example.com** / **TestLogin123!**.
-
-The first login creates a **Test Admin** account with administrator access. Complete
-the normal profile onboarding to enter the app. Repeat logins keep the same user,
-role, and employment status; a deactivated account remains blocked.
-
-Sample login and existing sessions are disabled unless `TEST_AUTH_ENABLED` is
-explicitly set to `true`. Keep it local: this shared test account is temporary and
-is not a production authentication system. No WorkOS API keys or OAuth setup are required.
-Existing users remain intact; the legacy `workos_id` database column is reused as
-an internal authentication ID, so no schema migration is needed for this change.
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+```sh
+bun run graph:backup
+bun run graph:restore-check
+bun run graph:down
 ```
 
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
-
-## Brainee.org branding
-
-The application uses the sample purple-and-blue B mark in `public/brainee-logo.svg`.
-Replace that SVG to update the sidebar, sign-in, onboarding, assistant, mascot, and favicon together.
-
-Migration `0020_brainee_branding.sql` updates the existing internal company without changing its ID,
-and renames stored inventory destinations, seeded asset tags, project names, and system notification labels.
-The session cookie is now `brainee_session`; existing users will need to sign in again.
-
-Existing Cloudflare Worker, D1, and R2 resource names in `wrangler.jsonc` remain unchanged to preserve
-resource connections. Historical migration filenames also remain unchanged. These technical identifiers
-are separate from application branding. Production has not been modified.
+Backups go to `.local/backups/falkordb/`. Restore checks use a separate temporary container. Stopping the stack keeps the data volume. Production access and deployment are human-run; replace demo authentication before using real team data.

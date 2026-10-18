@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, desc, eq, inArray, ne } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { createDb } from "../db";
 import {
 	projectDailyUpdateItems,
@@ -19,7 +18,7 @@ export const getProjectDailyUpdates = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getProjectDailyUpdatesSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -114,7 +113,7 @@ export const getProjectDailyUpdates = createServerFn({ method: "GET" })
 export const getMyDashboardDailyUpdates = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const today = getTodayIsoDate();
 
 		const myMemberships = await db
@@ -129,8 +128,8 @@ export const getMyDashboardDailyUpdates = createServerFn({ method: "GET" })
 				and(
 					eq(projectMembers.userId, context.user.id),
 					eq(projectMembers.isCurrent, true),
-					sql`${projectMembers.role} != 'viewer'`,
-					sql`${projects.status} = 'active'`,
+					ne(projectMembers.role, "viewer"),
+					eq(projects.status, "active"),
 				),
 			);
 

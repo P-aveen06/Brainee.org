@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, count, desc, eq, isNull, or } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createDb } from "../db";
 import { users, workFlags } from "../db/schema";
@@ -30,7 +29,7 @@ export const getWorkFlags = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getWorkFlagsSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -45,7 +44,7 @@ export const getWorkFlags = createServerFn({ method: "GET" })
 			? undefined
 			: or(
 					eq(workFlags.raisedForUserId, context.user.id),
-					sql`${workFlags.raisedForUserId} IS NULL`,
+					isNull(workFlags.raisedForUserId),
 				);
 
 		// Filter conditions
@@ -92,7 +91,7 @@ export const getWorkFlags = createServerFn({ method: "GET" })
 		}
 
 		const [openCountRow] = await db
-			.select({ count: sql<number>`count(*)` })
+			.select({ count: count() })
 			.from(workFlags)
 			.where(and(...openCountConditions));
 
@@ -108,7 +107,7 @@ export const acknowledgeWorkFlag = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => acknowledgeFlagSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [flag] = await db
 			.select()
@@ -149,7 +148,7 @@ export const dismissWorkFlag = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => dismissFlagSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [flag] = await db
 			.select()

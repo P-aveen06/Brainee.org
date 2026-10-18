@@ -1,6 +1,6 @@
 # Phase 0 — Employee Lifecycle · ✅ COMPLETE
 
-**Shipped 2026-08-29.** Not committed — the working tree holds the changes for review.
+**Shipped 2026-10-16.** Not committed — the working tree holds the changes for review.
 
 **Verification:** Biome clean · `tsc --noEmit` clean · **68/68 tests** (was 46) · `bun run build` OK ·
 dev server boots with no errors · migrations `0009` + `0010` applied locally.

@@ -99,26 +99,26 @@ describe("Asset Management & Smart Return Routing", () => {
 
 	it("calculates urgency correctly for expiring client accounts", () => {
 		const urgent = calculateAccountExpiryUrgency(
-			"2026-08-25",
-			"2026-08-28",
+			"2026-10-16",
+			"2026-10-19",
 			null,
 		);
 		expect(urgent.level).toBe("urgent");
 		expect(urgent.daysRemaining).toBe(3);
 
 		const warning = calculateAccountExpiryUrgency(
-			"2026-08-25",
+			"2026-10-16",
 			null,
-			"2026-09-10",
+			"2026-11-01",
 		);
 		expect(warning.level).toBe("warning");
 		expect(warning.daysRemaining).toBe(16);
 
-		const ok = calculateAccountExpiryUrgency("2026-08-25", "2026-12-01", null);
+		const ok = calculateAccountExpiryUrgency("2026-10-16", "2026-12-01", null);
 		expect(ok.level).toBe("ok");
 		expect(ok.daysRemaining).toBeGreaterThan(30);
 
-		const none = calculateAccountExpiryUrgency("2026-08-25", null, null);
+		const none = calculateAccountExpiryUrgency("2026-10-16", null, null);
 		expect(none.level).toBe("none");
 	});
 
@@ -137,22 +137,22 @@ describe("Asset Management & Smart Return Routing", () => {
 
 	it("evaluates employee acknowledgment custody state", () => {
 		const unacknowledged = {
-			assignedDate: "2026-08-25",
+			assignedDate: "2026-10-16",
 			acknowledgedAt: null,
 			issueStatus: null,
 		};
 		expect(isCustodyConfirmed(unacknowledged)).toBe(false);
 
 		const acknowledged = {
-			assignedDate: "2026-08-25",
-			acknowledgedAt: new Date("2026-08-26"),
+			assignedDate: "2026-10-16",
+			acknowledgedAt: new Date("2026-10-17"),
 			issueStatus: null,
 		};
 		expect(isCustodyConfirmed(acknowledged)).toBe(true);
 
 		const issue = {
-			assignedDate: "2026-08-25",
-			acknowledgedAt: new Date("2026-08-26"),
+			assignedDate: "2026-10-16",
+			acknowledgedAt: new Date("2026-10-17"),
 			issueStatus: "open",
 		};
 		expect(hasOpenIssue(issue)).toBe(true);

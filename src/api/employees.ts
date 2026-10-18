@@ -1,7 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, exists, inArray, ne, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { and, eq, inArray, ne } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb, type Database } from "../db";
 import {
@@ -78,7 +76,7 @@ export const updateEmployeeRole = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [oldUser] = await db
 				.select({ role: users.role })
@@ -90,37 +88,10 @@ export const updateEmployeeRole = createServerFn({ method: "POST" })
 				return { error: "Employee not found." };
 			}
 
-			const isDemotion = oldUser.role === "admin" && input.newRole !== "admin";
-
-			// Demotion is guarded atomically: the row only changes while at least one
-			// OTHER admin still exists. This prevents a check-then-update race where
-			// two admins demote each other concurrently and leave zero admins.
-			const otherAdmins = alias(users, "other_admins");
-			const updated = await db
-				.update(users)
-				.set({
-					role: input.newRole,
-					updatedAt: new Date(),
-				})
-				.where(
-					and(
-						eq(users.id, input.userId),
-						isDemotion
-							? exists(
-									db
-										.select({ one: sql`1` })
-										.from(otherAdmins)
-										.where(
-											and(
-												eq(otherAdmins.role, "admin"),
-												ne(otherAdmins.id, input.userId),
-											),
-										),
-								)
-							: undefined,
-					),
-				)
-				.returning({ id: users.id });
+			const updated = await db.operation<{ id: string }[]>(
+				"employees.changeRole",
+				input,
+			);
 
 			if (updated.length === 0) {
 				return { error: "Cannot remove the last admin from the system." };
@@ -152,7 +123,7 @@ export const updateEmployeeSettings = createServerFn({ method: "POST" })
 				return { error: "A user cannot be their own peer lead." };
 			}
 
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			if (input.peerLeadId) {
 				await assertNoReportingCycle(db, input.userId, input.peerLeadId);
@@ -225,7 +196,7 @@ export const updateLeaveBalance = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [user] = await db
 				.select({ birthday: users.birthday, joinDate: users.joinDate })
@@ -321,7 +292,7 @@ export const getLeaveBalancesForUser = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.inputValidator((data: unknown) => z.string().parse(data))
 	.handler(async ({ data: userId }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const dbLeaveTypes = await db
 			.select()
@@ -494,7 +465,7 @@ export const getEmployeeDeactivationPreview = createServerFn({ method: "GET" })
 			.parse(data),
 	)
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const gathered = await gatherDeactivationSnapshot(db, {
 			targetUserId: input.userId,
 			actorUserId: context.user.id,
@@ -537,7 +508,7 @@ export const getEmployeeDeactivationPreview = createServerFn({ method: "GET" })
  * The account is never deleted — audit logs, approvals and the org chart all
  * reference users, and cascading deletes would erase timesheet and leave history.
  *
- * D1 gives us no transaction, so the steps run in dependency order and each is
+ * The departure workflow runs in dependency order and each step is
  * safe to repeat: reports move first (that is what reroutes approvals), and the
  * deactivation itself lands last so a partial failure leaves a still-active
  * account that can simply be retried.
@@ -547,7 +518,7 @@ export const deactivateEmployee = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => deactivateSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const gathered = await gatherDeactivationSnapshot(db, {

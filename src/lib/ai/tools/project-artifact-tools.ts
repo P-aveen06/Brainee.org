@@ -1,4 +1,4 @@
-import { and, desc, eq, like, ne } from "drizzle-orm";
+import { and, desc, eq, like, ne } from "@/db/graph-query";
 import {
 	projectChecklistItems,
 	projectComments,
@@ -154,7 +154,7 @@ export const getProjectDocumentsTool: ToolHandler = {
 			.leftJoin(users, eq(projectDocuments.uploadedById, users.id))
 			.where(and(...conditions))
 			.orderBy(desc(projectDocuments.createdAt))
-			.limit(50);
+			.limit(100);
 
 		return {
 			success: true,
@@ -175,7 +175,7 @@ export const getProjectTimelineTool: ToolHandler = {
 			projectId: { type: "string", description: "The project ID" },
 			limit: {
 				type: "number",
-				description: "Max events to return (default 20, max 50)",
+				description: "Max events to return (default 20, max 100)",
 			},
 		},
 		required: ["projectId"],
@@ -195,7 +195,7 @@ export const getProjectTimelineTool: ToolHandler = {
 			return { success: false, error: "Project not found." };
 		}
 		const limit =
-			typeof args.limit === "number" ? Math.min(args.limit, 50) : 20;
+			typeof args.limit === "number" ? Math.min(args.limit, 100) : 20;
 
 		const events = await ctx.db
 			.select({
@@ -248,7 +248,7 @@ export const getProjectDiscussionsTool: ToolHandler = {
 			},
 			limit: {
 				type: "number",
-				description: "Max comments to return (default 20, max 50)",
+				description: "Max comments to return (default 20, max 100)",
 			},
 		},
 		required: ["projectId"],
@@ -268,7 +268,7 @@ export const getProjectDiscussionsTool: ToolHandler = {
 			return { success: false, error: "Project not found." };
 		}
 		const limit =
-			typeof args.limit === "number" ? Math.min(args.limit, 50) : 20;
+			typeof args.limit === "number" ? Math.min(args.limit, 100) : 20;
 
 		const conditions = [eq(projectComments.projectId, canonicalId)];
 		if (args.onlyDecisions === true) {

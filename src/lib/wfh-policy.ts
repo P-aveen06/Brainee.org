@@ -36,12 +36,11 @@ export function getExistingWfhDateError(existingStatus: string | undefined) {
 	return existingStatus === undefined ? null : WFH_DATE_DUPLICATE_ERROR;
 }
 
-export function isSqliteWfhDateUniqueConstraintError(error: unknown) {
+export function isWfhDateUniqueConstraintError(error: unknown) {
 	return (
 		error instanceof Error &&
-		error.message.includes("UNIQUE constraint failed") &&
-		error.message.includes("wfh_requests.user_id") &&
-		error.message.includes("wfh_requests.date")
+		error.message.includes("Unique constraint violation") &&
+		error.message.includes("WfhRequest")
 	);
 }
 

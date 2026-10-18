@@ -164,7 +164,7 @@ and reduces the eventual provider choice to one adapter file.
 
 `src/lib/ai/tools/`, each with a zod input schema and `execute({ user, db }, args)`.
 
-**Decision (2026-08-30): the assistant's scope is deliberately wider than "projects only."**
+**Decision (2026-10-16): the assistant's scope is deliberately wider than "projects only."**
 It also covers leaves/WFH, team availability, approvals, and IT assets/timesheets — the tools
 below are real and registered. This supersedes the original "no leave/asset/salary tool exists"
 framing further down this document; that framing described an earlier, narrower design and is

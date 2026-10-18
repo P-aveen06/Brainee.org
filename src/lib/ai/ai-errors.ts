@@ -44,6 +44,6 @@ export function classifyAssistantFailure(error: unknown): {
 		code: "turn_failed",
 		label: "Error",
 		publicMessage:
-			"Brainee.org Brain could not complete this response. Please retry; do not assume the requested action was performed.",
+			"Company Brain could not complete this response. Please retry; do not assume the requested action was performed.",
 	};
 }

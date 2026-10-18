@@ -35,7 +35,9 @@ import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAssetsRouteImport } from './routes/_authenticated.admin.assets'
 import { Route as AuthenticatedAdminEmployeesIndexRouteImport } from './routes/_authenticated.admin.employees.index'
 import { Route as ApiDocumentsDocumentIdDownloadRouteImport } from './routes/api.documents.$documentId.download'
+import { Route as ApiCompanyPoliciesDocumentIdDownloadRouteImport } from './routes/api.company-policies.$documentId.download'
 import { Route as AuthenticatedAdminEmployeesIdRouteImport } from './routes/_authenticated.admin.employees.$id'
+import { Route as ApiDeliveryDocumentsDocumentIdPassagesRouteImport } from './routes/api.delivery.documents.$documentId.passages'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -175,11 +177,23 @@ const ApiDocumentsDocumentIdDownloadRoute =
     path: '/api/documents/$documentId/download',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCompanyPoliciesDocumentIdDownloadRoute =
+  ApiCompanyPoliciesDocumentIdDownloadRouteImport.update({
+    id: '/api/company-policies/$documentId/download',
+    path: '/api/company-policies/$documentId/download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminEmployeesIdRoute =
   AuthenticatedAdminEmployeesIdRouteImport.update({
     id: '/employees/$id',
     path: '/employees/$id',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const ApiDeliveryDocumentsDocumentIdPassagesRoute =
+  ApiDeliveryDocumentsDocumentIdPassagesRouteImport.update({
+    id: '/api/delivery/documents/$documentId/passages',
+    path: '/api/delivery/documents/$documentId/passages',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -207,8 +221,10 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
   '/admin/employees/$id': typeof AuthenticatedAdminEmployeesIdRoute
+  '/api/company-policies/$documentId/download': typeof ApiCompanyPoliciesDocumentIdDownloadRoute
   '/api/documents/$documentId/download': typeof ApiDocumentsDocumentIdDownloadRoute
   '/admin/employees/': typeof AuthenticatedAdminEmployeesIndexRoute
+  '/api/delivery/documents/$documentId/passages': typeof ApiDeliveryDocumentsDocumentIdPassagesRoute
 }
 export interface FileRoutesByTo {
   '/access-ended': typeof AccessEndedRoute
@@ -233,8 +249,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
   '/admin/employees/$id': typeof AuthenticatedAdminEmployeesIdRoute
+  '/api/company-policies/$documentId/download': typeof ApiCompanyPoliciesDocumentIdDownloadRoute
   '/api/documents/$documentId/download': typeof ApiDocumentsDocumentIdDownloadRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesIndexRoute
+  '/api/delivery/documents/$documentId/passages': typeof ApiDeliveryDocumentsDocumentIdPassagesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -263,8 +281,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/admin/employees/$id': typeof AuthenticatedAdminEmployeesIdRoute
+  '/api/company-policies/$documentId/download': typeof ApiCompanyPoliciesDocumentIdDownloadRoute
   '/api/documents/$documentId/download': typeof ApiDocumentsDocumentIdDownloadRoute
   '/_authenticated/admin/employees/': typeof AuthenticatedAdminEmployeesIndexRoute
+  '/api/delivery/documents/$documentId/passages': typeof ApiDeliveryDocumentsDocumentIdPassagesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -293,8 +313,10 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/projects/'
     | '/admin/employees/$id'
+    | '/api/company-policies/$documentId/download'
     | '/api/documents/$documentId/download'
     | '/admin/employees/'
+    | '/api/delivery/documents/$documentId/passages'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/access-ended'
@@ -319,8 +341,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/projects'
     | '/admin/employees/$id'
+    | '/api/company-policies/$documentId/download'
     | '/api/documents/$documentId/download'
     | '/admin/employees'
+    | '/api/delivery/documents/$documentId/passages'
   id:
     | '__root__'
     | '/_authenticated'
@@ -348,8 +372,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/projects/'
     | '/_authenticated/admin/employees/$id'
+    | '/api/company-policies/$documentId/download'
     | '/api/documents/$documentId/download'
     | '/_authenticated/admin/employees/'
+    | '/api/delivery/documents/$documentId/passages'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,7 +384,9 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   SignInSplatRoute: typeof SignInSplatRoute
+  ApiCompanyPoliciesDocumentIdDownloadRoute: typeof ApiCompanyPoliciesDocumentIdDownloadRoute
   ApiDocumentsDocumentIdDownloadRoute: typeof ApiDocumentsDocumentIdDownloadRoute
+  ApiDeliveryDocumentsDocumentIdPassagesRoute: typeof ApiDeliveryDocumentsDocumentIdPassagesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -545,12 +573,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocumentsDocumentIdDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/company-policies/$documentId/download': {
+      id: '/api/company-policies/$documentId/download'
+      path: '/api/company-policies/$documentId/download'
+      fullPath: '/api/company-policies/$documentId/download'
+      preLoaderRoute: typeof ApiCompanyPoliciesDocumentIdDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/employees/$id': {
       id: '/_authenticated/admin/employees/$id'
       path: '/employees/$id'
       fullPath: '/admin/employees/$id'
       preLoaderRoute: typeof AuthenticatedAdminEmployeesIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/delivery/documents/$documentId/passages': {
+      id: '/api/delivery/documents/$documentId/passages'
+      path: '/api/delivery/documents/$documentId/passages'
+      fullPath: '/api/delivery/documents/$documentId/passages'
+      preLoaderRoute: typeof ApiDeliveryDocumentsDocumentIdPassagesRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -633,7 +675,11 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   SignInSplatRoute: SignInSplatRoute,
+  ApiCompanyPoliciesDocumentIdDownloadRoute:
+    ApiCompanyPoliciesDocumentIdDownloadRoute,
   ApiDocumentsDocumentIdDownloadRoute: ApiDocumentsDocumentIdDownloadRoute,
+  ApiDeliveryDocumentsDocumentIdPassagesRoute:
+    ApiDeliveryDocumentsDocumentIdPassagesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

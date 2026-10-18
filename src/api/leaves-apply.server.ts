@@ -1,6 +1,7 @@
+import { getLeaveCycleBounds } from "../lib/leave-policy";
 import { z } from "zod";
 import type { Database } from "../db";
-import { leaveRequests, systemLeaveTypes } from "../db/schema";
+import { systemLeaveTypes } from "../db/schema";
 import { resolveLeaveType } from "../lib/ai/normalization/leave-type";
 import { formatDateDisplay } from "../lib/date-format";
 import { validateLeaveRequest } from "../lib/leave-validation.server";
@@ -63,9 +64,12 @@ export async function applyForLeaveCore(
 	const { totalDays, ruleViolationNote } = validation;
 	const isSingleDay = rawInput.start_date === rawInput.end_date;
 
-	const [request] = await db
-		.insert(leaveRequests)
-		.values({
+	const [request] = await db.operation<{ id: string }[]>("leave.request", {
+		cycleStart: getLeaveCycleBounds(
+			user.birthday!,
+			new Date(rawInput.start_date + "T00:00:00"),
+		).cycleStart,
+		values: {
 			id: crypto.randomUUID(),
 			userId: user.id,
 			leaveType: rawInput.leave_type,
@@ -84,8 +88,8 @@ export async function applyForLeaveCore(
 			totalDays: totalDays,
 			reason: rawInput.reason,
 			status: "pending",
-		})
-		.returning({ id: leaveRequests.id });
+		},
+	});
 
 	if (!request) {
 		return { error: "Failed to submit leave request." };

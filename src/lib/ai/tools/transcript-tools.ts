@@ -1,4 +1,4 @@
-import { eq, or } from "drizzle-orm";
+import { eq, or } from "@/db/graph-query";
 import { projects, projectTasks, users } from "@/db/schema";
 import { assertProjectAccess } from "@/lib/project-access";
 import {
@@ -87,7 +87,7 @@ export const compareProjectTranscriptTool: ToolHandler = {
 			.from(projectTasks)
 			.leftJoin(users, eq(projectTasks.assigneeId, users.id))
 			.where(eq(projectTasks.projectId, project.id))
-			.limit(50);
+			.limit(100);
 		if (!project) return { success: false, error: "Project not found." };
 		const findings = compareTranscriptClaims({ project, tasks, claims });
 		const matchedIds = findings.flatMap((finding) =>

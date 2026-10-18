@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { ApprovalTabs } from "../components/approvals/ApprovalTabs";
@@ -11,7 +10,7 @@ export const getApprovalsPageData = createServerFn({ method: "GET" })
 	.middleware([approverMiddleware])
 	.handler(async ({ context }) => {
 		const user = context.user;
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const data = await getApprovalsLiveData(db, {
 			leadId: user.role === "admin" ? undefined : user.id,
 		});

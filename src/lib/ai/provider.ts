@@ -48,13 +48,21 @@ export interface ChatCompletionRequest {
 
 export interface ChatProvider {
 	complete(req: ChatCompletionRequest): Promise<ChatCompletionResult>;
+	stream?(
+		req: ChatCompletionRequest,
+		onTextDelta: (delta: string) => void,
+	): Promise<ChatCompletionResult>;
 }
 
-/** Models a caller may request. Anything else silently falls back to the provider default. */
+/** Models a caller may request from OpenCode. Anything else silently falls back to the provider default. */
 export const ALLOWED_MODEL_IDS = new Set([
+	"deepseek-v4-flash",
+	"deepseek-v4.1-flash-free",
 	"DeepSeek-V4-Flash",
-	"google/gemini-2.5-flash",
-	"google/gemini-2.5-pro",
-	"openai/gpt-4o-mini",
-	"anthropic/claude-3.5-sonnet",
+	"gpt-6-luna",
+	"gpt-6-astra",
+	"gpt-6-sol",
+	"claude-sonnet-5",
+	"big-pickle",
+	"beam-free",
 ]);

@@ -3,7 +3,7 @@
 **Goal:** a project exists, has full client context, has a team whose changes are recorded over
 time, moves through lifecycle stages, and has one unambiguous access rule.
 
-**Shipped & Verified:** 2026-08-29
+**Shipped & Verified:** 2026-10-16
 - Migration: `drizzle/0011_bright_payback.sql` applied locally to SQLite/D1.
 - Unit tests: 78/78 passing across the test suite (`project-access.test.ts` with 9 full-matrix tests, `employee-lifecycle.test.ts` with `owns_projects` blocker tests).
 - Typecheck & Lint: `tsc --noEmit` clean (code 0), `biome check` clean (code 0).

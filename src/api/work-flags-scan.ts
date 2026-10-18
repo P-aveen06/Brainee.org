@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, eq, ne } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createDb } from "../db";
 import { projectTasks, workFlags } from "../db/schema";
@@ -20,7 +19,7 @@ export const scanProjectWorkFlags = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => scanFlagsSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "contributor");
 
 		const today = getTodayIsoDate();
@@ -40,8 +39,8 @@ export const scanProjectWorkFlags = createServerFn({ method: "POST" })
 			.where(
 				and(
 					eq(projectTasks.projectId, input.projectId),
-					sql`${projectTasks.status} != 'done'`,
-					sql`${projectTasks.status} != 'cancelled'`,
+					ne(projectTasks.status, "done"),
+					ne(projectTasks.status, "cancelled"),
 				),
 			);
 

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "tw-shimmer";
 @plugin "@tailwindcss/typography";
 
 @theme inline {
@@ -789,10 +790,15 @@
 }
 
 /* Assistant UI Markdown Typography & Indentation */
+.assistant-message-text {
+    font-size: clamp(0.9375rem, calc(0.91rem + 0.06vw), 1.0625rem);
+    line-height: 1.7;
+}
+
 .assistant-prose {
     color: var(--foreground);
-    font-size: 0.875rem;
-    line-height: 1.625;
+    font-size: clamp(0.9375rem, calc(0.91rem + 0.06vw), 1.0625rem);
+    line-height: 1.7;
 }
 
 .assistant-prose p {
@@ -812,10 +818,38 @@
     margin-bottom: 0.5rem;
 }
 
+/* Ensure no excessive top or bottom margins on markdown edge elements */
+.assistant-prose :first-child,
+.assistant-prose h1:first-child,
+.assistant-prose h2:first-child,
+.assistant-prose h3:first-child,
+.assistant-prose h4:first-child,
+.assistant-prose p:first-child,
+.assistant-prose ul:first-child,
+.assistant-prose ol:first-child {
+    margin-top: 0 !important;
+}
+
+.assistant-prose :last-child,
+.assistant-prose p:last-child,
+.assistant-prose ul:last-child,
+.assistant-prose ol:last-child {
+    margin-bottom: 0 !important;
+}
+
 .assistant-prose h3 {
-    font-size: 0.875rem;
+    font-size: 1.15em;
     padding-bottom: 0.25rem;
     border-bottom: 1px solid rgba(226, 228, 233, 0.5);
+}
+
+.assistant-prose h4 {
+    font-size: 1rem;
+    line-height: 1.35;
+    margin-top: 1.25rem;
+    margin-bottom: 0.45rem;
+    padding-left: 0.65rem;
+    border-left: 2px solid var(--accent);
 }
 
 .dark .assistant-prose h3 {
@@ -837,8 +871,8 @@
 }
 
 .assistant-prose li {
-    margin-top: 0.35rem;
-    margin-bottom: 0.35rem;
+    margin-top: 0.45rem;
+    margin-bottom: 0.45rem;
     padding-left: 0.2rem;
     line-height: 1.6;
 }
@@ -875,14 +909,62 @@
     overflow-x: auto;
 }
 
+/* Assistant Prose Table Styling */
+.assistant-prose table {
+    width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: clamp(0.9375rem, calc(0.91rem + 0.08vw), 1rem);
+    line-height: 1.5;
+}
+
+.assistant-prose thead {
+    background-color: var(--surface-alt, rgba(0, 0, 0, 0.03));
+}
+
+.dark .assistant-prose thead {
+    background-color: var(--surface-alt, rgba(255, 255, 255, 0.04));
+}
+
+.assistant-prose th {
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    text-align: left;
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.assistant-prose td {
+    padding: 0.5rem 0.75rem;
+    color: var(--foreground);
+    border-bottom: 1px solid rgba(226, 228, 233, 0.5);
+}
+
+.dark .assistant-prose td {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.assistant-prose tr:last-child td {
+    border-bottom: none;
+}
+
+.assistant-prose tbody tr:hover td {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark .assistant-prose tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
 /* Sidebar collapsible chevron animation & accessibility */
 @media (prefers-reduced-motion: reduce) {
     .sidebar-group-chevron {
         transition: none !important;
     }
 }
-
-
 
 /* Skeleton shimmer */
 @keyframes skeleton-shimmer {
@@ -914,6 +996,32 @@
     .skeleton-shimmer::after {
         animation: none;
     }
+}
+
+/* Concentric Ripple Breathing Animation */
+@keyframes ripple-breathe {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.92;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.025);
+        opacity: 1;
+    }
+}
+
+.animate-ripple-breathe {
+    animation: ripple-breathe 14s ease-in-out infinite;
+}
+
+.ripple-wave-circle {
+    stroke: url(#ripple-grad-light);
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+.dark .ripple-wave-circle {
+    stroke: url(#ripple-grad-dark);
 }
 
 @media (prefers-reduced-motion: reduce) {

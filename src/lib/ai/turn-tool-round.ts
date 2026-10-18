@@ -1,4 +1,12 @@
 import { aiMessages, aiProposedActions, aiToolInvocations } from "@/db/schema";
+import {
+	type AssistantQuestionSet,
+	parseAssistantQuestionSet,
+} from "./assistant-questions";
+import type { AssistantChartSpec } from "./chart-types";
+import type { GroundedLabel } from "./citations";
+import { coverageNotices } from "./coverage-notices";
+import { type PitchPackage, parsePitch } from "./pitch-types";
 import type { ChatMessage, ToolCall } from "./provider";
 import { executeToolCalls } from "./tool-invoker";
 import type { ToolContext } from "./tools/tool-types";
@@ -50,10 +58,14 @@ export async function executeAndPersistToolRound(input: {
 }): Promise<{
 	historyMessages: ChatMessage[];
 	groundedIds: Set<string>;
-	groundedLabels: Array<{ id: string; label: string }>;
+	groundedLabels: GroundedLabel[];
 	proposals: CreatedProposal[];
+	questionSets: AssistantQuestionSet[];
+	charts: AssistantChartSpec[];
+	pitches: PitchPackage[];
 	nextSequence: number;
 	resultBytes: number;
+	coverageNotices: string[];
 }> {
 	await input.ctx.db.insert(aiMessages).values({
 		id: newId("msg-tc"),
@@ -73,6 +85,16 @@ export async function executeAndPersistToolRound(input: {
 		{ turnId: input.turnId, toolRound: input.toolRound },
 	);
 	const proposals: CreatedProposal[] = [];
+	const questionSets = results.toolOutputs.flatMap((output) => {
+		if (output.name !== "ask_questions" || !output.result.success) return [];
+		const parsed = parseAssistantQuestionSet(
+			output.result.data,
+			output.toolCallId,
+		);
+		return parsed ? [parsed] : [];
+	});
+	const charts: AssistantChartSpec[] = [];
+	const pitches: PitchPackage[] = [];
 	for (const proposal of results.proposedActions) {
 		const actionId = newId("act");
 		const payload = JSON.stringify(proposal.payload);
@@ -104,6 +126,16 @@ export async function executeAndPersistToolRound(input: {
 	let resultBytes = 0;
 	for (const output of results.toolOutputs) {
 		const resultPayload = output.result.data ?? { error: output.result.error };
+		if (
+			output.result.success &&
+			resultPayload &&
+			typeof resultPayload === "object" &&
+			"pitch" in resultPayload
+		) {
+			const pitch = parsePitch(resultPayload.pitch);
+			if (pitch) pitches.push(pitch);
+		}
+		if (output.result.chart) charts.push(output.result.chart.chart);
 		const call = input.calls.find(
 			(candidate) => candidate.id === output.toolCallId,
 		);
@@ -122,7 +154,11 @@ export async function executeAndPersistToolRound(input: {
 			role: "tool",
 			toolCallId: output.toolCallId,
 			content: JSON.stringify({
+				knowledgeScope: output.result.knowledgeScope,
 				scopeProjectId,
+				scopeProjectIds:
+					output.result.scopeProjectIds ?? output.result.chart?.scopeProjectIds,
+				scopeUserIds: output.result.chart?.scopeUserIds,
 				result: resultPayload,
 			} satisfies StoredToolPayload),
 		});
@@ -139,7 +175,13 @@ export async function executeAndPersistToolRound(input: {
 		groundedIds: results.allGroundedIds,
 		groundedLabels: results.allGroundedLabels,
 		proposals,
+		questionSets,
+		charts,
+		pitches,
 		nextSequence: sequence,
 		resultBytes,
+		coverageNotices: results.toolOutputs.flatMap((output) =>
+			coverageNotices(output.result.data),
+		),
 	};
 }

@@ -137,7 +137,7 @@ export function CalendarRail({
 							</Button>
 						</div>
 					</CardHeader>
-					<CardContent className="space-y-3 min-h-0 flex-1 flex flex-col">
+					<CardContent className="space-y-2.5 min-h-0 flex-1 flex flex-col">
 						<div
 							className={cn(
 								"transition-opacity duration-200",

@@ -1,15 +1,16 @@
 "use client";
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AssistantPageContext } from "@/lib/ai/page-context";
+import type { InitialAssistantMessage } from "./AssistantRuntimeAdapter";
 import {
-	type InitialAssistantMessage,
-	useAssistantUiBridge,
-} from "./AssistantRuntimeAdapter";
+	useAssistantSession,
+	useAssistantSessionView,
+} from "./AssistantSessions";
 import { AssistantThread } from "./AssistantThread";
 
 interface AssistantPaneProps {
+	sessionKey?: string;
 	conversationId: string | undefined;
 	initialMessages: InitialAssistantMessage[];
 	threadTitle?: string;
@@ -23,12 +24,9 @@ interface AssistantPaneProps {
 	projectCount?: number;
 }
 
-/**
- * Owns one conversation's runtime. The parent must render this with a `key` tied to the
- * conversation id (see the assistant route) — remounting is how the thread actually resets
- * when the user starts a new chat or picks a different one from the sidebar.
- */
+/** Displays a session whose runtime is owned by the authenticated layout. */
 export function AssistantPane({
+	sessionKey,
 	conversationId,
 	initialMessages,
 	threadTitle,
@@ -41,18 +39,23 @@ export function AssistantPane({
 	userRole,
 	projectCount,
 }: AssistantPaneProps) {
-	const modelIdRef = useRef<string | undefined>("DeepSeek-V4-Flash");
-
-	const bridge = useAssistantUiBridge(
+	const session = useAssistantSession(
+		sessionKey || conversationId || "drawer",
 		conversationId,
 		initialMessages,
-		onConversationCreated,
 		pageContext,
-		modelIdRef,
 	);
-
-	return (
-		<AssistantRuntimeProvider runtime={bridge.runtime}>
+	const notifiedId = useRef<string | undefined>(undefined);
+	useEffect(() => {
+		const id = session?.conversationId;
+		if (id && !conversationId && notifiedId.current !== id) {
+			notifiedId.current = id;
+			onConversationCreated(id);
+		}
+	}, [session?.conversationId, conversationId, onConversationCreated]);
+	const [container, setContainer] = useState<HTMLDivElement | null>(null);
+	const content = useMemo(
+		() => (
 			<AssistantThread
 				threadTitle={threadTitle}
 				showHeader={showHeader}
@@ -61,8 +64,18 @@ export function AssistantPane({
 				sidebarOpen={sidebarOpen}
 				userRole={userRole}
 				projectCount={projectCount}
-				modelIdRef={modelIdRef}
 			/>
-		</AssistantRuntimeProvider>
+		),
+		[
+			threadTitle,
+			showHeader,
+			onProposalResolved,
+			onToggleSidebar,
+			sidebarOpen,
+			userRole,
+			projectCount,
+		],
 	);
+	useAssistantSessionView(session?.key, container, content);
+	return <div ref={setContainer} className="h-full min-w-0" />;
 }

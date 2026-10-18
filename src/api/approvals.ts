@@ -1,9 +1,8 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, exists, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb, type Database } from "../db";
-import { leaveBalances, leaveRequests, users, wfhRequests } from "../db/schema";
+import { leaveRequests, users, wfhRequests } from "../db/schema";
 import { getApprovalsLiveData } from "../lib/approvals-live-data.server";
 import { logAuditEvent } from "../lib/audit.server";
 import { formatDateDisplay } from "../lib/date-format";
@@ -72,7 +71,7 @@ export const approveLeaveRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: id, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select({
@@ -117,40 +116,10 @@ export const approveLeaveRequest = createServerFn({ method: "POST" })
 				return { error: "Leave balance is not configured." };
 			}
 
-			const balanceKey = and(
-				eq(leaveBalances.userId, request.userId),
-				eq(leaveBalances.leaveType, request.leaveType),
-				eq(leaveBalances.cycleStart, cycle.cycleStart),
-			);
-
-			// Guarded status flip: only one concurrent approval can win, and only
-			// while the balance still has room. This is what prevents double
-			// deduction on double-click or concurrent approvers.
-			const flipped = await db
-				.update(leaveRequests)
-				.set({
-					status: "approved",
-					approvedBy: actor.id,
-					updatedAt: new Date(),
-				})
-				.where(
-					and(
-						eq(leaveRequests.id, id),
-						eq(leaveRequests.status, "pending"),
-						exists(
-							db
-								.select({ one: sql`1` })
-								.from(leaveBalances)
-								.where(
-									and(
-										balanceKey,
-										sql`${leaveBalances.used} + ${request.totalDays} <= ${leaveBalances.totalLimit}`,
-									),
-								),
-						),
-					),
-				)
-				.returning({ id: leaveRequests.id });
+			const flipped = await db.operation<{ id: string }[]>("leave.approve", {
+				id,
+				cycleStart: cycle.cycleStart,
+			});
 
 			if (flipped.length === 0) {
 				const [current] = await db
@@ -163,15 +132,6 @@ export const approveLeaveRequest = createServerFn({ method: "POST" })
 				}
 				return { error: "Request not found or already processed." };
 			}
-
-			// Atomic in-database increment: no read-modify-write race.
-			await db
-				.update(leaveBalances)
-				.set({
-					used: sql`${leaveBalances.used} + ${request.totalDays}`,
-					updatedAt: new Date(),
-				})
-				.where(balanceKey);
 
 			await runSideEffects("approveLeaveRequest", async () => {
 				const actorName = actor.name ?? "Your lead";
@@ -220,7 +180,7 @@ export const rejectLeaveRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -306,7 +266,7 @@ export const revokeLeaveRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select({
@@ -334,46 +294,18 @@ export const revokeLeaveRequest = createServerFn({ method: "POST" })
 				return { error: "Approved request not found." };
 			}
 
-			const flipped = await db
-				.update(leaveRequests)
-				.set({
-					status: "revoked",
-					revokedBy: actor.id,
-					revokeReason: input.reason,
-					updatedAt: new Date(),
-				})
-				.where(
-					and(
-						eq(leaveRequests.id, input.id),
-						inArray(leaveRequests.status, ["approved", "pending_cancellation"]),
-					),
-				)
-				.returning({ id: leaveRequests.id });
-
-			if (flipped.length === 0) {
-				return { error: "Approved request not found." };
-			}
-
-			// Restore the balance of the cycle the leave was charged to.
-			if (request.employeeBirthday) {
-				const cycle = getLeaveCycleBounds(
-					request.employeeBirthday,
-					dateAtMidnight(request.startDate),
-				);
-				await db
-					.update(leaveBalances)
-					.set({
-						used: sql`MAX(0, ${leaveBalances.used} - ${request.totalDays})`,
-						updatedAt: new Date(),
-					})
-					.where(
-						and(
-							eq(leaveBalances.userId, request.userId),
-							eq(leaveBalances.leaveType, request.leaveType),
-							eq(leaveBalances.cycleStart, cycle.cycleStart),
-						),
-					);
-			}
+			const cycle = request.employeeBirthday
+				? getLeaveCycleBounds(
+						request.employeeBirthday,
+						dateAtMidnight(request.startDate),
+					)
+				: null;
+			const flipped = await db.operation<{ id: string }[]>("leave.revoke", {
+				id: input.id,
+				reason: input.reason,
+				cycleStart: cycle?.cycleStart ?? "",
+			});
+			if (!flipped.length) return { error: "Approved request not found." };
 
 			await runSideEffects("revokeLeaveRequest", async () => {
 				const actorName = actor.name ?? "An admin";
@@ -422,7 +354,7 @@ export const rejectLeaveCancellation = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -503,7 +435,7 @@ export const approveWfhRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: id, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -577,7 +509,7 @@ export const rejectWfhRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -656,7 +588,7 @@ export const revokeWfhRequest = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -739,7 +671,7 @@ export const rejectWfhCancellation = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const actor = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [request] = await db
 				.select()
@@ -816,7 +748,7 @@ export const rejectWfhCancellation = createServerFn({ method: "POST" })
 export const getApprovalsLive = createServerFn({ method: "GET" })
 	.middleware([approverMiddleware])
 	.handler(async ({ context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const leadId = context.user.role === "admin" ? undefined : context.user.id;
 		return await getApprovalsLiveData(db, { leadId });
 	});
@@ -827,7 +759,7 @@ export const getTeamCalendarLive = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => z.string().parse(data))
 	.handler(async ({ data: dateStr }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const date = new Date(dateStr);
 		return await getTeamCalendarLiveData(db, date);
 	});

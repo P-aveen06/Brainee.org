@@ -211,11 +211,11 @@ Two details that matter:
 
 ```
 ⚠ ACTION REQUIRED
-  Code of Conduct v2       Acknowledge by 30 Sep        [ I have read this ]
+  Code of Conduct v2       Acknowledge by 16 Oct 2026        [ I have read this ]
 
 LEAVE & ATTENDANCE
-  Leave Policy v3          ✓ You acknowledged 12 Aug
-  WFH Policy v2            ✓ You acknowledged 4 Jul
+  Leave Policy v3          ✓ You acknowledged 16 Oct 2026
+  WFH Policy v2            ✓ You acknowledged 16 Oct 2026
 
 HIRING
   Referral Policy v2       —
@@ -241,7 +241,7 @@ Three portals generate personal obligations, and the sidebar can only carry so m
 
 ```
 ┌─ Needs your attention ──────────────────────┐
-│  Acknowledge Code of Conduct v2   by 30 Sep │
+│  Acknowledge Code of Conduct v2   by 16 Oct 2026 │
 │  2 development goals due this month         │
 │  AWS certification expires in 21 days       │
 └─────────────────────────────────────────────┘

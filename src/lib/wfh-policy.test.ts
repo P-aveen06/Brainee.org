@@ -5,7 +5,7 @@ import {
 	getWfhCycleBounds,
 	getWfhRequestDays,
 	isCurrentWfhQuotaRequest,
-	isSqliteWfhDateUniqueConstraintError,
+	isWfhDateUniqueConstraintError,
 	isValidWfhAllowance,
 	isValidWfhDate,
 } from "./wfh-policy";
@@ -18,13 +18,13 @@ describe("wfh-policy", () => {
 	});
 
 	it("uses the selected date to resolve the birthday-month quota cycle", () => {
-		expect(getWfhCycleBounds("1990-07-15", "2026-06-30")).toEqual({
-			cycleStart: "2025-07-01",
-			cycleEnd: "2026-06-30",
+		expect(getWfhCycleBounds("2028-07-15", "2028-06-30")).toEqual({
+			cycleStart: "2027-07-01",
+			cycleEnd: "2028-06-30",
 		});
-		expect(getWfhCycleBounds("1990-07-15", "2026-07-01")).toEqual({
-			cycleStart: "2026-07-01",
-			cycleEnd: "2027-06-30",
+		expect(getWfhCycleBounds("2028-07-15", "2028-07-01")).toEqual({
+			cycleStart: "2028-07-01",
+			cycleEnd: "2029-06-30",
 		});
 	});
 
@@ -38,9 +38,9 @@ describe("wfh-policy", () => {
 	});
 
 	it("accepts only real ISO calendar dates", () => {
-		expect(isValidWfhDate("2026-02-28")).toBe(true);
-		expect(isValidWfhDate("2026-02-31")).toBe(false);
-		expect(isValidWfhDate("2026-2-28")).toBe(false);
+		expect(isValidWfhDate("2026-10-16")).toBe(true);
+		expect(isValidWfhDate("2026-11-31")).toBe(false);
+		expect(isValidWfhDate("2026-11-6")).toBe(false);
 		expect(isValidWfhDate("not-a-date")).toBe(false);
 	});
 
@@ -53,14 +53,12 @@ describe("wfh-policy", () => {
 
 	it("recognizes only the WFH date unique-constraint failure", () => {
 		expect(
-			isSqliteWfhDateUniqueConstraintError(
-				new Error(
-					"D1_ERROR: UNIQUE constraint failed: wfh_requests.user_id, wfh_requests.date: SQLITE_CONSTRAINT",
-				),
+			isWfhDateUniqueConstraintError(
+				new Error("Unique constraint violation on WfhRequest.userId,date"),
 			),
 		).toBe(true);
 		expect(
-			isSqliteWfhDateUniqueConstraintError(
+			isWfhDateUniqueConstraintError(
 				new Error("CHECK constraint failed: wfh_policy_allowance_check"),
 			),
 		).toBe(false);

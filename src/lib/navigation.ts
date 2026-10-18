@@ -52,7 +52,7 @@ export const NAV_GROUPS: {
 			},
 			{
 				href: "/assistant",
-				label: "Brainee.org Brain",
+				label: "Company Brain",
 				icon: Sparkles,
 				allowedRoles: ["user", "lead", "admin", "hr"],
 			},

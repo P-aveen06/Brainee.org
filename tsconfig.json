@@ -3,7 +3,6 @@
     "src",
     "vite.config.ts",
     "vitest.config.ts",
-    "drizzle.config.ts",
     "worker-configuration.d.ts"
   ],
   "compilerOptions": {

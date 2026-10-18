@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import {
@@ -23,7 +22,7 @@ import {
  * Returns every asset currently in a person's custody — used by departure
  * clearance, where the per-asset flows are impractical.
  *
- * D1 has no transactions here, so each asset is closed out independently and
+ * Each asset is closed out independently and
  * the work is idempotent: assignments already closed are simply not selected.
  * Returns the assets it processed so the caller can report and audit them.
  */
@@ -259,7 +258,7 @@ const renewAccountSchema = z.object({
 export const getAssetsPageData = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultCompany(db);
 
 		// Fetch all companies
@@ -400,7 +399,7 @@ export const getAssetHistory = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.inputValidator((data: unknown) => z.string().parse(data))
 	.handler(async ({ data: assetId }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [asset] = await db
 			.select({
@@ -545,7 +544,7 @@ export const createAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => createAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 			const quantity = input.quantity || 1;
 			const now = new Date();
@@ -713,7 +712,7 @@ export const updateAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [oldAsset] = await db
@@ -796,7 +795,7 @@ export const assignAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => assignAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [asset] = await db
@@ -899,7 +898,7 @@ export const reassignAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => reassignAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [asset] = await db
@@ -992,7 +991,7 @@ export const returnAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => returnAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [asset] = await db
@@ -1091,7 +1090,7 @@ export const markAssetStatus = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => markStatusSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [asset] = await db
@@ -1190,7 +1189,7 @@ export const replaceAsset = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => replaceAssetSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [defective] = await db
@@ -1254,7 +1253,7 @@ export const renewAccount = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => renewAccountSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [asset] = await db
@@ -1316,7 +1315,7 @@ export const deleteAsset = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [activeAssignment] = await db
@@ -1366,7 +1365,7 @@ export const acknowledgeAssetReceipt = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const user = context.user;
 
 			const [assignment] = await db
@@ -1479,7 +1478,7 @@ export const reportAssetIssue = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => reportAssetIssueSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		return reportAssetIssueCore(db, context.user, input);
 	});
 
@@ -1490,7 +1489,7 @@ export const resolveAssetIssue = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [assignment] = await db

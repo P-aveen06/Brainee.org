@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { count, eq } from "drizzle-orm";
+import { count, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import {
@@ -52,7 +51,7 @@ export const createLeaveType = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const id = crypto.randomUUID();
 			const accrualPerYear = input.accrualPerYear ?? 0;
@@ -138,7 +137,7 @@ export const updateLeaveType = createServerFn({ method: "POST" })
 	.handler(async ({ data: input, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [oldLeaveType] = await db
 				.select()
@@ -222,7 +221,7 @@ export const deleteLeaveType = createServerFn({ method: "POST" })
 	.handler(async ({ data: id, context }) => {
 		try {
 			const adminUser = context.user;
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 
 			const [oldLeaveType] = await db
 				.select()

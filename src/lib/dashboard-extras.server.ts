@@ -1,5 +1,16 @@
-import { env } from "cloudflare:workers";
-import { and, asc, eq, gte, inArray, lte, notInArray, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	count,
+	countWhen,
+	eq,
+	gte,
+	inArray,
+	isNull,
+	lt,
+	lte,
+	notInArray,
+} from "@/db/graph-query";
 import { createDb } from "../db";
 import {
 	dashboardLayouts,
@@ -96,7 +107,7 @@ export async function getDashboardExtras(user: {
 	role: string;
 	birthday: string | null;
 }): Promise<DashboardExtras> {
-	const db = createDb(env.DATABASE);
+	const db = createDb();
 	const today = getTodayIsoDate();
 	const month = today.slice(0, 7);
 	const trendStart = addIsoDays(today, -(TREND_DAYS - 1));
@@ -204,10 +215,10 @@ export async function getDashboardExtras(user: {
 	const [counts, upcoming] = await Promise.all([
 		db
 			.select({
-				open: sql<number>`count(*)`,
-				overdue: sql<number>`coalesce(sum(case when ${projectTasks.dueDate} < ${today} then 1 else 0 end), 0)`,
-				dueToday: sql<number>`coalesce(sum(case when ${projectTasks.dueDate} = ${today} then 1 else 0 end), 0)`,
-				inProgress: sql<number>`coalesce(sum(case when ${projectTasks.status} = 'in_progress' then 1 else 0 end), 0)`,
+				open: count(),
+				overdue: countWhen(lt(projectTasks.dueDate, today)),
+				dueToday: countWhen(eq(projectTasks.dueDate, today)),
+				inProgress: countWhen(eq(projectTasks.status, "in_progress")),
 			})
 			.from(projectTasks)
 			.where(openMine),
@@ -225,7 +236,7 @@ export async function getDashboardExtras(user: {
 			.innerJoin(projects, eq(projectTasks.projectId, projects.id))
 			.where(openMine)
 			// SQLite sorts NULL first ascending; keep undated tasks last.
-			.orderBy(sql`${projectTasks.dueDate} is null`, asc(projectTasks.dueDate))
+			.orderBy(isNull(projectTasks.dueDate), asc(projectTasks.dueDate))
 			.limit(8),
 	]);
 

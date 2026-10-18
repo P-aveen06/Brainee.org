@@ -33,7 +33,7 @@ function UpdatesPanel({
 
 	if (projects.length === 0) {
 		return (
-			<div className="flex h-full min-h-[220px] flex-col items-center justify-center p-6 text-center">
+			<div className="flex h-full min-h-[180px] flex-col items-center justify-center p-4 text-center">
 				<div className="mb-3 flex size-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
 					<CheckCircle2 className="size-5" />
 				</div>
@@ -167,7 +167,7 @@ function TasksPanel({ tasks }: { tasks: DashboardExtras["tasks"] }) {
 				</div>
 			</div>
 			{upcoming.length === 0 ? (
-				<div className="flex h-full min-h-[220px] flex-col items-center justify-center p-6 text-center">
+				<div className="flex h-full min-h-[180px] flex-col items-center justify-center p-4 text-center">
 					<div className="mb-3 flex size-11 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
 						<CheckCircle2 className="size-5" />
 					</div>

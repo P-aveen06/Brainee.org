@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "../db";
 import {
@@ -26,7 +25,7 @@ import {
 	getExistingWfhDateError,
 	getWfhCycleBounds,
 	getWfhRequestDays,
-	isSqliteWfhDateUniqueConstraintError,
+	isWfhDateUniqueConstraintError,
 	isValidWfhDate,
 	WFH_POLICY_ID,
 } from "../lib/wfh-policy";
@@ -43,7 +42,7 @@ export const getInitialLeaveRequestData = createServerFn({
 })
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const leaveTypes = await db.select().from(systemLeaveTypes);
 		const holidays = await db.select().from(publicHolidays);
 		const mappedLeaveTypes = leaveTypes.map((t) => ({
@@ -66,7 +65,7 @@ export const applyForLeave = createServerFn({ method: "POST" })
 			return { error: "Unauthorized" };
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		return applyForLeaveCore(db, user, input);
 	});
 
@@ -81,7 +80,7 @@ export const cancelLeaveRequest = createServerFn({ method: "POST" })
 			return { error: "Unauthorized" };
 		}
 
-		return cancelLeaveRequestCore(createDb(env.DATABASE), user, id);
+		return cancelLeaveRequestCore(createDb(), user, id);
 	});
 
 export const applyForWfh = createServerFn({ method: "POST" })
@@ -109,7 +108,7 @@ export const applyForWfh = createServerFn({ method: "POST" })
 			return { error: "WFH cannot be applied on weekends." };
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		if (!user.birthday) {
 			return {
 				error: "Set your birthday in your profile before applying for WFH.",
@@ -228,41 +227,24 @@ export const applyForWfh = createServerFn({ method: "POST" })
 		}
 
 		const requestId = crypto.randomUUID();
-		let insertResult: Awaited<
-			ReturnType<ReturnType<typeof env.DATABASE.prepare>["run"]>
-		>;
+		let insertResult: { meta: { changes: number } };
 		try {
-			insertResult = await env.DATABASE.prepare(
-				`INSERT INTO wfh_requests (id, user_id, date, is_half_day, half_day_period, status, reason)
-			 SELECT ?, ?, ?, ?, ?, 'pending', ?
-			 WHERE NOT EXISTS (
-				 SELECT 1 FROM wfh_requests
-				 WHERE user_id = ? AND date = ?
-			 )
-			 AND ? + COALESCE((
-				 SELECT SUM(CASE WHEN is_half_day = 1 THEN 0.5 ELSE 1 END)
-				 FROM wfh_requests
-				 WHERE user_id = ? AND date >= ? AND date <= ? AND status IN ('pending', 'approved')
-			 ), 0) <= COALESCE((SELECT annual_allowance FROM wfh_policy WHERE id = 1), ?)`,
-			)
-				.bind(
-					requestId,
-					user.id,
-					input.date,
-					input.day_portion !== "full_day" ? 1 : 0,
-					input.day_portion === "full_day" ? null : input.day_portion,
-					normalizeReason(input.reason),
-					user.id,
-					input.date,
-					requestedDays,
-					user.id,
-					cycle.cycleStart,
-					cycle.cycleEnd,
-					DEFAULT_WFH_ALLOWANCE,
-				)
-				.run();
+			insertResult = await db.operation("wfh.request", {
+				values: {
+					id: requestId,
+					userId: user.id,
+					date: input.date,
+					isHalfDay: input.day_portion !== "full_day",
+					halfDayPeriod:
+						input.day_portion === "full_day" ? null : input.day_portion,
+					reason: normalizeReason(input.reason),
+				},
+				cycleStart: cycle.cycleStart,
+				cycleEnd: cycle.cycleEnd,
+				defaultAllowance: DEFAULT_WFH_ALLOWANCE,
+			});
 		} catch (error) {
-			if (isSqliteWfhDateUniqueConstraintError(error)) {
+			if (isWfhDateUniqueConstraintError(error)) {
 				return {
 					error: getExistingWfhDateError("concurrent_request"),
 				};
@@ -330,7 +312,7 @@ export const cancelWfhRequest = createServerFn({ method: "POST" })
 			return { error: "Unauthorized" };
 		}
 
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 
 		const [request] = await db
 			.select()

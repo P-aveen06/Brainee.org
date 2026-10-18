@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "@/db/graph-query";
 import { z } from "zod";
 import { createDb } from "@/db";
 import { projectComments, projectEvents, users } from "@/db/schema";
@@ -28,7 +27,7 @@ export const getProjectComments = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => getCommentsSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const access = await assertProjectAccess(
 			db,
 			context.user,
@@ -79,7 +78,7 @@ export const createComment = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => createCommentSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			await assertProjectAccess(
 				db,
 				context.user,
@@ -129,7 +128,7 @@ export const toggleDecisionFlag = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [comment] = await db
 				.select()
 				.from(projectComments)
@@ -162,7 +161,7 @@ export const togglePinComment = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [comment] = await db
 				.select()
 				.from(projectComments)
@@ -190,7 +189,7 @@ export const updateComment = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [comment] = await db
 				.select()
 				.from(projectComments)
@@ -223,7 +222,7 @@ export const deleteComment = createServerFn({ method: "POST" })
 	)
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const [comment] = await db
 				.select()
 				.from(projectComments)

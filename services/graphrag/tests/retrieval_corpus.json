@@ -1,0 +1,22 @@
+[
+  {"query":"Collect money from a credit card", "expected":"payment"},
+  {"query":"Build online payment processing", "expected":"payment"},
+  {"query":"Authorize and capture a purchase", "expected":"payment"},
+  {"query":"Accept a customer's card at checkout", "expected":"payment"},
+  {"query":"Give the customer their money back", "expected":"refund"},
+  {"query":"Reverse a completed purchase", "expected":"refund"},
+  {"query":"Refund to the original payment method", "expected":"refund"},
+  {"query":"Reconcile refunded gateway events", "expected":"refund"},
+  {"query":"Let staff use their corporate account", "expected":"sso"},
+  {"query":"Single sign-on with OpenID Connect", "expected":"sso"},
+  {"query":"Authenticate through our identity provider", "expected":"sso"},
+  {"query":"Employee login federation", "expected":"sso"},
+  {"query":"Tell a customer that their package has left", "expected":"notification"},
+  {"query":"Send delivery status messages", "expected":"notification"},
+  {"query":"Email shipment alerts", "expected":"notification"},
+  {"query":"Notify users when an order ships", "expected":"notification"},
+  {"query":"Make uploaded files searchable", "expected":"ingestion"},
+  {"query":"Extract text from incoming attachments", "expected":"ingestion"},
+  {"query":"Ingest documents into a knowledge base", "expected":"ingestion"},
+  {"query":"Track file indexing failures", "expected":"ingestion"}
+]

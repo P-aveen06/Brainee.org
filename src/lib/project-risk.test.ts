@@ -8,7 +8,7 @@ describe("evaluateProjectRisks", () => {
 		projectName: "Apollo",
 		status: "active",
 		currentStageKey: "development",
-		today: "2026-08-29",
+		today: "2026-10-20",
 		tasks: [],
 		checklistItems: [],
 		documents: [],
@@ -19,7 +19,7 @@ describe("evaluateProjectRisks", () => {
 		const archived = evaluateProjectRisks({
 			...baseSnapshot,
 			status: "archived",
-			tasks: [{ id: "t1", status: "todo", dueDate: "2026-08-01" }],
+			tasks: [{ id: "t1", status: "todo", dueDate: "2026-10-16" }],
 		});
 		expect(archived).toHaveLength(0);
 	});
@@ -28,9 +28,9 @@ describe("evaluateProjectRisks", () => {
 		const res = evaluateProjectRisks({
 			...baseSnapshot,
 			tasks: [
-				{ id: "t1", status: "todo", dueDate: "2026-08-20" },
-				{ id: "t2", status: "in_progress", dueDate: "2026-08-25" },
-				{ id: "t3", status: "done", dueDate: "2026-08-20" }, // done, should not flag
+				{ id: "t1", status: "todo", dueDate: "2026-10-16" },
+				{ id: "t2", status: "in_progress", dueDate: "2026-10-17" },
+				{ id: "t3", status: "done", dueDate: "2026-10-16" }, // done, should not flag
 			],
 		});
 
@@ -90,7 +90,7 @@ describe("evaluateProjectRisks", () => {
 	it("flags target_date_at_risk when target date is approaching within 7 days", () => {
 		const res = evaluateProjectRisks({
 			...baseSnapshot,
-			targetEndDate: "2026-09-02", // 4 days from 2026-08-29
+			targetEndDate: "2026-10-24", // 4 days from 2026-10-20
 			tasks: [{ id: "t1", status: "in_progress", assigneeId: "u1" }],
 		});
 
@@ -102,7 +102,7 @@ describe("evaluateProjectRisks", () => {
 	it("flags critical severity when target date has already passed with open tasks", () => {
 		const res = evaluateProjectRisks({
 			...baseSnapshot,
-			targetEndDate: "2026-08-25", // 4 days ago
+			targetEndDate: "2026-10-16", // 4 days ago
 			tasks: [{ id: "t1", status: "in_progress", assigneeId: "u1" }],
 		});
 

@@ -28,7 +28,7 @@ describe("checkStalledTask", () => {
 	it("returns null if task is not in_progress", () => {
 		const res = checkStalledTask({
 			status: "todo",
-			today: "2026-08-29",
+			today: "2026-10-16",
 		});
 		expect(res).toBeNull();
 	});
@@ -37,7 +37,7 @@ describe("checkStalledTask", () => {
 		const res = checkStalledTask({
 			status: "in_progress",
 			lastReferencedDate: null,
-			today: "2026-08-29",
+			today: "2026-10-16",
 			thresholdDays: 3,
 		});
 		expect(res).not.toBeNull();
@@ -48,8 +48,8 @@ describe("checkStalledTask", () => {
 	it("returns null if task was updated recently within threshold", () => {
 		const res = checkStalledTask({
 			status: "in_progress",
-			lastReferencedDate: "2026-08-28",
-			today: "2026-08-29",
+			lastReferencedDate: "2026-10-18",
+			today: "2026-10-20",
 			thresholdDays: 3,
 		});
 		expect(res).toBeNull();
@@ -58,13 +58,13 @@ describe("checkStalledTask", () => {
 	it("raises stalled flag if elapsed days exceed threshold", () => {
 		const res = checkStalledTask({
 			status: "in_progress",
-			lastReferencedDate: "2026-08-20",
-			today: "2026-08-29",
+			lastReferencedDate: "2026-10-16",
+			today: "2026-10-20",
 			thresholdDays: 3,
 		});
 		expect(res).not.toBeNull();
 		expect(res?.flagCode).toBe("stalled");
-		expect(res?.evidence?.daysSinceUpdate).toBe(9);
+		expect(res?.evidence?.daysSinceUpdate).toBe(4);
 	});
 });
 

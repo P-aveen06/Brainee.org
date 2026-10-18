@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, eq, ne, or } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, or, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { createDb, type Database } from "../db";
 import { projectEvents, projectTasks } from "../db/schema";
@@ -111,7 +110,7 @@ export const updateTaskStatus = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => updateTaskStatusSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		return updateTaskStatusCore(db, context.user, input);
 	});
 
@@ -119,7 +118,7 @@ export const reassignTask = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => reassignTaskSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const targetId = input.id || input.taskId || "";
 
 		const [existing] = await db
@@ -163,7 +162,7 @@ export const bulkReassignTasks = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator((data: unknown) => bulkReassignTasksSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await assertProjectAccess(db, context.user, input.projectId, "manager");
 
 		const result = await db
@@ -176,8 +175,8 @@ export const bulkReassignTasks = createServerFn({ method: "POST" })
 				and(
 					eq(projectTasks.projectId, input.projectId),
 					eq(projectTasks.assigneeId, input.fromUserId),
-					sql`${projectTasks.status} != 'done'`,
-					sql`${projectTasks.status} != 'cancelled'`,
+					ne(projectTasks.status, "done"),
+					ne(projectTasks.status, "cancelled"),
 				),
 			)
 			.returning({ id: projectTasks.id });

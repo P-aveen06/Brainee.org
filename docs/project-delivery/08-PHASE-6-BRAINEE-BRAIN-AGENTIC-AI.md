@@ -56,10 +56,11 @@ Initial limits:
 
 ```ts
 MAX_TOOL_ROUNDS = 3
-MAX_TOTAL_TOOL_CALLS = 8
-MAX_TOOL_CALLS_PER_ROUND = 4
-MAX_TOOL_RESULT_ROWS = 50
-MAX_TOOL_RESULT_BYTES = 64_000
+MAX_TOTAL_TOOL_CALLS = 16
+MAX_TOOL_CALLS_PER_ROUND = 6
+MAX_TOOL_RESULT_ROWS = 100
+MAX_TOOL_RESULT_BYTES = 128_000
+MAX_CONVERSATION_HISTORY_ROWS = 80
 MAX_TURN_DURATION_MS = 25_000
 ```
 
@@ -89,6 +90,8 @@ All schema changes are additive. Generate and review a Drizzle migration, then a
 local D1 database during development.
 
 History selection must never start with an orphaned tool result or remove half of a tool exchange.
+The provider history query is capped at 80 persisted message/tool rows, then drops any incomplete
+oldest turn prefix before sending the messages to the model.
 
 ## 3. Deterministic domain intelligence
 
@@ -253,7 +256,7 @@ bun run build
 
 Schema work additionally uses reviewed generated SQL and the local D1 migration command only.
 
-## Implementation status — 2026-08-30
+## Implementation status — 2026-10-16
 
 Delivered in the first execution slice:
 

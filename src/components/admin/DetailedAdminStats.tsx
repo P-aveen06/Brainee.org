@@ -125,7 +125,7 @@ export default function DetailedAdminStats({ data }: DetailedAdminStatsProps) {
 						className="h-7 text-xs gap-1.5 font-medium border-border"
 					>
 						<Sparkles className="size-3 text-accent" />
-						Ask Brainee.org Brain
+						Ask Company Brain
 					</Button>
 				</div>
 			</div>

@@ -10,11 +10,11 @@ export const TURN_TIMEOUT_MS = 90_000;
 export const CLIENT_TIMEOUT_MS = 100_000;
 export const TOOL_TIMEOUT_MS = 12_000;
 
-export async function completeWithinDeadline(
-	provider: ChatProvider,
+async function withProviderDeadline<T>(
 	request: ChatCompletionRequest,
 	deadlineMs: number,
-): Promise<ChatCompletionResult> {
+	run: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
 	const remainingMs = deadlineMs - Date.now();
 	if (remainingMs <= 0) {
 		throw new AssistantFailure(
@@ -41,13 +41,42 @@ export async function completeWithinDeadline(
 			);
 		}, timeoutMs);
 	});
+	const abortForCaller = () => controller.abort(request.signal?.reason);
+	if (request.signal?.aborted) abortForCaller();
+	else
+		request.signal?.addEventListener("abort", abortForCaller, { once: true });
 
 	try {
-		return await Promise.race([
-			provider.complete({ ...request, signal: controller.signal }),
-			timeout,
-		]);
+		return await Promise.race([run(controller.signal), timeout]);
 	} finally {
 		if (timer) clearTimeout(timer);
+		request.signal?.removeEventListener("abort", abortForCaller);
 	}
+}
+
+export function completeWithinDeadline(
+	provider: ChatProvider,
+	request: ChatCompletionRequest,
+	deadlineMs: number,
+): Promise<ChatCompletionResult> {
+	return withProviderDeadline(request, deadlineMs, (signal) =>
+		provider.complete({ ...request, signal }),
+	);
+}
+
+export function streamWithinDeadline(
+	provider: ChatProvider,
+	request: ChatCompletionRequest,
+	deadlineMs: number,
+	onTextDelta: (delta: string) => void,
+): Promise<ChatCompletionResult> {
+	return withProviderDeadline(request, deadlineMs, async (signal) => {
+		const streamRequest = { ...request, signal };
+		if (provider.stream) {
+			return provider.stream(streamRequest, onTextDelta);
+		}
+		const result = await provider.complete(streamRequest);
+		if (result.text) onTextDelta(result.text);
+		return result;
+	});
 }

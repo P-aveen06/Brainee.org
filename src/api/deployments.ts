@@ -1,6 +1,5 @@
-import { env } from "cloudflare:workers";
+import { and, count, desc, eq } from "@/db/graph-query";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createDb } from "../db";
 import {
@@ -72,7 +71,7 @@ const offboardDeploymentSchema = z.object({
 export const getCompaniesList = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultCompany(db);
 
 		const allCompanies = await db
@@ -84,7 +83,7 @@ export const getCompaniesList = createServerFn({ method: "GET" })
 		const assetCounts = await db
 			.select({
 				companyId: assets.ownerCompanyId,
-				count: sql<number>`count(*)`,
+				count: count(),
 			})
 			.from(assets)
 			.groupBy(assets.ownerCompanyId);
@@ -92,7 +91,7 @@ export const getCompaniesList = createServerFn({ method: "GET" })
 		const deploymentCounts = await db
 			.select({
 				companyId: clientDeployments.primaryClientId,
-				count: sql<number>`count(*)`,
+				count: count(),
 			})
 			.from(clientDeployments)
 			.where(eq(clientDeployments.status, "active"))
@@ -117,7 +116,7 @@ export const createCompany = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => companySchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [existing] = await db
@@ -163,7 +162,7 @@ export const updateCompany = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateCompanySchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [existing] = await db
@@ -220,7 +219,7 @@ export const updateCompany = createServerFn({ method: "POST" })
 export const getDeploymentsPageData = createServerFn({ method: "GET" })
 	.middleware([adminMiddleware])
 	.handler(async () => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		await ensureDefaultCompany(db);
 
 		// Fetch all companies
@@ -363,7 +362,7 @@ export const createClientDeployment = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => deploymentSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const deploymentId = crypto.randomUUID();
@@ -460,7 +459,7 @@ export const offboardClientDeployment = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => offboardDeploymentSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [deployment] = await db
@@ -575,7 +574,7 @@ export const updateClientDeployment = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => updateDeploymentSchema.parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			const [existing] = await db
@@ -638,7 +637,7 @@ export const deleteClientDeployment = createServerFn({ method: "POST" })
 	.inputValidator((data: unknown) => z.object({ id: z.string() }).parse(data))
 	.handler(async ({ data: input, context }) => {
 		try {
-			const db = createDb(env.DATABASE);
+			const db = createDb();
 			const admin = context.user;
 
 			// Unlink any assignments from this deployment
@@ -672,7 +671,7 @@ export const getEmployeeEquipmentAndDeployments = createServerFn({
 		z.object({ userId: z.string() }).parse(data),
 	)
 	.handler(async ({ data: input, context }) => {
-		const db = createDb(env.DATABASE);
+		const db = createDb();
 		const caller = context.user;
 
 		// Authorization check: User can view their own, or admin/lead can view employee
