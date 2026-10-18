@@ -26,6 +26,9 @@ export function useMonthEvents(initial: {
 		setFailed(false);
 		try {
 			const res = await getDashboardCalendar({ data: month });
+			if (!res || !Array.isArray(res.events)) {
+				throw new Error("Calendar response did not include events");
+			}
 			setCache((c) => ({ ...c, [month]: res.events }));
 		} catch {
 			requested.current.delete(month);

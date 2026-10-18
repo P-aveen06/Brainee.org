@@ -135,9 +135,9 @@ export function AssistantQuestionCard({
 	return (
 		<section
 			aria-labelledby={headingId}
-			className="my-3 max-w-3xl rounded-3xl border border-border bg-card px-5 py-4 shadow-xs sm:px-6"
+			className="my-2 max-w-3xl rounded-2xl border border-border bg-card px-4 py-3 shadow-xs sm:px-5"
 		>
-			<div className="mb-4 flex items-center justify-between gap-3">
+			<div className="mb-3 flex items-center justify-between gap-3">
 				<div className="flex min-w-0 items-center gap-3 text-muted-foreground">
 					<CircleHelp className="size-5 shrink-0" aria-hidden="true" />
 					<h3 id={headingId} className="text-base font-medium">
@@ -169,11 +169,11 @@ export function AssistantQuestionCard({
 			</div>
 
 			<fieldset disabled={isResolved} className="min-w-0">
-				<legend className="mb-4 text-lg font-medium leading-7 text-foreground sm:text-xl">
+				<legend className="mb-2 text-base font-medium leading-6 text-foreground sm:text-lg">
 					{question.prompt}
 				</legend>
 				{question.options && (
-					<div className="space-y-1.5">
+					<div className="space-y-0.5">
 						{question.options.map((option, index) => {
 							const selected = answer.optionIds.includes(option.id);
 							return (
@@ -181,24 +181,22 @@ export function AssistantQuestionCard({
 									key={option.id}
 									type="button"
 									variant="ghost"
+									aria-label={
+										option.description
+											? `${option.label}: ${option.description}`
+											: option.label
+									}
 									aria-pressed={selected}
 									onClick={() => selectOption(option.id)}
-									className={`min-h-12 w-full justify-between gap-3 px-3 text-left text-base font-normal whitespace-normal ${selected ? "bg-surface-alt" : "hover:bg-surface-alt"}`}
+									className={`min-h-11 w-full justify-between gap-2 px-2 text-left text-sm font-normal whitespace-normal ${selected ? "bg-surface-alt" : "hover:bg-surface-alt"}`}
 								>
-									<span className="flex min-w-0 items-center gap-3">
-										<span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-sm text-muted-foreground">
+									<span className="flex min-w-0 items-center gap-2">
+										<span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-xs text-muted-foreground">
 											{index + 1}
 										</span>
-										<span className="min-w-0">
-											<span className="block">{option.label}</span>
-											{option.description && (
-												<span className="block text-sm text-muted-foreground">
-													{option.description}
-												</span>
-											)}
-										</span>
+										<span className="min-w-0 truncate">{option.label}</span>
 									</span>
-									<ArrowRight className="size-5 shrink-0 text-muted-foreground" />
+									<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
 								</Button>
 							);
 						})}
@@ -230,7 +228,7 @@ export function AssistantQuestionCard({
 					</div>
 				)}
 
-				<div className="mt-4 flex min-w-0 items-start gap-2 border-b border-border/70 pb-2">
+				<div className="mt-3 flex min-w-0 items-start gap-2 border-b border-border/70 pb-2">
 					<PencilLine
 						className="mt-2 size-5 shrink-0 text-muted-foreground"
 						aria-hidden="true"
@@ -239,13 +237,13 @@ export function AssistantQuestionCard({
 						aria-label={`Your response to: ${question.prompt}`}
 						value={answer.text}
 						onChange={(event) => setFreeformAnswer(event.target.value)}
-						rows={2}
+						rows={1}
 						placeholder={
 							question.options
 								? "Or write your own response"
 								: "Write your response"
 						}
-						className="min-h-16 min-w-0 flex-1 resize-y border-0 bg-transparent px-1 text-base shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
+						className="min-h-11 min-w-0 flex-1 resize-y border-0 bg-transparent px-1 text-base shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
 					/>
 					{isSupported && (
 						<Button
@@ -267,7 +265,7 @@ export function AssistantQuestionCard({
 			</fieldset>
 
 			{!isResolved && (
-				<div className="mt-4 flex items-center justify-end gap-2">
+				<div className="mt-3 flex items-center justify-end gap-2">
 					<Button
 						type="button"
 						variant="outline"
