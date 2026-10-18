@@ -53,7 +53,11 @@ Open [localhost:3000](http://localhost:3000) and choose a teammate. The local de
 
 Seeding only runs when you ask for it. Back up an existing graph before running `graph:seed` or `graph:enrich`. The first upgrade of the old sample updates known demo accounts and staffing once; later seed runs preserve edits. Details are in the [local setup guide](docs/falkordb/LOCAL-SETUP.md).
 
-FalkorDB Browser is at [localhost:3001](http://localhost:3001). The setup guide explains how to connect. Uploaded files use local R2 storage during development. Live assistant conversations send prompts and selected records to the configured chat provider; embeddings are calculated locally.
+FalkorDB Browser is at [localhost:3001](http://localhost:3001). Use it to inspect the local graph's labels, relationships and data. The setup guide explains how to connect.
+
+![FalkorDB Browser showing the Brainee development graph](docs/assets/falkordb-browser.png)
+
+Uploaded files use local R2 storage during development. Live assistant conversations send prompts and selected records to the configured chat provider; embeddings are calculated locally.
 
 Public research for pitches is optional. To enable it, run `bunx playwright install chromium`, set a random `BROWSER_SERVICE_TOKEN` of at least 32 characters in `.dev.vars`, keep `BROWSER_SERVICE_URL=http://127.0.0.1:3200`, and start `bun run browser:serve` in another terminal. It reads approved HTTPS hosts; `BROWSER_PUBLIC_HOSTS` adds hosts to that list. Public searches use generic terms without project details. Layout checks cover the preview, not the exported Word or PowerPoint file.
 
