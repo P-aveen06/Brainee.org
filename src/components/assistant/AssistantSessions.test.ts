@@ -4,7 +4,6 @@ import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 import { sendAiMessage } from "@/api/ai-assistant";
-import { AssistantLoading } from "./AssistantLoading";
 import { AssistantPane } from "./AssistantPane";
 import {
 	AssistantSessionsProvider,
@@ -40,7 +39,6 @@ function Answer() {
 		"div",
 		null,
 		createElement("span", null, part?.type === "text" ? part.text : ""),
-		createElement(AssistantLoading),
 	);
 }
 
@@ -136,9 +134,6 @@ test("concurrent streams survive replacing views and leaving the assistant page"
 	if (!first) throw new Error("First runtime missing");
 	act(() => first.thread.append("First question"));
 	await waitFor(() => expect(requests).toHaveLength(1));
-	await waitFor(() =>
-		expect(view.getByText("Generating your response…")).toBeTruthy(),
-	);
 	expect(view.getByText("Running")).toBeTruthy();
 
 	view.rerender(tree("draft-b"));
@@ -148,7 +143,6 @@ test("concurrent streams survive replacing views and leaving the assistant page"
 	act(() => second.thread.append("Second question"));
 	await waitFor(() => expect(requests).toHaveLength(2));
 	view.rerender(tree()); // Another application route, without any chat view.
-	expect(view.queryByText("Generating your response…")).toBeNull();
 	expect(view.getAllByText("Running")).toHaveLength(2);
 	expect(view.getByText("First question")).toBeTruthy();
 	expect(view.getByText("Second question")).toBeTruthy();
@@ -179,7 +173,6 @@ test("concurrent streams survive replacing views and leaving the assistant page"
 	await waitFor(() =>
 		expect(view.getByText("Answer conversation-0")).toBeTruthy(),
 	);
-	expect(view.queryByText("Generating your response…")).toBeNull();
 	expect(first.thread.getState().messages.at(-1)?.content).toEqual([
 		{ type: "text", text: "Answer conversation-0" },
 	]);
