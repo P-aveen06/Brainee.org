@@ -17,6 +17,9 @@ export type TaskRow = {
 	completedAt: Date | null;
 	estimateHours: number | null;
 	actualHours: number | null;
+	sourceTaskId?: string | null;
+	sourceProjectId?: string | null;
+	adaptationAssumptions?: string | null;
 	blockedReason: string | null;
 	sequence: number;
 	createdAt: Date | null;

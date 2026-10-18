@@ -1,9 +1,11 @@
-import type { GroundedLabel } from "./citations";
 import { desc, eq } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiTurns } from "@/db/schema";
 import { getEnvVar } from "@/lib/auth.server";
 import { visibleProjectIdsFor } from "@/lib/project-access";
+import type { AssistantActivity } from "./assistant-activity";
+import type { AssistantQuestionSet } from "./assistant-questions";
 import type { AssistantChartSpec } from "./chart-types";
+import type { GroundedLabel } from "./citations";
 import {
 	type CitationRef,
 	matchGroundedCitation,
@@ -51,6 +53,7 @@ export interface AssistantTurnInput {
 	turnId?: string;
 	assistantMessageId?: string;
 	signal?: AbortSignal;
+	onActivity?: (activity: AssistantActivity) => void;
 	onTextDelta?: (delta: string) => void;
 }
 
@@ -67,6 +70,7 @@ export interface AssistantTurnOutput {
 		status: string;
 	}>;
 	charts: AssistantChartSpec[];
+	questions: AssistantQuestionSet[];
 	modelId?: string;
 	tokens: { in: number; out: number };
 	latencyMs: number;
@@ -180,6 +184,7 @@ export async function runAssistantTurn(
 	const groundedRecordIds = new Set<string>();
 	const groundedLabels: GroundedLabel[] = [];
 	const createdProposals: AssistantTurnOutput["proposedActions"] = [];
+	let questionSets: AssistantQuestionSet[] = [];
 	const charts: AssistantChartSpec[] = [];
 	const assistantMsgId = input.assistantMessageId ?? newId("msg-ast");
 	const usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
@@ -213,12 +218,13 @@ export async function runAssistantTurn(
 		}
 	};
 	const streamFinalAnswer = async () => {
+		input.onActivity?.("answering");
 		const result = await streamWithinDeadline(
 			provider,
 			{
 				system: systemPrompt,
 				messages: conversationHistory,
-				maxTokens: 1024,
+				maxTokens: 4096,
 				modelId: requestedModelId,
 				signal: input.signal,
 			},
@@ -235,16 +241,18 @@ export async function runAssistantTurn(
 	let totalToolCalls = 0;
 	let completedToolRounds = 0;
 	let toolResultBytes = 0;
+	const coverageNotices = new Set<string>();
 	let completion: ChatCompletionResult | undefined;
 
 	for (let toolRound = 0; toolRound < MAX_TOOL_ROUNDS; toolRound += 1) {
+		input.onActivity?.(toolRound === 0 ? "analyzing" : "reviewing");
 		completion = await completeWithinDeadline(
 			provider,
 			{
 				system: systemPrompt,
 				messages: conversationHistory,
 				tools,
-				maxTokens: 1024,
+				maxTokens: 2048,
 				toolChoice:
 					toolRound === 0 && forcedInitialTool
 						? { name: forcedInitialTool }
@@ -270,6 +278,11 @@ export async function runAssistantTurn(
 			toolRound,
 		});
 		if (selected.accepted.length === 0) break;
+		input.onActivity?.(
+			selected.accepted.some((call) => call.name.startsWith("propose_"))
+				? "drafting"
+				: "searching",
+		);
 
 		sequence += 1;
 		const round = await executeAndPersistToolRound({
@@ -286,10 +299,22 @@ export async function runAssistantTurn(
 		totalToolCalls += selected.accepted.length;
 		completedToolRounds += 1;
 		toolResultBytes += round.resultBytes;
+		for (const notice of round.coverageNotices ?? [])
+			coverageNotices.add(notice);
 		for (const id of round.groundedIds) groundedRecordIds.add(id);
 		groundedLabels.push(...round.groundedLabels);
 		createdProposals.push(...round.proposals);
 		charts.push(...round.charts);
+		if (round.questionSets.length > 0) {
+			questionSets = round.questionSets;
+			completion = {
+				text: "I need a few details before I can continue.",
+				usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+				modelId: completion.modelId,
+				latencyMs: 0,
+			};
+			break;
+		}
 
 		const mustSynthesize =
 			toolRound === MAX_TOOL_ROUNDS - 1 ||
@@ -301,13 +326,21 @@ export async function runAssistantTurn(
 		}
 	}
 
-	if (!completion || completion.toolCalls?.length) {
+	if (
+		(!completion || completion.toolCalls?.length) &&
+		questionSets.length === 0
+	) {
 		completion = await streamFinalAnswer();
 	}
+	if (!completion)
+		throw new Error("Assistant turn ended without a completion.");
+	const finalCompletion = completion;
 
 	// 4. Citation validation & hygiene — citations are matched by content against this
 	// turn's real grounded labels, never guessed by bracket position.
-	const rawContent = completion.text || fallbackAnswer(groundedLabels);
+	const rawContent =
+		(finalCompletion.text || fallbackAnswer(groundedLabels)) +
+		(coverageNotices.size ? `\n\n${[...coverageNotices].join("\n\n")}` : "");
 	if (!streamedRawText) {
 		streamedRawText = rawContent;
 		emitSafeText(rawContent);
@@ -322,14 +355,18 @@ export async function runAssistantTurn(
 	const claimedCitations: CitationRef[] = citationMatches.map((m) => {
 		const label = m.slice(1, -1);
 		const matchedId = matchGroundedCitation(label, groundedLabels);
+		const grounded =
+			groundedLabels.find(
+				(entry) =>
+					entry.id === matchedId &&
+					entry.label.toLowerCase() === label.toLowerCase(),
+			) ?? groundedLabels.find((entry) => entry.id === matchedId);
 		return {
 			id: matchedId ?? `unverified:${label}`,
-			type:
-				groundedLabels.find(
-					(entry) =>
-						entry.id === matchedId &&
-						entry.label.toLowerCase() === label.toLowerCase(),
-				)?.type ?? (label.includes("#") ? "task" : "project"),
+			projectId: grounded?.projectId,
+			url: grounded?.url,
+			description: grounded?.description,
+			type: grounded?.type ?? (label.includes("#") ? "task" : "project"),
 			label,
 		};
 	});
@@ -349,7 +386,7 @@ export async function runAssistantTurn(
 		role: "assistant",
 		content: citationCheck.sanitizedText,
 		citations: JSON.stringify(citationCheck.verifiedCitations),
-		modelId: completion.modelId,
+		modelId: finalCompletion.modelId,
 		tokensIn: usage.promptTokens,
 		tokensOut: usage.completionTokens,
 		latencyMs: Date.now() - startTime,
@@ -359,7 +396,7 @@ export async function runAssistantTurn(
 		.update(aiTurns)
 		.set({
 			status: "completed",
-			modelId: completion.modelId,
+			modelId: finalCompletion.modelId,
 			toolRounds: completedToolRounds,
 			toolCalls: totalToolCalls,
 			promptTokens: usage.promptTokens,
@@ -385,7 +422,8 @@ export async function runAssistantTurn(
 		citations: citationCheck.verifiedCitations,
 		proposedActions: createdProposals,
 		charts,
-		modelId: completion.modelId,
+		questions: questionSets,
+		modelId: finalCompletion.modelId,
 		tokens: {
 			in: usage.promptTokens,
 			out: usage.completionTokens,

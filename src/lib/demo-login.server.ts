@@ -12,9 +12,10 @@ export async function signInAsDemoPerson(employeeId: string) {
 	const local = ["localhost", "127.0.0.1", "[::1]"].includes(
 		getRequestUrl().hostname,
 	);
-	if (!isTestAuthEnabled() || !local)
+	const publicDemoEnabled = getEnvVar("PUBLIC_DEMO_AUTH_ENABLED") === "true";
+	if (!isTestAuthEnabled() || (!local && !publicDemoEnabled))
 		return {
-			error: "Role selection is available only in the enabled local demo.",
+			error: "Role selection is available only in the enabled demo environment.",
 		};
 	const person = demoPeople.find((entry) => entry.id === employeeId);
 	if (!person) return { error: "Choose a person from the startup team." };

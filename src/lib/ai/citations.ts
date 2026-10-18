@@ -5,6 +5,7 @@
 
 export interface CitationRef {
 	id: string;
+	projectId?: string;
 	type:
 		| "project"
 		| "task"
@@ -17,12 +18,16 @@ export interface CitationRef {
 		| "person";
 	label: string;
 	url?: string;
+	description?: string;
 }
 
 export interface GroundedLabel {
 	type?: CitationRef["type"];
 	id: string;
+	projectId?: string;
 	label: string;
+	url?: string;
+	description?: string;
 }
 
 /**

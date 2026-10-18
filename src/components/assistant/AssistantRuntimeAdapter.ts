@@ -1,6 +1,14 @@
 import { type ChatModelAdapter, useLocalRuntime } from "@assistant-ui/react";
 import { toast } from "sonner";
 import { sendAiMessage } from "@/api/ai-assistant";
+import {
+	type AssistantActivity,
+	isAssistantActivity,
+} from "@/lib/ai/assistant-activity";
+import {
+	parseAssistantQuestionSet,
+	type AssistantQuestionSet,
+} from "@/lib/ai/assistant-questions";
 import type { AssistantChartSpec } from "@/lib/ai/chart-types";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import type { CitationRef } from "@/lib/ai/citations";
@@ -15,6 +23,8 @@ export interface MessageCustomData {
 	charts: AssistantChartSpec[];
 	modelId?: string;
 	latencyMs?: number;
+	activity?: AssistantActivity;
+	questions?: AssistantQuestionSet[];
 }
 
 export interface InitialAssistantMessage {
@@ -24,6 +34,7 @@ export interface InitialAssistantMessage {
 	citations?: CitationRef[];
 	proposals?: ProposedActionItem[];
 	charts?: AssistantChartSpec[];
+	questions?: AssistantQuestionSet[];
 	modelId?: string | null;
 	latencyMs?: number | null;
 	createdAt?: string | Date | null;
@@ -71,6 +82,7 @@ export function useAssistantUiBridge(
 				yield { content: [{ type: "text", text: "" }] };
 				return;
 			}
+			yield { metadata: { custom: { activity: "preparing" } } };
 
 			const requestController = new AbortController();
 			let timedOut = false;
@@ -126,6 +138,7 @@ export function useAssistantUiBridge(
 						if (!line.trim()) return null;
 						return JSON.parse(line) as {
 							type?: string;
+							activity?: unknown;
 							text?: string;
 							result?: Record<string, unknown>;
 						};
@@ -138,7 +151,16 @@ export function useAssistantUiBridge(
 							buffer = lines.pop() || "";
 							for (const line of lines) {
 								const event = processLine(line);
-								if (event?.type === "delta" && event.text) {
+								if (
+									event?.type === "activity" &&
+									isAssistantActivity(event.activity)
+								) {
+									yield {
+										metadata: {
+											custom: { activity: event.activity },
+										},
+									};
+								} else if (event?.type === "delta" && event.text) {
 									receivedText = true;
 									accumulatedText += event.text;
 									yield {
@@ -151,7 +173,16 @@ export function useAssistantUiBridge(
 							if (done) break;
 						}
 						const event = processLine(buffer);
-						if (event?.type === "result") result = event.result;
+						if (
+							event?.type === "activity" &&
+							isAssistantActivity(event.activity)
+						) {
+							yield {
+								metadata: {
+									custom: { activity: event.activity },
+								},
+							};
+						} else if (event?.type === "result") result = event.result;
 						if (event?.type === "delta" && event.text) {
 							receivedText = true;
 							accumulatedText += event.text;
@@ -197,12 +228,19 @@ export function useAssistantUiBridge(
 				const charts = Array.isArray(result.charts)
 					? result.charts.filter(isAssistantChartSpec)
 					: [];
+				const questions = Array.isArray(result.questions)
+					? result.questions.flatMap((questionSet) => {
+							const parsed = parseAssistantQuestionSet(questionSet);
+							return parsed ? [parsed] : [];
+						})
+					: [];
 				yield {
 					metadata: {
 						custom: {
 							citations,
 							proposals,
 							charts,
+							questions,
 							modelId,
 							latencyMs,
 						} satisfies MessageCustomData,
@@ -251,6 +289,7 @@ export function useAssistantUiBridge(
 					citations: m.citations || [],
 					proposals: m.proposals || [],
 					charts: (m.charts || []).filter(isAssistantChartSpec),
+					questions: m.questions || [],
 					modelId: m.modelId || undefined,
 					latencyMs: m.latencyMs || undefined,
 				} satisfies MessageCustomData,

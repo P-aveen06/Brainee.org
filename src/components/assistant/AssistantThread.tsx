@@ -45,7 +45,7 @@ export function AssistantThread({
 								<PanelLeftClose className="size-3.5 rotate-180" />
 							</Button>
 						)}
-						<span className="text-xs font-semibold text-foreground truncate tracking-tight">
+						<span className="text-sm font-semibold text-foreground truncate tracking-tight">
 							{threadTitle || "Company Brain"}
 						</span>
 					</div>
@@ -64,7 +64,7 @@ export function AssistantThread({
 					<AssistantEmptyState />
 				</ThreadPrimitive.Empty>
 
-				<div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 sm:px-8">
+				<div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8">
 					<AssistantMessages onProposalResolved={onProposalResolved} />
 					<AssistantSuggestions />
 				</div>

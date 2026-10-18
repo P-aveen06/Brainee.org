@@ -790,10 +790,15 @@
 }
 
 /* Assistant UI Markdown Typography & Indentation */
+.assistant-message-text {
+    font-size: clamp(1rem, calc(0.97rem + 0.08vw), 1.125rem);
+    line-height: 1.7;
+}
+
 .assistant-prose {
     color: var(--foreground);
-    font-size: 0.875rem;
-    line-height: 1.625;
+    font-size: clamp(1rem, calc(0.97rem + 0.08vw), 1.125rem);
+    line-height: 1.7;
 }
 
 .assistant-prose p {
@@ -833,9 +838,18 @@
 }
 
 .assistant-prose h3 {
-    font-size: 0.875rem;
+    font-size: 1.15em;
     padding-bottom: 0.25rem;
     border-bottom: 1px solid rgba(226, 228, 233, 0.5);
+}
+
+.assistant-prose h4 {
+    font-size: 1rem;
+    line-height: 1.35;
+    margin-top: 1.25rem;
+    margin-bottom: 0.45rem;
+    padding-left: 0.65rem;
+    border-left: 2px solid var(--accent);
 }
 
 .dark .assistant-prose h3 {
@@ -857,8 +871,8 @@
 }
 
 .assistant-prose li {
-    margin-top: 0.35rem;
-    margin-bottom: 0.35rem;
+    margin-top: 0.45rem;
+    margin-bottom: 0.45rem;
     padding-left: 0.2rem;
     line-height: 1.6;
 }
@@ -902,7 +916,7 @@
     margin-bottom: 0.75rem;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 0.8125rem;
+    font-size: clamp(0.9375rem, calc(0.91rem + 0.08vw), 1rem);
     line-height: 1.5;
 }
 

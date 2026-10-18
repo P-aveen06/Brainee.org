@@ -19,6 +19,11 @@ export type DocumentVersionRow = {
 	deliveryText: string | null;
 	deliveryTextChecksum: string | null;
 	deliveryIndexStatus: string | null;
+	deliveryLocations: string | null;
+	deliveryIndexAttempts: number | null;
+	deliveryRetryAt: number | null;
+	deliveryIndexError: string | null;
+	deliveryAttemptChecksum: string | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
 };

@@ -49,7 +49,7 @@ export function AssistantComposer() {
 
 	return (
 		<div className="shrink-0 w-full bg-transparent px-4 pb-4 pt-1">
-			<div className="mx-auto w-full max-w-4xl">
+			<div className="mx-auto w-full max-w-5xl">
 				{isListening && (
 					<div
 						role="status"
@@ -57,7 +57,10 @@ export function AssistantComposer() {
 						className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive shadow-xs"
 					>
 						<div className="flex min-w-0 items-center gap-2">
-							<span className="relative flex size-2 shrink-0" aria-hidden="true">
+							<span
+								className="relative flex size-2 shrink-0"
+								aria-hidden="true"
+							>
 								<span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-50" />
 								<span className="relative size-2 rounded-full bg-destructive" />
 							</span>
@@ -90,7 +93,7 @@ export function AssistantComposer() {
 								}, 0);
 							}
 						}}
-						className="min-h-9 max-h-[104px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-2 font-sans text-sm leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none scrollbar-thin sm:text-base"
+						className="min-h-9 max-h-[104px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-2 font-sans text-base leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none scrollbar-thin"
 					/>
 
 					<div className="flex shrink-0 items-center gap-1 self-end pb-0.5">

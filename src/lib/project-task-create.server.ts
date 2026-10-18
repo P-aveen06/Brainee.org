@@ -186,6 +186,9 @@ export async function createTaskCore(
 				startDate: input.startDate || null,
 				dueDate: input.dueDate || null,
 				estimateHours: input.estimateHours ?? null,
+				sourceTaskId: input.sourceTaskId ?? null,
+				sourceProjectId: input.sourceProjectId ?? null,
+				adaptationAssumptions: input.adaptationAssumptions ?? null,
 			},
 		},
 	);

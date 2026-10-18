@@ -9,6 +9,7 @@ import {
 } from "@/api/ai-assistant";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EditableTaskProposal } from "./EditableTaskProposal";
 
 export interface ProposedActionItem {
 	id: string;
@@ -32,7 +33,13 @@ interface ProposedActionCardProps {
 	onActionResolved?: () => void;
 }
 
-export function ProposedActionCard({
+export function ProposedActionCard(props: ProposedActionCardProps) {
+	if (props.action.actionType === "create_task" && props.action.payload.sourceTaskId)
+		return <EditableTaskProposal {...props} />;
+	return <StandardProposedActionCard {...props} />;
+}
+
+function StandardProposedActionCard({
 	action,
 	onActionResolved,
 }: ProposedActionCardProps) {

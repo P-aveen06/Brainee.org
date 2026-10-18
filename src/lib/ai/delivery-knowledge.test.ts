@@ -9,6 +9,10 @@ import { reconstructHistory } from "./turn-history";
 import type { aiMessages } from "@/db/schema";
 
 describe("company delivery knowledge contract", () => {
+	it("accepts provider-filled empty optional context fields", () => {
+		expect(parseDeliveryInput("delivery.context", { projectId: "DEMO-FIN", taskId: "", section: "" }))
+			.toMatchObject({ projectId: "DEMO-FIN", section: "all" });
+	});
 	it("rejects arbitrary identity, graph names and queries", () => {
 		for (const field of ["actorId", "graph", "cypher", "subject"])
 			expect(() =>
@@ -40,6 +44,12 @@ describe("company delivery knowledge contract", () => {
 		expect(
 			parseDeliveryResult({ scope: "company_delivery", sources: [] }).scope,
 		).toBe("company_delivery");
+	});
+	it("only accepts a source-owned internal passage link", () => {
+		const source = { id: "doc", type: "document", label: "OLD spec passage 1", projectId: "old" };
+		expect(parseDeliveryResult({ scope: "company_delivery", sources: [{ ...source, url: "/api/delivery/documents/doc/passages?position=0" }] }).sources).toHaveLength(1);
+		for (const url of ["https://external.example/secret", "/api/delivery/documents/other/passages?position=0"])
+			expect(() => parseDeliveryResult({ scope: "company_delivery", sources: [{ ...source, url }] })).toThrow();
 	});
 	it("matches the most specific source label", () => {
 		expect(

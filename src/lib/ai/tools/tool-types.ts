@@ -17,6 +17,7 @@ export interface ToolExecutionResult {
 	/** Real (id, label) pairs from this tool's own output — used to verify citations by content, never by position. */
 	groundedLabels?: GroundedLabel[];
 	knowledgeScope?: "company_delivery";
+	scopeProjectIds?: string[];
 	/** Private chart scope metadata used to persist and re-authorize an inline chart. */
 	chart?: ScopedAssistantChart;
 	proposedAction?: {
@@ -25,6 +26,7 @@ export interface ToolExecutionResult {
 		targetEntityId: string;
 		payload: Record<string, unknown>;
 	};
+	proposedActions?: Array<NonNullable<ToolExecutionResult["proposedAction"]>>;
 }
 
 export interface ToolHandler {

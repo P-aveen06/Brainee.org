@@ -57,6 +57,7 @@ export interface ChatProvider {
 /** Models a caller may request from OpenCode. Anything else silently falls back to the provider default. */
 export const ALLOWED_MODEL_IDS = new Set([
 	"deepseek-v4-flash",
+	"deepseek-v4.1-flash-free",
 	"DeepSeek-V4-Flash",
 	"gpt-6-luna",
 	"gpt-6-astra",

@@ -1,7 +1,8 @@
-import type { GroundedLabel } from "./citations";
 import { aiToolInvocations } from "@/db/schema";
+import type { GroundedLabel } from "./citations";
 import { TOOL_TIMEOUT_MS } from "./completion-timeout";
 import type { ToolCall } from "./provider";
+import { normalizeToolArguments } from "./tool-arguments";
 import type { ToolContext, ToolExecutionResult } from "./tools/tool-types";
 import { getToolHandler } from "./tools-registry";
 
@@ -19,6 +20,59 @@ export interface InvokerTurnResults {
 		targetEntityId: string;
 		payload: Record<string, unknown>;
 	}>;
+}
+
+function collectRecordsById(
+	value: unknown,
+	byId: Map<string, Record<string, unknown>>,
+	depth = 0,
+): void {
+	if (depth > 8 || !value || typeof value !== "object") return;
+	if (Array.isArray(value)) {
+		for (const item of value) collectRecordsById(item, byId, depth + 1);
+		return;
+	}
+	const record = value as Record<string, unknown>;
+	if (typeof record.id === "string" && !byId.has(record.id)) {
+		byId.set(record.id, record);
+	}
+	for (const nested of Object.values(record)) {
+		collectRecordsById(nested, byId, depth + 1);
+	}
+}
+
+function groundedDescription(
+	label: GroundedLabel,
+	record: Record<string, unknown> | undefined,
+): string | undefined {
+	if (label.description || !record) return label.description;
+	const narrative = [
+		record.excerpt,
+		record.summary,
+		record.description,
+		record.text,
+		record.body,
+	].find((value) => typeof value === "string" && value.trim());
+	const facts = [
+		typeof record.status === "string" ? `Status: ${record.status}` : undefined,
+		typeof record.priority === "string"
+			? `Priority: ${record.priority}`
+			: undefined,
+		typeof (record.assigneeName ?? record.assignee) === "string"
+			? `Owner: ${record.assigneeName ?? record.assignee}`
+			: undefined,
+		typeof record.dueDate === "string" ? `Due: ${record.dueDate}` : undefined,
+		typeof record.projectRole === "string"
+			? `Role: ${record.projectRole}`
+			: undefined,
+	].filter((value): value is string => Boolean(value));
+	const detail = [
+		typeof narrative === "string" ? narrative.trim() : undefined,
+		facts.length ? facts.join(" · ") : undefined,
+	]
+		.filter(Boolean)
+		.join(" · ");
+	return detail.replace(/\s+/g, " ").slice(0, 600).trim() || undefined;
 }
 
 async function executeWithTimeout(
@@ -39,7 +93,13 @@ async function executeWithTimeout(
 		);
 	});
 	try {
-		return await Promise.race([handler.execute(call.arguments, ctx), timeout]);
+		return await Promise.race([
+			handler.execute(
+				normalizeToolArguments(call.arguments, handler.parameters),
+				ctx,
+			),
+			timeout,
+		]);
 	} finally {
 		if (timer) clearTimeout(timer);
 	}
@@ -117,12 +177,20 @@ export async function executeToolCalls(
 		}
 
 		if (executionResult.groundedLabels) {
-			allGroundedLabels.push(...executionResult.groundedLabels);
+			const recordsById = new Map<string, Record<string, unknown>>();
+			collectRecordsById(executionResult.data, recordsById);
+			allGroundedLabels.push(
+				...executionResult.groundedLabels.map((label) => ({
+					...label,
+					description: groundedDescription(label, recordsById.get(label.id)),
+				})),
+			);
 		}
 
 		if (executionResult.proposedAction) {
 			proposedActions.push(executionResult.proposedAction);
 		}
+		proposedActions.push(...(executionResult.proposedActions ?? []));
 
 		toolOutputs.push({
 			toolCallId: call.id,

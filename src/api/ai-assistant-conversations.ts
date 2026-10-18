@@ -3,6 +3,7 @@ import { createDb } from "@/db";
 import { and, desc, eq, inArray } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiProposedActions } from "@/db/schema";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
+import { parseAssistantQuestionSet } from "@/lib/ai/assistant-questions";
 import { loadWorkBrief } from "@/lib/ai/tools/work-brief-data";
 import { recoverStaleAssistantTurns } from "@/lib/ai/turn-failure.server";
 import { authMiddleware } from "@/lib/server-fn";
@@ -65,6 +66,29 @@ export const getAiConversation = createServerFn({ method: "GET" })
 			.from(aiMessages)
 			.where(eq(aiMessages.conversationId, data.conversationId))
 			.orderBy(aiMessages.createdAt);
+		const questionsByTurnId = new Map<
+			string,
+			NonNullable<ReturnType<typeof parseAssistantQuestionSet>>[]
+		>();
+		for (const row of allRows) {
+			if (row.role !== "assistant" || !row.turnId || !row.toolCalls) continue;
+			const calls = safeJsonParse<
+				Array<{
+					id?: string;
+					name?: string;
+					arguments?: unknown;
+				}>
+			>(row.toolCalls, []);
+			const questions = calls.flatMap((call) => {
+				if (call.name !== "ask_questions") return [];
+				const parsed = parseAssistantQuestionSet(
+					call.arguments,
+					typeof call.id === "string" ? call.id : undefined,
+				);
+				return parsed ? [parsed] : [];
+			});
+			if (questions.length > 0) questionsByTurnId.set(row.turnId, questions);
+		}
 		const storedCharts = allRows.flatMap((row) => {
 			if (row.role !== "tool" || !row.content || !row.turnId) return [];
 			const stored = safeJsonParse<Record<string, unknown> | null>(
@@ -161,6 +185,10 @@ export const getAiConversation = createServerFn({ method: "GET" })
 				citations: safeJsonParse(m.citations, []),
 				toolCalls: safeJsonParse(m.toolCalls, undefined),
 				proposals: proposalsByMessageId.get(m.id) || [],
+				questions:
+					m.role === "assistant"
+						? questionsByTurnId.get(m.turnId ?? "") || []
+						: [],
 				charts:
 					m.role === "assistant"
 						? (chartsByTurnId.get(m.turnId ?? "") || []).map(

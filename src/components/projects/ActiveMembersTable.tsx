@@ -56,8 +56,8 @@ export function ActiveMembersTable({
 	onRemoveMember,
 }: ActiveMembersTableProps) {
 	return (
-		<div className="border border-border overflow-hidden bg-card">
-			<Table>
+		<div className="min-w-0 max-w-full overflow-hidden border border-border bg-card">
+			<Table className="min-w-[640px]">
 				<TableHeader>
 					<TableRow>
 						<TableHead>Member</TableHead>

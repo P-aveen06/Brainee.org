@@ -183,7 +183,7 @@ export function MemberManagerPanel({
 
 	return (
 		<>
-			<div className="space-y-4">
+			<div className="min-w-0 space-y-4">
 				{/* Standardized Toolbar */}
 				<DataTableToolbar>
 					<div className="flex items-center gap-2">

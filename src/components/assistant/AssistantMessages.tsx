@@ -1,71 +1,23 @@
 "use client";
-import { MessagePrimitive, ThreadPrimitive } from "@assistant-ui/react";
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
-import { AlertCircle, Check, Copy } from "lucide-react";
+import {
+	MessagePrimitive,
+	ThreadPrimitive,
+	useAui,
+	useAuiState,
+} from "@assistant-ui/react";
+import { AlertCircle, Check, Copy, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ASSISTANT_ACTIVITY_LABELS } from "@/lib/ai/assistant-activity";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import { AssistantChartLoader } from "./AssistantChartLoader";
-import { AssistantMarkdownTable } from "./AssistantDataTable";
+import { AssistantMessageText } from "./AssistantMarkdown";
+import { AssistantQuestionCard } from "./AssistantQuestionCard";
 import type { MessageCustomData } from "./AssistantRuntimeAdapter";
 import { CitationChips } from "./CitationChips";
+import { uniqueCitations } from "./citation-markers";
 import { ProposedActionCard } from "./ProposedActionCard";
-
-const markdownComponents = {
-	table: AssistantMarkdownTable,
-	thead: ({
-		node: _node,
-		...props
-	}: React.ComponentProps<"thead"> & { node?: unknown }) => (
-		<thead className="border-b border-border bg-surface-alt/80" {...props} />
-	),
-	tbody: ({
-		node: _node,
-		...props
-	}: React.ComponentProps<"tbody"> & { node?: unknown }) => (
-		<tbody className="divide-y divide-border/50" {...props} />
-	),
-	th: ({
-		node: _node,
-		...props
-	}: React.ComponentProps<"th"> & { node?: unknown }) => (
-		<th
-			className="px-3 py-2 font-semibold text-foreground tracking-tight whitespace-nowrap"
-			{...props}
-		/>
-	),
-	td: ({
-		node: _node,
-		...props
-	}: React.ComponentProps<"td"> & { node?: unknown }) => (
-		<td className="px-3 py-2 text-foreground align-top" {...props} />
-	),
-};
-
-const remarkPlugins = [remarkGfm];
-
-function AssistantMessageText() {
-	return (
-		<MarkdownTextPrimitive
-			preprocess={preprocessMarkdown}
-			remarkPlugins={remarkPlugins}
-			components={markdownComponents}
-			smooth={false}
-			defer
-		/>
-	);
-}
-
-const messagePartComponents = { Text: AssistantMessageText };
-
-function preprocessMarkdown(text: string): string {
-	let t = text.trim();
-	// If a table separator row was joined with the header row on a single line (| col | |---|)
-	t = t.replace(/\|\s*\|\s*([-:]{2,})/g, "|\n| $1");
-	return t;
-}
 
 export function AssistantMessages({
 	onProposalResolved,
@@ -73,6 +25,8 @@ export function AssistantMessages({
 	onProposalResolved?: () => void;
 }) {
 	const [copiedId, setCopiedId] = useState<string | null>(null);
+	const aui = useAui();
+	const threadMessages = useAuiState((state) => state.thread.messages);
 	const handleCopy = (id: string, text: string) => {
 		navigator.clipboard.writeText(text);
 		setCopiedId(id);
@@ -86,6 +40,15 @@ export function AssistantMessages({
 				const isUser = message.role === "user";
 				const custom = (message.metadata?.custom ||
 					{}) as Partial<MessageCustomData>;
+				const citations = uniqueCitations(custom.citations ?? []);
+				const messagePartComponents = {
+					Text: () => (
+						<AssistantMessageText
+							citations={citations}
+							messageId={message.id}
+						/>
+					),
+				};
 
 				// Extract raw text for copying
 				let rawText = "";
@@ -129,7 +92,7 @@ export function AssistantMessages({
 										<Copy className="size-3" />
 									)}
 								</Button>
-								<div className="rounded-2xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 shadow-xs text-sm leading-relaxed font-sans select-text">
+								<div className="assistant-message-text rounded-2xl bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 px-4 py-2.5 shadow-xs font-sans select-text">
 									<MessagePrimitive.Parts components={messagePartComponents} />
 								</div>
 							</div>
@@ -155,17 +118,29 @@ export function AssistantMessages({
 								/>
 							</div>
 							<div className="flex-1 min-w-0 space-y-1.5">
-								<div className="flex items-center gap-1.5 text-xs text-muted-foreground pb-0.5">
+								<output
+									aria-live="polite"
+									aria-atomic="true"
+									className="flex items-center gap-1.5 text-sm text-muted-foreground pb-0.5"
+								>
 									<span className="font-semibold text-foreground">
 										Company Brain
 									</span>
-									<span className="font-mono text-[10px] text-accent animate-pulse">
-										Thinking…
+									<span className="inline-flex items-center gap-1 font-mono text-xs text-accent">
+										<LoaderCircle
+											className="size-3 animate-spin"
+											aria-hidden="true"
+										/>
+										{ASSISTANT_ACTIVITY_LABELS[custom.activity || "preparing"]}
 									</span>
-								</div>
-								<div className="py-1 space-y-2 max-w-sm">
-									<div className="h-2 bg-muted rounded-full w-5/6 animate-pulse" />
-									<div className="h-2 bg-muted rounded-full w-3/5 animate-pulse" />
+								</output>
+								<div className="py-1">
+									<div
+										aria-hidden="true"
+										className="h-1 w-36 overflow-hidden rounded-full bg-accent/10"
+									>
+										<div className="h-full w-2/5 rounded-full bg-accent/60 animate-pulse" />
+									</div>
 								</div>
 							</div>
 						</MessagePrimitive.Root>
@@ -191,11 +166,11 @@ export function AssistantMessages({
 							{/* Assistant Meta Header */}
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-1.5 flex-wrap">
-									<span className="text-xs font-semibold text-foreground tracking-tight">
+									<span className="text-sm font-semibold text-foreground tracking-tight">
 										Company Brain
 									</span>
 									{custom.latencyMs !== undefined && (
-										<span className="text-[10px] font-mono text-muted-foreground bg-surface-alt px-1.5 py-0.2 rounded border border-border/50">
+										<span className="text-xs font-mono text-muted-foreground bg-surface-alt px-1.5 py-0.2 rounded border border-border/50">
 											⚡ {(custom.latencyMs / 1000).toFixed(1)}s
 										</span>
 									)}
@@ -227,7 +202,7 @@ export function AssistantMessages({
 
 							{/* Failure State vs Normal Markdown Bubble */}
 							{isFailure ? (
-								<div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive space-y-1 shadow-xs">
+								<div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive space-y-1 shadow-xs">
 									<div className="flex items-center gap-1.5 font-semibold">
 										<AlertCircle className="size-3.5 shrink-0" />
 										<span>Unable to complete response</span>
@@ -237,14 +212,32 @@ export function AssistantMessages({
 									</p>
 								</div>
 							) : (
-								<div className="pt-0.5 text-sm leading-relaxed text-foreground">
-									<div className="assistant-prose prose prose-sm dark:prose-invert max-w-none">
+								<div className="pt-0.5 text-foreground">
+									<div className="assistant-prose prose dark:prose-invert max-w-none">
 										<MessagePrimitive.Parts
 											components={messagePartComponents}
 										/>
 									</div>
 								</div>
 							)}
+							{custom.questions?.map((questionSet) => (
+								<AssistantQuestionCard
+									key={questionSet.requestId}
+									questionSet={questionSet}
+									answered={threadMessages.some(
+										(candidate) =>
+											candidate.index > message.index &&
+											candidate.role === "user",
+									)}
+									onSubmit={(answers) =>
+										aui.thread.append({
+											role: "user",
+											content: [{ type: "text", text: answers }],
+											startRun: true,
+										})
+									}
+								/>
+							))}
 							{!isFailure && custom.charts && custom.charts.length > 0 && (
 								<div className="space-y-2">
 									{custom.charts.filter(isAssistantChartSpec).map((chart) => (
@@ -259,7 +252,7 @@ export function AssistantMessages({
 							{/* Grounded Citation Chips */}
 							{custom.citations && custom.citations.length > 0 && (
 								<div className="pt-0.5">
-									<CitationChips citations={custom.citations} />
+									<CitationChips citations={citations} messageId={message.id} />
 								</div>
 							)}
 

@@ -4,6 +4,7 @@ import { createDb } from "@/db";
 import { and, eq, gte } from "@/db/graph-query";
 import { aiConversations, aiMessages } from "@/db/schema";
 import { classifyAssistantFailure } from "@/lib/ai/ai-errors";
+import type { AssistantActivity } from "@/lib/ai/assistant-activity";
 import { runAssistantTurn } from "@/lib/ai/assistant-turn";
 import { verifyAssistantPageContext } from "@/lib/ai/page-context.server";
 import {
@@ -121,8 +122,11 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 						);
 					}
 				};
+				const emitActivity = (activity: AssistantActivity) =>
+					emit({ type: "activity", activity });
 				void (async () => {
 					try {
+						emitActivity("preparing");
 						const pageContext = await verifyAssistantPageContext(
 							db,
 							context.user,
@@ -137,6 +141,7 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 								turnId,
 								assistantMessageId,
 								signal: abortController.signal,
+								onActivity: emitActivity,
 								onTextDelta: (text) => emit({ type: "delta", text }),
 							},
 							{ user: context.user, db },

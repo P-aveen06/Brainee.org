@@ -69,8 +69,8 @@ export const listProjectsTool: ToolHandler = {
 							.where(inArray(projects.id, visibleIds));
 
 		const byStatus =
-			typeof args.status === "string"
-				? rows.filter((p) => p.status === args.status)
+			typeof args.status === "string" && args.status.trim()
+				? rows.filter((p) => p.status === String(args.status).trim())
 				: rows;
 
 		const query = typeof args.query === "string" ? args.query.trim() : "";
@@ -432,6 +432,10 @@ export const getMyTasksTool: ToolHandler = {
 				projectId: projectTasks.projectId,
 				projectCode: projects.code,
 				projectName: projects.name,
+				assigneeId: projectTasks.assigneeId,
+				parentTaskId: projectTasks.parentTaskId,
+				estimateHours: projectTasks.estimateHours,
+				actualHours: projectTasks.actualHours,
 			})
 			.from(projectTasks)
 			.innerJoin(projects, eq(projectTasks.projectId, projects.id))
@@ -450,6 +454,11 @@ export const getMyTasksTool: ToolHandler = {
 				dueDate: t.dueDate,
 				projectCode: t.projectCode,
 				projectName: t.projectName,
+				assigneeId: t.assigneeId,
+				assigneeName: ctx.user.name,
+				parentTaskId: t.parentTaskId,
+				estimateHours: t.estimateHours,
+				actualHours: t.actualHours,
 			})),
 			groundedRecordIds: tasks.map((t) => t.id),
 			groundedLabels: tasks.flatMap((t) => [

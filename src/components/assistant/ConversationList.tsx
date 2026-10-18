@@ -73,7 +73,7 @@ export function ConversationList({
 				<div className="flex items-center gap-1.5">
 					<Button
 						onClick={onNewChat}
-						className="h-8.5 flex-1 justify-center gap-1.5 text-xs font-medium rounded-xl"
+						className="h-9 flex-1 justify-center gap-1.5 text-sm font-medium rounded-xl"
 					>
 						<Plus className="w-3.5 h-3.5" />
 						New chat
@@ -97,20 +97,20 @@ export function ConversationList({
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Search chats..."
-						className="h-8 bg-card pl-8 pr-2 text-xs rounded-xl border-border/80"
+						className="h-9 bg-card pl-8 pr-2 text-sm rounded-xl border-border/80"
 					/>
 				</div>
 			</div>
 
 			{/* Recent Chats Heading */}
-			<div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-muted-foreground/70 tracking-tight">
+			<div className="px-3 pt-2 pb-1 text-xs font-semibold text-muted-foreground/70 tracking-tight">
 				Recent chats
 			</div>
 
 			{/* Conversation items list */}
 			<div className="flex-1 space-y-0.5 overflow-y-auto px-1.5 pb-2 scrollbar-thin">
 				{filtered.length === 0 ? (
-					<div className="p-6 text-center text-xs text-muted-foreground">
+					<div className="p-6 text-center text-sm text-muted-foreground">
 						No chats yet
 					</div>
 				) : (
@@ -121,7 +121,7 @@ export function ConversationList({
 						return (
 							<div
 								key={conv.id}
-								className={`group relative flex items-center justify-between gap-1.5 min-h-9 rounded-lg px-2.5 py-2 text-xs transition-colors ${
+								className={`group relative flex items-center justify-between gap-1.5 min-h-10 rounded-lg px-2.5 py-2 text-sm transition-colors ${
 									isActive
 										? "bg-surface-alt text-foreground font-medium"
 										: "text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -136,11 +136,11 @@ export function ConversationList({
 									onClick={() => onSelect(conv.id)}
 									className="flex items-center min-w-0 flex-1 text-left gap-2"
 								>
-									<span className="truncate font-sans font-medium text-foreground text-[12px] flex-1">
+									<span className="truncate font-sans font-medium text-foreground flex-1">
 										{conv.title || "Untitled Chat"}
 									</span>
 									{timeStr && (
-										<span className="shrink-0 text-[10px] text-muted-foreground/70 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+										<span className="shrink-0 text-xs text-muted-foreground/70 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
 											{timeStr}
 										</span>
 									)}

@@ -4,7 +4,7 @@ import {
 	useRouter,
 	useSearch,
 } from "@tanstack/react-router";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { archiveProject } from "@/api/projects";
@@ -44,6 +44,7 @@ const projectDetailSearchSchema = z.object({
 	status: z.string().optional(),
 	stage: z.string().optional(),
 	date: z.string().optional(),
+	focusTask: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/projects/$id")({
@@ -97,6 +98,35 @@ function ProjectDetailPage() {
 		today,
 		selectedDate,
 	} = data;
+
+	useEffect(() => {
+		if (!search.focusTask) return;
+		const task = tasks.find((candidate) => candidate.id === search.focusTask);
+		if (!task) return;
+
+		setSelectedTask(task);
+		void navigate({
+			to: "/projects/$id",
+			params: { id: project.id },
+			search: {
+				tab: "tasks",
+				view: search.view,
+				status: search.status,
+				stage: search.stage,
+				date: search.date,
+			},
+			replace: true,
+		});
+	}, [
+		navigate,
+		project.id,
+		search.date,
+		search.focusTask,
+		search.stage,
+		search.status,
+		search.view,
+		tasks,
+	]);
 
 	const memberOptions = useMemo(
 		() =>

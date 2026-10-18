@@ -1,11 +1,16 @@
 import type { GroundedLabel } from "./citations";
 import { aiMessages, aiProposedActions, aiToolInvocations } from "@/db/schema";
+import {
+	parseAssistantQuestionSet,
+	type AssistantQuestionSet,
+} from "./assistant-questions";
 import type { AssistantChartSpec } from "./chart-types";
 import type { ChatMessage, ToolCall } from "./provider";
 import { executeToolCalls } from "./tool-invoker";
 import type { ToolContext } from "./tools/tool-types";
 import type { DroppedToolCall } from "./turn-budget";
 import type { StoredToolPayload } from "./turn-history";
+import { coverageNotices } from "./coverage-notices";
 
 function newId(prefix: string): string {
 	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -54,9 +59,11 @@ export async function executeAndPersistToolRound(input: {
 	groundedIds: Set<string>;
 	groundedLabels: GroundedLabel[];
 	proposals: CreatedProposal[];
+	questionSets: AssistantQuestionSet[];
 	charts: AssistantChartSpec[];
 	nextSequence: number;
 	resultBytes: number;
+	coverageNotices: string[];
 }> {
 	await input.ctx.db.insert(aiMessages).values({
 		id: newId("msg-tc"),
@@ -76,6 +83,14 @@ export async function executeAndPersistToolRound(input: {
 		{ turnId: input.turnId, toolRound: input.toolRound },
 	);
 	const proposals: CreatedProposal[] = [];
+	const questionSets = results.toolOutputs.flatMap((output) => {
+		if (output.name !== "ask_questions" || !output.result.success) return [];
+		const parsed = parseAssistantQuestionSet(
+			output.result.data,
+			output.toolCallId,
+		);
+		return parsed ? [parsed] : [];
+	});
 	const charts: AssistantChartSpec[] = [];
 	for (const proposal of results.proposedActions) {
 		const actionId = newId("act");
@@ -129,7 +144,7 @@ export async function executeAndPersistToolRound(input: {
 			content: JSON.stringify({
 				knowledgeScope: output.result.knowledgeScope,
 				scopeProjectId,
-				scopeProjectIds: output.result.chart?.scopeProjectIds,
+				scopeProjectIds: output.result.scopeProjectIds ?? output.result.chart?.scopeProjectIds,
 				scopeUserIds: output.result.chart?.scopeUserIds,
 				result: resultPayload,
 			} satisfies StoredToolPayload),
@@ -147,8 +162,10 @@ export async function executeAndPersistToolRound(input: {
 		groundedIds: results.allGroundedIds,
 		groundedLabels: results.allGroundedLabels,
 		proposals,
+		questionSets,
 		charts,
 		nextSequence: sequence,
 		resultBytes,
+		coverageNotices: results.toolOutputs.flatMap(output => coverageNotices(output.result.data)),
 	};
 }

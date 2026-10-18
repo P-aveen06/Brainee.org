@@ -14,6 +14,11 @@ export const getConversationSchema = z.object({
 
 export const confirmProposalSchema = z.object({
 	proposalId: z.string().min(1),
+	edits: z.object({
+		title: z.string().trim().min(1).max(300),
+		description: z.string().max(10000),
+		estimateHours: z.number().min(0).max(100000).nullable(),
+	}).strict().optional(),
 });
 
 export const rejectProposalSchema = z.object({

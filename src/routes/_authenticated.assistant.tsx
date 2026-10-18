@@ -58,6 +58,7 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 						content: m.content,
 						citations: m.citations,
 						charts: m.charts,
+						questions: m.questions,
 						proposals: m.proposals?.map(
 							(p): ProposedActionItem => ({
 								...p,

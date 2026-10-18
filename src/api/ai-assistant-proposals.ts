@@ -77,6 +77,10 @@ export const confirmAiProposedAction = createServerFn({ method: "POST" })
 		} catch {
 			return { error: "Proposal payload is invalid." };
 		}
+		if (data.edits) {
+			if (prop.actionType !== "create_task") return { error: "Only task drafts can be edited." };
+			rawPayload = { ...(rawPayload as Record<string, unknown>), ...data.edits };
+		}
 		const parsedAction = parseProposedAction(prop.actionType, rawPayload);
 		if (!parsedAction.success) {
 			return { error: "Proposal type or payload is not permitted." };
@@ -84,7 +88,7 @@ export const confirmAiProposedAction = createServerFn({ method: "POST" })
 
 		const [claimed] = await db
 			.update(aiProposedActions)
-			.set({ status: "executing", updatedAt: new Date() })
+			.set({ status: "executing", updatedAt: new Date(), payload: JSON.stringify(parsedAction.data.payload) })
 			.where(
 				and(
 					eq(aiProposedActions.id, prop.id),
@@ -150,6 +154,9 @@ export const confirmAiProposedAction = createServerFn({ method: "POST" })
 					startDate: payload.startDate,
 					dueDate: payload.dueDate,
 					estimateHours: payload.estimateHours,
+					sourceTaskId: payload.sourceTaskId,
+					sourceProjectId: payload.sourceProjectId,
+					adaptationAssumptions: payload.adaptationAssumptions,
 				});
 			}
 		} catch (error) {

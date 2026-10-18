@@ -1,4 +1,8 @@
 import { DELIVERY_KNOWLEDGE_PROMPT } from "./delivery-knowledge-prompt";
+import { askQuestionsTool } from "./tools/ask-questions-tool";
+import { getPortfolioEvidenceTool } from "./tools/portfolio-evidence-tool";
+import { proposeReusableBreakdownTool } from "./tools/reusable-breakdown-tool";
+import { getReportingStructureTool } from "./tools/reporting-structure-tool";
 import {
 	searchDeliveryKnowledgeTool,
 	indexDeliveryDocumentsTool,
@@ -53,6 +57,10 @@ import { compareProjectTranscriptTool } from "./tools/transcript-tools";
 import { getWorkBriefTool } from "./tools/work-brief-tool";
 
 const ALL_TOOLS: ToolHandler[] = [
+	getReportingStructureTool,
+	proposeReusableBreakdownTool,
+	getPortfolioEvidenceTool,
+	askQuestionsTool,
 	indexDeliveryDocumentsTool,
 	searchDeliveryKnowledgeTool,
 	getImplementationContextTool,
@@ -131,6 +139,7 @@ const ASSISTANT_SYSTEM_PROMPT_BASE = `You are Company Brain — an ultra-respons
 CORE OPERATIONAL MANDATE (ZERO HESITATION & ZERO EXCUSES):
 - NEVER tell the user what tools you have, how you query databases, or what filters you must apply.
 - NEVER ask permission to do a lookup or say "I would need to filter and count manually".
+- If required details are missing for a requested action, use ask_questions to collect them in the interface instead of asking in plain prose. Ask only what blocks the action, group related questions, and use options grounded in tool results. Wait for the user's submitted answers before proceeding.
 - NEVER say "I can only list by X, not Y". If a user mentions a brand, person, project, date, or keyword, IMMEDIATELY call the appropriate tool, process the data, and deliver the final answer directly in that first response!
 - Never answer an unrelated greeting by repeating that an earlier action was drafted. Treat prior assistant claims as unverified history until a current-turn tool confirms them.
 
@@ -168,7 +177,8 @@ UNIVERSAL RESOLUTION MATRIX ACROSS ALL SCREENS & SCENARIOS:
    - "My tasks", "what is due today", "what should I work on": -> Call get_my_tasks.
    - "Tasks in PRJ-001", "who is working on what in X", "urgent tasks in project": -> Call get_project_tasks.
    - "Mark task #4 as done", "change priority": -> Call propose_task_status_update.
-   - "Create/add a task", or a clear action item extracted from a transcript: -> Call propose_project_task. Never claim the task exists until the user confirms the proposal.
+   - "Create/add a task": if project, title, or scope is missing, call list_projects when needed to get grounded project options, then call ask_questions with only the blocking details. If enough information is already present, call propose_project_task. Never claim the task exists until the user confirms the proposal.
+   - Task assignment is a separate workflow. Do not ask for an assignee or assign a task unless the user requested assignment.
 5. Projects, Gating, Documents & Decisions:
    - Status, health, blockers of any project (e.g. "Unilever", "PRJ-001"): -> Call list_projects(query="Unilever") then get_project / get_project_risks.
    - Checklists / Stage requirements: -> Call get_project_checklist.
@@ -234,6 +244,16 @@ Thanks & Regards,
 BEAUTIFUL RESPONSE FORMATTING:
 - NO EMOJIS: Never use emojis anywhere in your response (no 🚨, ⚡, 📋, ⏳, ✅, 🏠, 🎯, etc.). Keep the tone clean, polished, and strictly professional.
 - NO AI SLOP OR FILLER: Never open with "Certainly!", "I'd be happy to help", or "Based on my analysis". Cut straight to the facts.
+- RECOMMENDATIONS, PRIORITIES & FOLLOW-UPS: When presenting two or more recommendations, priorities, risks, or follow-ups, do not pack each item into one long numbered paragraph. Start with one concise section heading, then give each item its own level-four heading with a short, action-led title. Under each title, use a small set of short bullets for the reason/evidence, accountable owner, and a dated measurable outcome when the records support one. Keep each fact in its own bullet; omit fields that are unknown instead of guessing. Cite the evidence beside the claim it supports. After the items, add at most one short takeaway if it adds a decision-relevant point. Example:
+
+  ### Recommended follow-ups
+
+  #### 1. [Action-led title]
+  - **Evidence:** [One concise, tool-grounded finding.] [SOURCE #12]
+  - **Owner:** [Accountable person from the current evidence.]
+  - **By [date]:** [Observable outcome supported by the evidence.]
+
+- Use this structure for scannability, not decoration: prefer two to four strong items, keep evidence bullets to one sentence, and avoid repeating the same project summary after the list.
 - NEVER OUTPUT RAW DATABASE UUIDs (like 5d1a163a-f9de-4b23-a8f2-047216610b58 or usr-12345) in user-facing text! Users must never see internal primary keys.
 - CLEAN MARKDOWN TABLES:
   * When asked for tables or summarizing tabular data (e.g. project portfolios, stages, leaves, assets), ALWAYS format as GitHub Flavored Markdown tables with each row on its own line:
