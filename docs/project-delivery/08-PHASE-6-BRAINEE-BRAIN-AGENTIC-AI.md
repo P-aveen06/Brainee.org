@@ -256,7 +256,7 @@ bun run build
 
 Schema work additionally uses reviewed generated SQL and the local D1 migration command only.
 
-## Implementation status — 2026-08-30
+## Implementation status — 2026-10-16
 
 Delivered in the first execution slice:
 

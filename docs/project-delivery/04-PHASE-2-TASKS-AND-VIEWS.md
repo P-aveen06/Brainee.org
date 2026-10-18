@@ -3,7 +3,7 @@
 **Goal:** people create tasks, get assigned tasks, and see the work as a list, a board, a Gantt
 chart, or a calendar.
 
-> **Delivered 2026-08-29:**
+> **Delivered 2026-10-16:**
 > - Schema table `project_tasks` added with self-referencing subtasks, per-project `task_number`, blocked reason, priority, and date ranges.
 > - Applied local migration `0012_damp_nick_fury.sql`.
 > - Server functions in `src/api/project-tasks.ts`: `getProjectTasks`, `getMyTasks`, `createTask`, `updateTask`, `updateTaskStatus`, `reassignTask`, `bulkReassignTasks`, `deleteTask`.
