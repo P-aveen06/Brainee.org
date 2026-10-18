@@ -40,6 +40,7 @@ interface SessionsContext {
 	sessions: Session[];
 	ensureSession: (session: Session) => void;
 	removeSession: (conversationId: string) => void;
+	clearStatus: (idOrKey: string) => void;
 	setView: (
 		key: string,
 		view: SessionView | undefined,
@@ -178,6 +179,16 @@ export function AssistantSessionsProvider({
 			current.filter((item) => item.conversationId !== conversationId),
 		);
 	}, []);
+	const clearStatus = useCallback((idOrKey: string) => {
+		setSessions((current) =>
+			current.map((item) =>
+				(item.key === idOrKey || item.conversationId === idOrKey) &&
+				item.status !== undefined
+					? { ...item, status: undefined }
+					: item,
+			),
+		);
+	}, []);
 	const setView = useCallback(
 		(
 			key: string,
@@ -196,8 +207,8 @@ export function AssistantSessionsProvider({
 	// Portal updates must not notify session consumers: route callbacks and their
 	// rendered content can change identity each time those consumers render.
 	const context = useMemo(
-		() => ({ sessions, ensureSession, setView, removeSession }),
-		[sessions, ensureSession, setView, removeSession],
+		() => ({ sessions, ensureSession, setView, removeSession, clearStatus }),
+		[sessions, ensureSession, setView, removeSession, clearStatus],
 	);
 	return (
 		<Context.Provider value={context}>
@@ -232,6 +243,7 @@ export function useAssistantSessionHistory() {
 				? [{ id: session.conversationId, title: session.title || null }]
 				: [],
 		),
+		clearStatus: (id: string) => context.clearStatus(id),
 		forgetConversation: (id: string) => {
 			for (const session of context.sessions) {
 				if (session.conversationId === id) session.runtime?.thread.cancelRun();

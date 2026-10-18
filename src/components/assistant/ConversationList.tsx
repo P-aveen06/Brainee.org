@@ -30,6 +30,7 @@ interface ConversationListProps {
 	onSelect: (id: string) => void;
 	onNewChat: () => void;
 	onDeleted?: (id: string) => void;
+	onClearStatus?: (id: string) => void;
 	onCloseSidebar?: () => void;
 }
 
@@ -40,10 +41,16 @@ export function ConversationList({
 	onSelect,
 	onNewChat,
 	onDeleted,
+	onClearStatus,
 	onCloseSidebar,
 }: ConversationListProps) {
 	const [search, setSearch] = useState("");
 	const [isDeleting, startTransition] = useTransition();
+
+	const handleSelect = (id: string) => {
+		onClearStatus?.(id);
+		onSelect(id);
+	};
 
 	const handleDelete = (e: React.MouseEvent, id: string) => {
 		e.stopPropagation();
@@ -129,6 +136,9 @@ export function ConversationList({
 						const isActive = conv.id === activeId;
 						const timeStr = formatDate(conv.lastMessageAt || conv.updatedAt);
 						const status = statuses[conv.id];
+						// When the chat is opened/active, Ready button disappears.
+						// Terminal statuses ("complete" / "error") are hidden when active.
+						const showStatus = status && (status === "running" || !isActive);
 
 						return (
 							<div
@@ -145,15 +155,15 @@ export function ConversationList({
 
 								<button
 									type="button"
-									onClick={() => onSelect(conv.id)}
+									onClick={() => handleSelect(conv.id)}
 									className="flex items-center min-w-0 flex-1 text-left gap-2"
 								>
 									<span className="truncate font-sans font-medium text-foreground flex-1">
 										{conv.title || "Untitled Chat"}
 									</span>
-									{status ? (
+									{showStatus ? (
 										<span
-											className={`inline-flex shrink-0 items-center gap-1 text-xs ${status === "running" ? "text-accent" : status === "complete" ? "text-success" : "text-destructive"}`}
+											className={`inline-flex shrink-0 items-center gap-1 text-xs mr-7 ${status === "running" ? "text-accent" : status === "complete" ? "text-success" : "text-destructive"}`}
 											title={
 												status === "running"
 													? "Response in progress"
@@ -191,7 +201,7 @@ export function ConversationList({
 									type="button"
 									onClick={(e) => handleDelete(e, conv.id)}
 									disabled={isDeleting}
-									className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground opacity-0 transition-[opacity,color,background-color] hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+									className="absolute top-1/2 right-2 z-10 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground opacity-0 transition-[opacity,color,background-color] hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
 									title="Delete Thread"
 								>
 									<Trash2 className="w-3 h-3" />

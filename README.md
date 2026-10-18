@@ -1,8 +1,12 @@
-# Brainee.org
+# 🧠 Brainee.org ✨
+
+🚀 **Projects** · 📄 **Documents** · 🤝 **People** · 💡 **Company Brain**
 
 Understand how your company works as a system at any given moment, so you can adjust individual parts to improve overall performance.
 
 Brainee is a workspace for a team's projects, tasks, documents and people. Company Brain is the assistant inside it. It uses the team's records to help prepare client pitches, plan work and find colleagues who have worked on similar features.
+
+![Brainee.org Company Brain: turn shared context into pitches, task plans, assignments and peer help](docs/assets/company-brain.png)
 
 For example, if a new project needs checkout, you can look up related work, read the decisions behind it and use the old task breakdown as a starting point. You can then review the new tasks, assign them and find someone to ask about the implementation.
 
@@ -115,17 +119,3 @@ bun run graph:down
 ```
 
 Backups go to `.local/backups/falkordb/`. Restore checks use a separate temporary container. Stopping the stack keeps the data volume. Production access and deployment are human-run; replace demo authentication before using real team data.
-
-## README image
-
-You can generate the illustration separately in ChatGPT's image-generation UI and add it here later. Use this prompt:
-
-> Make a 16:9 illustration for the Brainee.org README. Show one continuous flow: a client pitch draft becomes a task plan, someone chooses task assignees, then a teammate finds a colleague who worked on a similar feature. Label the stages “Client pitch,” “Task plan,” “Assign tasks” and “Ask a peer.” Connect them with a purple line. Add a few source links under the pitch, editable task rows in the plan, an assignee selector, and a colleague card linked to an earlier task. Use white and pale lavender backgrounds, black text and small pink/cyan accents. Use rounded cards and Plus Jakarta Sans or a similar font. Keep text large and sparse. Treat it as a product illustration, with fictional names and no invented results or customer endorsements.
-
-For an animated version, use the same layout in an eight-second loop: highlight the pitch, reveal the plan, show an assignee selection, then highlight the colleague's earlier task. Keep the labels still. Export a GIF or animated WebP with a PNG fallback using an animation-capable tool.
-
-Save the image as `docs/assets/company-brain.png` and add this below the opening description:
-
-```md
-![Client pitch, task planning, assignment and peer help in Brainee](docs/assets/company-brain.png)
-```

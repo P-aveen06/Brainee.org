@@ -3,7 +3,7 @@ import {
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { getAiConversation, getAiConversations } from "@/api/ai-assistant";
 import { getProjectsPageData } from "@/api/projects";
@@ -102,7 +102,17 @@ function AssistantRoute() {
 
 	const activeThread = conversations.find((c) => c.id === data.activeId);
 
+	// Once the chat is opened, Ready status should disappear
+	useEffect(() => {
+		if (data.activeId && liveHistory.statuses[data.activeId] === "complete") {
+			liveHistory.clearStatus(data.activeId);
+		}
+	}, [data.activeId, liveHistory.statuses, liveHistory.clearStatus]);
+
 	const goToThread = (threadId: string | undefined) => {
+		if (threadId) {
+			liveHistory.clearStatus(threadId);
+		}
 		navigate({
 			to: "/assistant",
 			search: threadId ? { thread: threadId } : {},
@@ -157,6 +167,7 @@ function AssistantRoute() {
 					onSelect={goToThread}
 					onNewChat={handleNewChat}
 					onDeleted={handleDeleted}
+					onClearStatus={liveHistory.clearStatus}
 					onCloseSidebar={() => setSidebarOpen(false)}
 				/>
 			</div>
