@@ -4,9 +4,9 @@
 
 Understand how your company works as a system at any given moment, so you can adjust individual parts to improve overall performance.
 
-Brainee is a workspace for a team's projects, tasks, documents and people. Company Brain is the assistant inside it. It uses the team's records to help prepare client pitches, plan work and find colleagues who have worked on similar features.
+Brainee is a workspace for a team's projects, tasks, documents and people. Company Brain is the assistant inside it. It connects past work, project decisions and people so teams can find relevant experience and understand what the records support.
 
-![Brainee.org Company Brain: turn shared context into pitches, task plans, assignments and peer help](docs/assets/company-brain.png)
+**Graph technology:** Brainee stores connected company data in FalkorDB and uses FalkorDB's GraphRAG SDK for semantic search.
 
 For example, if a new project needs checkout, you can look up related work, read the decisions behind it and use the old task breakdown as a starting point. You can then review the new tasks, assign them and find someone to ask about the implementation.
 
@@ -14,14 +14,12 @@ The workspace also handles daily updates, leave, WFH requests and equipment.
 
 ## Try the demo
 
-The local demo uses Northstar Studio, a fictional company with 14 people, 10 projects and 70 tasks. Sign in as CEO Aditi Deshmukh to try the steps below. You can switch to another teammate to see their view of the workspace.
+The local demo uses Northstar Studio, a fictional company with 14 people, 10 projects and 70 tasks. Sign in as CEO Aditi Deshmukh to try the examples below. You can switch to another teammate to see their view of the workspace.
 
-1. Ask for a client pitch: “Put together a pitch for a checkout project using our past work. Show the sources and flag anything we still need to verify.” The assistant opens a draft with presentation and document views. You can export PowerPoint, Word or PDF files.
-2. Ask for a task plan: “Find similar checkout work and draft a task breakdown for [project]. Show the old estimates and explain what needs to change.” Use an existing project name. Review the proposals before confirming them.
-3. Open the tasks in the project and choose their assignees. Assignment is a separate step from drafting the plan; owners and managers can reassign existing tasks.
-4. Ask: “Who was assigned to the earlier checkout tasks? Show me their work and the decisions I should ask them about.” The linked tasks help you decide which colleague to approach.
+1. Ask: “We need to show a client an iOS demo in two days. Search our past work for iOS or mobile app experience. Show the people and source tasks or documents that support each match, and distinguish direct iOS experience from related frontend work.” The starter data includes frontend and full stack project work, but no explicit iOS delivery, so treat related experience as a lead to verify.
+2. Ask: “How many active people have engineering or developer titles? Group them by their exact recorded title, show their names, and flag titles represented by one person. I’m considering hiring; separate roster facts from what we don’t know about workload or demand.” The roster can inform the discussion, but headcount alone does not establish a hiring need.
 
-Pitch drafts need review before sharing with a client. Old estimates can be incomplete, and being assigned to a task does not establish that someone built every part of it. The assistant includes source links so you can check the context.
+Use the assistant's source links to check project and staffing records. A project assignment does not establish that someone personally built every part of the work.
 
 See the [demo roster and projects](docs/falkordb/STARTUP-DEMO.md). For more document content, `bun run graph:enrich` adds project documents and expands the sample to 170 tasks. Back up first and read the [enrichment notes](docs/falkordb/STARTUP-DEMO.md#detailed-project-content). All of this data is fictional.
 
@@ -59,7 +57,7 @@ FalkorDB Browser is at [localhost:3001](http://localhost:3001). Use it to inspec
 
 Uploaded files use local R2 storage during development. Live assistant conversations send prompts and selected records to the configured chat provider; embeddings are calculated locally.
 
-Public research for pitches is optional. To enable it, run `bunx playwright install chromium`, set a random `BROWSER_SERVICE_TOKEN` of at least 32 characters in `.dev.vars`, keep `BROWSER_SERVICE_URL=http://127.0.0.1:3200`, and start `bun run browser:serve` in another terminal. It reads approved HTTPS hosts; `BROWSER_PUBLIC_HOSTS` adds hosts to that list. Public searches use generic terms without project details. Layout checks cover the preview, not the exported Word or PowerPoint file.
+Optional public research uses approved HTTPS hosts. To enable it, run `bunx playwright install chromium`, set a random `BROWSER_SERVICE_TOKEN` of at least 32 characters in `.dev.vars`, keep `BROWSER_SERVICE_URL=http://127.0.0.1:3200`, and start `bun run browser:serve` in another terminal. `BROWSER_PUBLIC_HOSTS` adds hosts to the approved list. Public searches use generic terms without project details.
 
 ## Graph data model
 
