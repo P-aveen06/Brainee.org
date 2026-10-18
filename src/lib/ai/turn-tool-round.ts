@@ -1,16 +1,17 @@
-import type { GroundedLabel } from "./citations";
 import { aiMessages, aiProposedActions, aiToolInvocations } from "@/db/schema";
 import {
-	parseAssistantQuestionSet,
 	type AssistantQuestionSet,
+	parseAssistantQuestionSet,
 } from "./assistant-questions";
 import type { AssistantChartSpec } from "./chart-types";
+import type { GroundedLabel } from "./citations";
+import { coverageNotices } from "./coverage-notices";
+import { type PitchPackage, parsePitch } from "./pitch-types";
 import type { ChatMessage, ToolCall } from "./provider";
 import { executeToolCalls } from "./tool-invoker";
 import type { ToolContext } from "./tools/tool-types";
 import type { DroppedToolCall } from "./turn-budget";
 import type { StoredToolPayload } from "./turn-history";
-import { coverageNotices } from "./coverage-notices";
 
 function newId(prefix: string): string {
 	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -61,6 +62,7 @@ export async function executeAndPersistToolRound(input: {
 	proposals: CreatedProposal[];
 	questionSets: AssistantQuestionSet[];
 	charts: AssistantChartSpec[];
+	pitches: PitchPackage[];
 	nextSequence: number;
 	resultBytes: number;
 	coverageNotices: string[];
@@ -92,6 +94,7 @@ export async function executeAndPersistToolRound(input: {
 		return parsed ? [parsed] : [];
 	});
 	const charts: AssistantChartSpec[] = [];
+	const pitches: PitchPackage[] = [];
 	for (const proposal of results.proposedActions) {
 		const actionId = newId("act");
 		const payload = JSON.stringify(proposal.payload);
@@ -123,6 +126,15 @@ export async function executeAndPersistToolRound(input: {
 	let resultBytes = 0;
 	for (const output of results.toolOutputs) {
 		const resultPayload = output.result.data ?? { error: output.result.error };
+		if (
+			output.result.success &&
+			resultPayload &&
+			typeof resultPayload === "object" &&
+			"pitch" in resultPayload
+		) {
+			const pitch = parsePitch(resultPayload.pitch);
+			if (pitch) pitches.push(pitch);
+		}
 		if (output.result.chart) charts.push(output.result.chart.chart);
 		const call = input.calls.find(
 			(candidate) => candidate.id === output.toolCallId,
@@ -144,7 +156,8 @@ export async function executeAndPersistToolRound(input: {
 			content: JSON.stringify({
 				knowledgeScope: output.result.knowledgeScope,
 				scopeProjectId,
-				scopeProjectIds: output.result.scopeProjectIds ?? output.result.chart?.scopeProjectIds,
+				scopeProjectIds:
+					output.result.scopeProjectIds ?? output.result.chart?.scopeProjectIds,
 				scopeUserIds: output.result.chart?.scopeUserIds,
 				result: resultPayload,
 			} satisfies StoredToolPayload),
@@ -164,8 +177,11 @@ export async function executeAndPersistToolRound(input: {
 		proposals,
 		questionSets,
 		charts,
+		pitches,
 		nextSequence: sequence,
 		resultBytes,
-		coverageNotices: results.toolOutputs.flatMap(output => coverageNotices(output.result.data)),
+		coverageNotices: results.toolOutputs.flatMap((output) =>
+			coverageNotices(output.result.data),
+		),
 	};
 }

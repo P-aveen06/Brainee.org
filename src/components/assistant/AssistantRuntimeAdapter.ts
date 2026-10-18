@@ -3,17 +3,20 @@ import { toast } from "sonner";
 import { sendAiMessage } from "@/api/ai-assistant";
 import {
 	type AssistantActivity,
+	type AssistantToolProgress,
 	isAssistantActivity,
+	isAssistantToolProgress,
 } from "@/lib/ai/assistant-activity";
 import {
-	parseAssistantQuestionSet,
 	type AssistantQuestionSet,
+	parseAssistantQuestionSet,
 } from "@/lib/ai/assistant-questions";
 import type { AssistantChartSpec } from "@/lib/ai/chart-types";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import type { CitationRef } from "@/lib/ai/citations";
 import { CLIENT_TIMEOUT_MS } from "@/lib/ai/completion-timeout";
 import type { AssistantPageContext } from "@/lib/ai/page-context";
+import { type PitchPackage, parsePitch } from "@/lib/ai/pitch-types";
 import type { ProposedActionItem } from "./ProposedActionCard";
 
 /** Shape stored on a message's own `metadata.custom` — see MessageCustomData below for why. */
@@ -24,7 +27,9 @@ export interface MessageCustomData {
 	modelId?: string;
 	latencyMs?: number;
 	activity?: AssistantActivity;
+	toolSteps?: AssistantToolProgress[];
 	questions?: AssistantQuestionSet[];
+	pitches?: PitchPackage[];
 }
 
 export interface InitialAssistantMessage {
@@ -35,6 +40,7 @@ export interface InitialAssistantMessage {
 	proposals?: ProposedActionItem[];
 	charts?: AssistantChartSpec[];
 	questions?: AssistantQuestionSet[];
+	pitches?: PitchPackage[];
 	modelId?: string | null;
 	latencyMs?: number | null;
 	createdAt?: string | Date | null;
@@ -83,6 +89,24 @@ export function useAssistantUiBridge(
 				return;
 			}
 			yield { metadata: { custom: { activity: "preparing" } } };
+			let currentActivity: AssistantActivity = "preparing";
+			const toolSteps: AssistantToolProgress[] = [];
+			const updateToolProgress = (value: unknown) => {
+				if (!isAssistantToolProgress(value)) return false;
+				const safeProgress: AssistantToolProgress = {
+					step: value.step,
+					status: value.status,
+				};
+				const existingIndex = toolSteps.findIndex(
+					(item) => item.step === safeProgress.step,
+				);
+				if (existingIndex === -1) toolSteps.push(safeProgress);
+				else toolSteps[existingIndex] = safeProgress;
+				return true;
+			};
+			const progressMetadata = () => ({
+				custom: { activity: currentActivity, toolSteps: [...toolSteps] },
+			});
 
 			const requestController = new AbortController();
 			let timedOut = false;
@@ -139,6 +163,7 @@ export function useAssistantUiBridge(
 						return JSON.parse(line) as {
 							type?: string;
 							activity?: unknown;
+							progress?: unknown;
 							text?: string;
 							result?: Record<string, unknown>;
 						};
@@ -155,11 +180,13 @@ export function useAssistantUiBridge(
 									event?.type === "activity" &&
 									isAssistantActivity(event.activity)
 								) {
-									yield {
-										metadata: {
-											custom: { activity: event.activity },
-										},
-									};
+									currentActivity = event.activity;
+									yield { metadata: progressMetadata() };
+								} else if (
+									event?.type === "tool-progress" &&
+									updateToolProgress(event.progress)
+								) {
+									yield { metadata: progressMetadata() };
 								} else if (event?.type === "delta" && event.text) {
 									receivedText = true;
 									accumulatedText += event.text;
@@ -177,11 +204,13 @@ export function useAssistantUiBridge(
 							event?.type === "activity" &&
 							isAssistantActivity(event.activity)
 						) {
-							yield {
-								metadata: {
-									custom: { activity: event.activity },
-								},
-							};
+							currentActivity = event.activity;
+							yield { metadata: progressMetadata() };
+						} else if (
+							event?.type === "tool-progress" &&
+							updateToolProgress(event.progress)
+						) {
+							yield { metadata: progressMetadata() };
 						} else if (event?.type === "result") result = event.result;
 						if (event?.type === "delta" && event.text) {
 							receivedText = true;
@@ -241,8 +270,16 @@ export function useAssistantUiBridge(
 							proposals,
 							charts,
 							questions,
+							pitches: Array.isArray(result.pitches)
+								? result.pitches.flatMap((item) => {
+										const pitch = parsePitch(item);
+										return pitch ? [pitch] : [];
+									})
+								: [],
 							modelId,
 							latencyMs,
+							activity: currentActivity,
+							toolSteps: [...toolSteps],
 						} satisfies MessageCustomData,
 					},
 				};
@@ -290,6 +327,7 @@ export function useAssistantUiBridge(
 					proposals: m.proposals || [],
 					charts: (m.charts || []).filter(isAssistantChartSpec),
 					questions: m.questions || [],
+					pitches: m.pitches || [],
 					modelId: m.modelId || undefined,
 					latencyMs: m.latencyMs || undefined,
 				} satisfies MessageCustomData,

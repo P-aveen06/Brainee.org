@@ -22,6 +22,12 @@ The Northstar Studio sample contains 14 people, 10 projects (4 internal and 6 di
 
 See [the startup roster, portfolio, and Company Brain scenarios](docs/falkordb/STARTUP-DEMO.md) for the full setup.
 
+## Assistant sales pitches
+
+Ask the Assistant for a client pitch or case study. It can gather permitted project evidence, save a cited internal draft in the conversation, and open a side-by-side canvas with presentation and written-document views. Export a presentation as editable PowerPoint or PDF, and a written case study as editable Word or PDF. Missing outcomes and approvals appear as review items for the team.
+
+Optional public research and pitch layout inspection use a local Playwright browser service. Install its Chromium runtime once with `bunx playwright install chromium`. Set `BROWSER_SERVICE_TOKEN` in `.dev.vars` to a random secret of at least 32 characters, keep `BROWSER_SERVICE_URL=http://127.0.0.1:3200`, then start this service in a second terminal with `bun run browser:serve`. The browser reads only HTTPS pages on exact administrator-approved hosts; add hosts with `BROWSER_PUBLIC_HOSTS` when needed. Research uses fixed generic searches and sends no project details. Page scripts and subresource requests are disabled. Layout inspection checks the generated preview at mobile and desktop widths; it does not verify how PowerPoint or Word will render the exported file. This companion service is intended for local development.
+
 When upgrading the original sample dataset, the first seed reconciles only the known fictional startup accounts, project metadata, and staffing. Later runs preserve edits. Existing unrelated records are retained.
 
 `graph:setup` retains existing graph passwords and configures the private Worker-to-service connection in ignored `.dev.vars`. The browser receives no graph credentials. FalkorDB is the only application database; there is no D1 binding, database selector or SQL fallback.

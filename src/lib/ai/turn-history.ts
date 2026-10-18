@@ -24,6 +24,18 @@ export function reconstructHistory(
 	const firstUserIndex = historyRows.findIndex((row) => row.role === "user");
 	const completeRows =
 		firstUserIndex >= 0 ? historyRows.slice(firstUserIndex) : historyRows;
+	// Pitch tool arguments contain the draft text too; redact them along with revoked results.
+	const blockedPitchCalls = new Set<string>();
+	for (const row of completeRows) {
+		if (row.role !== "tool" || !row.content || !row.toolCallId) continue;
+		try {
+			const stored = JSON.parse(row.content) as StoredToolPayload;
+			if (stored.scopeProjectIds?.some((id) => !canSeeProject(id)))
+				blockedPitchCalls.add(row.toolCallId);
+		} catch {
+			/* Legacy content is handled below. */
+		}
+	}
 	return completeRows.map((m) => {
 		if (m.role === "tool") {
 			let stored: StoredToolPayload = { result: null };
@@ -56,6 +68,12 @@ export function reconstructHistory(
 		if (m.toolCalls) {
 			try {
 				parsedToolCalls = JSON.parse(m.toolCalls);
+				parsedToolCalls = parsedToolCalls?.map((call) =>
+					call.name === "present_pitch_package" &&
+					blockedPitchCalls.has(call.id)
+						? { ...call, arguments: { unavailable: "Source access changed." } }
+						: call,
+				);
 			} catch {
 				parsedToolCalls = undefined;
 			}

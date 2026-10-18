@@ -2,7 +2,10 @@ import { desc, eq } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiTurns } from "@/db/schema";
 import { getEnvVar } from "@/lib/auth.server";
 import { visibleProjectIdsFor } from "@/lib/project-access";
-import type { AssistantActivity } from "./assistant-activity";
+import type {
+	AssistantActivity,
+	AssistantToolProgress,
+} from "./assistant-activity";
 import type { AssistantQuestionSet } from "./assistant-questions";
 import type { AssistantChartSpec } from "./chart-types";
 import type { GroundedLabel } from "./citations";
@@ -20,6 +23,8 @@ import {
 } from "./completion-timeout";
 import { getForcedToolForIntent } from "./intent-routing";
 import type { AssistantPageContext } from "./page-context";
+import { restorePitchState } from "./pitch-evidence";
+import type { PitchPackage } from "./pitch-types";
 import {
 	ALLOWED_MODEL_IDS,
 	type ChatCompletionResult,
@@ -54,6 +59,7 @@ export interface AssistantTurnInput {
 	assistantMessageId?: string;
 	signal?: AbortSignal;
 	onActivity?: (activity: AssistantActivity) => void;
+	onToolProgress?: (progress: AssistantToolProgress) => void;
 	onTextDelta?: (delta: string) => void;
 }
 
@@ -71,6 +77,7 @@ export interface AssistantTurnOutput {
 	}>;
 	charts: AssistantChartSpec[];
 	questions: AssistantQuestionSet[];
+	pitches?: PitchPackage[];
 	modelId?: string;
 	tokens: { in: number; out: number };
 	latencyMs: number;
@@ -153,6 +160,11 @@ export async function runAssistantTurn(
 		canSeeProject,
 		canSeeChartScope,
 	);
+	ctx = {
+		...ctx,
+		pitchState: restorePitchState(historyRows, canSeeProject),
+		onToolProgress: input.onToolProgress,
+	};
 	const forcedInitialTool = getForcedToolForIntent(
 		input.userMessage,
 		conversationHistory,
@@ -180,12 +192,17 @@ export async function runAssistantTurn(
 	conversationHistory.push({ role: "user", content: input.userMessage });
 
 	const tools = getToolDefinitions();
+	const pitchRequest =
+		!!ctx.pitchState?.drafts.length ||
+		/pitch|case stud|proposal|presentation/i.test(input.userMessage);
+	const toolRoundLimit = pitchRequest ? 6 : MAX_TOOL_ROUNDS;
 	const systemPrompt = getAssistantSystemPrompt(input.pageContext, ctx.user);
 	const groundedRecordIds = new Set<string>();
 	const groundedLabels: GroundedLabel[] = [];
 	const createdProposals: AssistantTurnOutput["proposedActions"] = [];
 	let questionSets: AssistantQuestionSet[] = [];
 	const charts: AssistantChartSpec[] = [];
+	const pitches: PitchPackage[] = [];
 	const assistantMsgId = input.assistantMessageId ?? newId("msg-ast");
 	const usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 	const addUsage = (result: ChatCompletionResult) => {
@@ -244,7 +261,7 @@ export async function runAssistantTurn(
 	const coverageNotices = new Set<string>();
 	let completion: ChatCompletionResult | undefined;
 
-	for (let toolRound = 0; toolRound < MAX_TOOL_ROUNDS; toolRound += 1) {
+	for (let toolRound = 0; toolRound < toolRoundLimit; toolRound += 1) {
 		input.onActivity?.(toolRound === 0 ? "analyzing" : "reviewing");
 		completion = await completeWithinDeadline(
 			provider,
@@ -252,7 +269,7 @@ export async function runAssistantTurn(
 				system: systemPrompt,
 				messages: conversationHistory,
 				tools,
-				maxTokens: 2048,
+				maxTokens: pitchRequest ? 8000 : 2048,
 				toolChoice:
 					toolRound === 0 && forcedInitialTool
 						? { name: forcedInitialTool }
@@ -305,6 +322,7 @@ export async function runAssistantTurn(
 		groundedLabels.push(...round.groundedLabels);
 		createdProposals.push(...round.proposals);
 		charts.push(...round.charts);
+		pitches.push(...round.pitches);
 		if (round.questionSets.length > 0) {
 			questionSets = round.questionSets;
 			completion = {
@@ -317,7 +335,7 @@ export async function runAssistantTurn(
 		}
 
 		const mustSynthesize =
-			toolRound === MAX_TOOL_ROUNDS - 1 ||
+			toolRound === toolRoundLimit - 1 ||
 			totalToolCalls >= MAX_TOTAL_TOOL_CALLS ||
 			toolResultBytes >= MAX_TOOL_RESULT_BYTES;
 		if (mustSynthesize) {
@@ -422,6 +440,7 @@ export async function runAssistantTurn(
 		citations: citationCheck.verifiedCitations,
 		proposedActions: createdProposals,
 		charts,
+		pitches,
 		questions: questionSets,
 		modelId: finalCompletion.modelId,
 		tokens: {

@@ -4,7 +4,10 @@ import { createDb } from "@/db";
 import { and, eq, gte } from "@/db/graph-query";
 import { aiConversations, aiMessages } from "@/db/schema";
 import { classifyAssistantFailure } from "@/lib/ai/ai-errors";
-import type { AssistantActivity } from "@/lib/ai/assistant-activity";
+import type {
+	AssistantActivity,
+	AssistantToolProgress,
+} from "@/lib/ai/assistant-activity";
 import { runAssistantTurn } from "@/lib/ai/assistant-turn";
 import { verifyAssistantPageContext } from "@/lib/ai/page-context.server";
 import {
@@ -20,7 +23,7 @@ export * from "./ai-assistant-schema";
 
 const HOURLY_MESSAGE_LIMIT = 60;
 const DAILY_MESSAGE_LIMIT = 500;
-const DAILY_TOKEN_LIMIT = 2_000_000;
+const DAILY_TOKEN_LIMIT = 5_000_000;
 
 export const sendAiMessage = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
@@ -124,6 +127,8 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 				};
 				const emitActivity = (activity: AssistantActivity) =>
 					emit({ type: "activity", activity });
+				const emitToolProgress = (progress: AssistantToolProgress) =>
+					emit({ type: "tool-progress", progress });
 				void (async () => {
 					try {
 						emitActivity("preparing");
@@ -142,6 +147,7 @@ export const sendAiMessage = createServerFn({ method: "POST" })
 								assistantMessageId,
 								signal: abortController.signal,
 								onActivity: emitActivity,
+								onToolProgress: emitToolProgress,
 								onTextDelta: (text) => emit({ type: "delta", text }),
 							},
 							{ user: context.user, db },

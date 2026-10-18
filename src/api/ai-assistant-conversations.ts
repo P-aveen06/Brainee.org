@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { createDb } from "@/db";
 import { and, desc, eq, inArray } from "@/db/graph-query";
 import { aiConversations, aiMessages, aiProposedActions } from "@/db/schema";
-import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import { parseAssistantQuestionSet } from "@/lib/ai/assistant-questions";
+import { isAssistantChartSpec } from "@/lib/ai/chart-types";
+import { restorePitchState } from "@/lib/ai/pitch-evidence";
 import { loadWorkBrief } from "@/lib/ai/tools/work-brief-data";
 import { recoverStaleAssistantTurns } from "@/lib/ai/turn-failure.server";
+import { visibleProjectIdsFor } from "@/lib/project-access";
 import { authMiddleware } from "@/lib/server-fn";
 import {
 	deleteConversationSchema,
@@ -66,6 +68,11 @@ export const getAiConversation = createServerFn({ method: "GET" })
 			.from(aiMessages)
 			.where(eq(aiMessages.conversationId, data.conversationId))
 			.orderBy(aiMessages.createdAt);
+		const visibleProjects = await visibleProjectIdsFor(db, context.user);
+		const pitchState = restorePitchState(
+			allRows,
+			(id) => visibleProjects === "all" || visibleProjects.includes(id),
+		);
 		const questionsByTurnId = new Map<
 			string,
 			NonNullable<ReturnType<typeof parseAssistantQuestionSet>>[]
@@ -194,6 +201,26 @@ export const getAiConversation = createServerFn({ method: "GET" })
 						? (chartsByTurnId.get(m.turnId ?? "") || []).map(
 								(stored) => stored.chart,
 							)
+						: [],
+				pitches:
+					m.role === "assistant"
+						? allRows.flatMap((row) => {
+								if (
+									row.role !== "tool" ||
+									row.turnId !== m.turnId ||
+									!row.content
+								)
+									return [];
+								const payload = safeJsonParse<{
+									result?: { pitch?: { draftId?: string; revision?: number } };
+								}>(row.content, {});
+								const stored = payload.result?.pitch;
+								return pitchState.drafts.filter(
+									(pitch) =>
+										pitch.draftId === stored?.draftId &&
+										pitch.revision === stored?.revision,
+								);
+							})
 						: [],
 				modelId: m.modelId,
 				latencyMs: m.latencyMs,

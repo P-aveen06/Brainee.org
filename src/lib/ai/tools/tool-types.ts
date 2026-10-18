@@ -1,12 +1,16 @@
-import type { GroundedLabel } from "../citations";
 import type { Database } from "@/db";
 import type { AppUser } from "@/lib/server-fn";
+import type { AssistantToolProgress } from "../assistant-activity";
 import type { ScopedAssistantChart } from "../chart-types";
+import type { GroundedLabel } from "../citations";
+import type { PitchTurnState } from "../pitch-types";
 
 export interface ToolContext {
 	user: AppUser;
 	db: Database;
 	d1?: unknown;
+	pitchState?: PitchTurnState;
+	onToolProgress?: (progress: AssistantToolProgress) => void;
 }
 
 export interface ToolExecutionResult {

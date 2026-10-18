@@ -9,14 +9,19 @@ import { AlertCircle, Check, Copy, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ASSISTANT_ACTIVITY_LABELS } from "@/lib/ai/assistant-activity";
+import {
+	ASSISTANT_ACTIVITY_LABELS,
+	ASSISTANT_TOOL_STEP_LABELS,
+} from "@/lib/ai/assistant-activity";
 import { isAssistantChartSpec } from "@/lib/ai/chart-types";
 import { AssistantChartLoader } from "./AssistantChartLoader";
 import { AssistantMessageText } from "./AssistantMarkdown";
 import { AssistantQuestionCard } from "./AssistantQuestionCard";
 import type { MessageCustomData } from "./AssistantRuntimeAdapter";
+import { AssistantToolProgress } from "./AssistantToolProgress";
 import { CitationChips } from "./CitationChips";
 import { uniqueCitations } from "./citation-markers";
+import { PitchResponseAttachments } from "./PitchResponseAttachments";
 import { ProposedActionCard } from "./ProposedActionCard";
 
 export function AssistantMessages({
@@ -27,6 +32,7 @@ export function AssistantMessages({
 	const [copiedId, setCopiedId] = useState<string | null>(null);
 	const aui = useAui();
 	const threadMessages = useAuiState((state) => state.thread.messages);
+	const isThreadRunning = useAuiState((state) => state.thread.isRunning);
 	const handleCopy = (id: string, text: string) => {
 		navigator.clipboard.writeText(text);
 		setCopiedId(id);
@@ -102,7 +108,11 @@ export function AssistantMessages({
 
 				const isGenerating =
 					!rawText.trim() &&
+					!custom.pitches?.length &&
 					(!custom.proposals || custom.proposals.length === 0);
+				const currentToolStep = custom.toolSteps?.find(
+					(step) => step.status === "running",
+				);
 
 				if (isGenerating) {
 					return (
@@ -131,9 +141,19 @@ export function AssistantMessages({
 											className="size-3 animate-spin"
 											aria-hidden="true"
 										/>
-										{ASSISTANT_ACTIVITY_LABELS[custom.activity || "preparing"]}
+										{currentToolStep
+											? ASSISTANT_TOOL_STEP_LABELS[currentToolStep.step]
+											: ASSISTANT_ACTIVITY_LABELS[
+													custom.activity || "preparing"
+												]}
 									</span>
 								</output>
+								{custom.toolSteps && custom.toolSteps.length > 0 && (
+									<AssistantToolProgress
+										steps={custom.toolSteps}
+										isRunning={isThreadRunning}
+									/>
+								)}
 								<div className="py-1">
 									<div
 										aria-hidden="true"
@@ -200,6 +220,13 @@ export function AssistantMessages({
 								</Button>
 							</div>
 
+							{custom.toolSteps && custom.toolSteps.length > 0 && (
+								<AssistantToolProgress
+									steps={custom.toolSteps}
+									isRunning={isThreadRunning}
+								/>
+							)}
+
 							{/* Failure State vs Normal Markdown Bubble */}
 							{isFailure ? (
 								<div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive space-y-1 shadow-xs">
@@ -249,6 +276,12 @@ export function AssistantMessages({
 								</div>
 							)}
 
+							{custom.pitches?.map((pitch) => (
+								<PitchResponseAttachments
+									key={`${pitch.draftId}-${pitch.revision}`}
+									pitch={pitch}
+								/>
+							))}
 							{/* Grounded Citation Chips */}
 							{custom.citations && custom.citations.length > 0 && (
 								<div className="pt-0.5">

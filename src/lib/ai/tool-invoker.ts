@@ -1,6 +1,11 @@
 import { aiToolInvocations } from "@/db/schema";
+import {
+	type AssistantToolStep,
+	getAssistantToolStep,
+} from "./assistant-activity";
 import type { GroundedLabel } from "./citations";
 import { TOOL_TIMEOUT_MS } from "./completion-timeout";
+import { collectPitchEvidence } from "./pitch-evidence";
 import type { ToolCall } from "./provider";
 import { normalizeToolArguments } from "./tool-arguments";
 import type { ToolContext, ToolExecutionResult } from "./tools/tool-types";
@@ -115,8 +120,31 @@ export async function executeToolCalls(
 	const allGroundedIds = new Set<string>();
 	const allGroundedLabels: InvokerTurnResults["allGroundedLabels"] = [];
 	const proposedActions: InvokerTurnResults["proposedActions"] = [];
+	const remainingByStep = new Map<AssistantToolStep, number>();
+	for (const call of toolCalls) {
+		const step = getAssistantToolStep(call.name);
+		remainingByStep.set(step, (remainingByStep.get(step) ?? 0) + 1);
+	}
+	const emitProgress = (
+		step: AssistantToolStep,
+		status: "queued" | "running" | "complete" | "failed",
+	) => {
+		try {
+			ctx.onToolProgress?.({ step, status });
+		} catch {
+			// Progress delivery is optional and must not interrupt a tool round.
+		}
+	};
+	for (const step of remainingByStep.keys()) emitProgress(step, "queued");
+	const startedSteps = new Set<AssistantToolStep>();
+	const failedSteps = new Set<AssistantToolStep>();
 
 	for (const call of toolCalls) {
+		const step = getAssistantToolStep(call.name);
+		if (!startedSteps.has(step)) {
+			startedSteps.add(step);
+			emitProgress(step, "running");
+		}
 		const startedAt = Date.now();
 		const handler = getToolHandler(call.name);
 		let executionResult: ToolExecutionResult;
@@ -186,11 +214,28 @@ export async function executeToolCalls(
 				})),
 			);
 		}
+		if (executionResult.success && ctx.pitchState) {
+			collectPitchEvidence(
+				ctx.pitchState,
+				call.name,
+				executionResult.data,
+				executionResult.groundedLabels ?? [],
+				executionResult.scopeProjectIds ??
+					(typeof call.arguments.projectId === "string"
+						? [call.arguments.projectId]
+						: []),
+			);
+		}
 
 		if (executionResult.proposedAction) {
 			proposedActions.push(executionResult.proposedAction);
 		}
 		proposedActions.push(...(executionResult.proposedActions ?? []));
+		if (!executionResult.success) failedSteps.add(step);
+		const remaining = (remainingByStep.get(step) ?? 1) - 1;
+		remainingByStep.set(step, remaining);
+		if (remaining === 0)
+			emitProgress(step, failedSteps.has(step) ? "failed" : "complete");
 
 		toolOutputs.push({
 			toolCallId: call.id,

@@ -14,3 +14,9 @@ OPENCODE_MODEL=deepseek-v4-flash
 # FalkorDB service. graph:setup writes the local URL and token to .dev.vars.
 GRAPH_SERVICE_URL=http://127.0.0.1:3100
 GRAPH_SERVICE_TOKEN=
+
+# Optional local browser research and pitch layout checks (bun run browser:serve).
+BROWSER_SERVICE_URL=http://127.0.0.1:3200
+BROWSER_SERVICE_TOKEN=
+# Optional comma-separated exact HTTPS host allowlist; defaults are in services/browser/public-page.ts.
+# BROWSER_PUBLIC_HOSTS=www.assistant-ui.com,example.com

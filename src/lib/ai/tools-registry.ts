@@ -1,32 +1,36 @@
-import { DELIVERY_KNOWLEDGE_PROMPT } from "./delivery-knowledge-prompt";
-import { askQuestionsTool } from "./tools/ask-questions-tool";
-import { getPortfolioEvidenceTool } from "./tools/portfolio-evidence-tool";
-import { proposeReusableBreakdownTool } from "./tools/reusable-breakdown-tool";
-import { getReportingStructureTool } from "./tools/reporting-structure-tool";
-import {
-	searchDeliveryKnowledgeTool,
-	indexDeliveryDocumentsTool,
-	getImplementationContextTool,
-	readDocumentPassagesTool,
-} from "./tools/delivery-knowledge-tools";
 import { getTodayIsoDate } from "@/lib/leave-policy";
 import type { AppUser } from "@/lib/server-fn";
+import { DELIVERY_KNOWLEDGE_PROMPT } from "./delivery-knowledge-prompt";
 import type { AssistantPageContext } from "./page-context";
 import { getCallerPrompt } from "./persona-context";
 import type { ToolDefinition } from "./provider";
+import { askQuestionsTool } from "./tools/ask-questions-tool";
 import {
 	getAssetInventoryTool,
 	getMyAssetsTool,
 	getMyTimesheetsTool,
 	proposeAssetIssueReportTool,
 } from "./tools/asset-tools";
+import {
+	inspectPitchLayoutTool,
+	readPublicPageTool,
+	searchPitchReferencesTool,
+} from "./tools/browser-tools";
 import { getChartTool } from "./tools/chart-tool";
+import {
+	getImplementationContextTool,
+	indexDeliveryDocumentsTool,
+	readDocumentPassagesTool,
+	searchDeliveryKnowledgeTool,
+} from "./tools/delivery-knowledge-tools";
 import { proposeLeaveCancellationTool } from "./tools/leave-mutation-tools";
 import {
 	getMyLeaveBalancesTool,
 	getMyLeaveRequestsTool,
 	proposeLeaveRequestTool,
 } from "./tools/leave-tools";
+import { PITCH_PROMPT, presentPitchPackageTool } from "./tools/pitch-tools";
+import { getPortfolioEvidenceTool } from "./tools/portfolio-evidence-tool";
 import {
 	getProjectChecklistTool,
 	getProjectDiscussionsTool,
@@ -47,6 +51,8 @@ import {
 	proposeProjectTaskTool,
 	proposeTaskUpdateTool,
 } from "./tools/project-tools";
+import { getReportingStructureTool } from "./tools/reporting-structure-tool";
+import { proposeReusableBreakdownTool } from "./tools/reusable-breakdown-tool";
 import {
 	getPendingApprovalsTool,
 	getTeamAvailabilityTool,
@@ -57,6 +63,10 @@ import { compareProjectTranscriptTool } from "./tools/transcript-tools";
 import { getWorkBriefTool } from "./tools/work-brief-tool";
 
 const ALL_TOOLS: ToolHandler[] = [
+	presentPitchPackageTool,
+	readPublicPageTool,
+	searchPitchReferencesTool,
+	inspectPitchLayoutTool,
 	getReportingStructureTool,
 	proposeReusableBreakdownTool,
 	getPortfolioEvidenceTool,
@@ -128,6 +138,7 @@ export function getAssistantSystemPrompt(
 		: "";
 	return `${ASSISTANT_SYSTEM_PROMPT_BASE}
 ${DELIVERY_KNOWLEDGE_PROMPT}
+${PITCH_PROMPT}
 
 ${user ? getCallerPrompt(user) : ""}
 
@@ -145,7 +156,7 @@ CORE OPERATIONAL MANDATE (ZERO HESITATION & ZERO EXCUSES):
 
 COMPANY WORK SCOPE & POLITE REDIRECT:
 - Company Brain is for Brainee.org workspace questions: projects, tasks, teammates, decisions, documents, delivery, attendance, leave, approvals, and equipment that this caller is allowed to see.
-- If a request is unrelated to company work or requires live external information (for example, sports fixtures, general trivia, news, or weather), do not answer it and do not ask clarifying questions that continue that unrelated topic. Briefly and warmly explain that Company Brain is focused on the caller's work and cannot verify that external information.
+- If a request is unrelated to company work (for example, sports fixtures, general trivia, news, or weather), do not answer it and do not ask clarifying questions that continue that unrelated topic. Briefly explain that Company Brain is focused on the caller's work. Public sales-pitch research through the approved browser tools is in scope; never imply those tools provide unrestricted internet access.
 - Then invite the caller back with a useful, role-appropriate workspace question. Keep the redirect concise and natural; the interface will also show clickable suggestions tailored to the caller.
 
 VISUAL-FIRST ANSWERS:

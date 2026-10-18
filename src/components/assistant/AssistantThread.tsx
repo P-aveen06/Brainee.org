@@ -7,6 +7,7 @@ import { AssistantComposer } from "./AssistantComposer";
 import { AssistantEmptyState } from "./AssistantEmptyState";
 import { AssistantMessages } from "./AssistantMessages";
 import { AssistantSuggestions } from "./AssistantSuggestions";
+import { PitchWorkspace } from "./PitchWorkspace";
 import { ScopeNotice } from "./ScopeNotice";
 
 interface AssistantThreadProps {
@@ -58,19 +59,21 @@ export function AssistantThread({
 				</header>
 			)}
 
-			{/* Scrollable Message Viewport */}
-			<ThreadPrimitive.Viewport className="relative flex-1 flex flex-col overflow-y-auto scrollbar-thin">
-				<ThreadPrimitive.Empty>
-					<AssistantEmptyState />
-				</ThreadPrimitive.Empty>
+			<PitchWorkspace>
+				{/* Scrollable Message Viewport */}
+				<ThreadPrimitive.Viewport className="relative flex-1 flex flex-col overflow-y-auto scrollbar-thin">
+					<ThreadPrimitive.Empty>
+						<AssistantEmptyState />
+					</ThreadPrimitive.Empty>
 
-				<div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8">
-					<AssistantMessages onProposalResolved={onProposalResolved} />
-					<AssistantSuggestions />
-				</div>
-			</ThreadPrimitive.Viewport>
+					<div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8">
+						<AssistantMessages onProposalResolved={onProposalResolved} />
+						<AssistantSuggestions />
+					</div>
+				</ThreadPrimitive.Viewport>
 
-			<AssistantComposer />
+				<AssistantComposer />
+			</PitchWorkspace>
 		</ThreadPrimitive.Root>
 	);
 }
