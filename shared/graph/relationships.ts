@@ -11,6 +11,7 @@ export interface GraphReference extends ReferenceDefinition {
 const specific: Record<string, Record<string, [string, boolean?]>> = {
 	Employee: { peerLeadId: ["REPORTS_TO"] },
 	Task: {
+		sourceTaskId: ["DERIVED_FROM"],
 		projectId: ["HAS_TASK", true],
 		assigneeId: ["ASSIGNED_TO"],
 		parentTaskId: ["PARENT_TASK"],

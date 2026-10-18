@@ -1921,6 +1921,11 @@
 			"deliveryText": {"type": "string", "required": false, "primary": false},
 			"deliveryTextChecksum": {"type": "string", "required": false, "primary": false},
 			"deliveryIndexStatus": {"type": "string", "required": false, "primary": false},
+			"deliveryLocations": {"type": "string", "required": false, "primary": false},
+			"deliveryIndexAttempts": {"type": "number", "required": false, "primary": false},
+			"deliveryRetryAt": {"type": "number", "required": false, "primary": false},
+			"deliveryIndexError": {"type": "string", "required": false, "primary": false},
+			"deliveryAttemptChecksum": {"type": "string", "required": false, "primary": false},
 			"createdAt": {
 				"type": "date",
 				"required": false,
@@ -2419,6 +2424,9 @@
 				"required": false,
 				"primary": false
 			},
+			"sourceTaskId": {"type": "string", "required": false, "primary": false},
+			"sourceProjectId": {"type": "string", "required": false, "primary": false},
+			"adaptationAssumptions": {"type": "string", "required": false, "primary": false},
 			"blockedReason": {
 				"type": "string",
 				"required": false,
@@ -2445,6 +2453,7 @@
 		},
 		"unique": [["projectId", "taskNumber"]],
 		"references": [
+			{"fields": ["sourceTaskId"], "target": "project_tasks", "targetFields": ["id"]},
 			{
 				"fields": ["projectId"],
 				"target": "projects",

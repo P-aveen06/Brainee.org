@@ -6,6 +6,8 @@ export interface DeliverySource {
 	type: DeliverySourceType;
 	label: string;
 	projectId: string;
+	url?: string;
+	description?: string;
 }
 export interface DeliveryResult {
 	scope: "company_delivery";
@@ -52,8 +54,8 @@ export function parseDeliveryInput(operation: DeliveryOperation, value: unknown)
 	};
 	if (operation === "delivery.context") {
 		output.projectId = deliveryString(input.projectId, "project ID or code");
-		if (input.taskId !== undefined) output.taskId = deliveryString(input.taskId, "task ID");
-		const section = input.section ?? "all";
+		if (input.taskId !== undefined && input.taskId !== "") output.taskId = deliveryString(input.taskId, "task ID");
+		const section = input.section === "" ? "all" : input.section ?? "all";
 		if (typeof section !== "string" || !sections.includes(section)) throw new Error("Invalid context section.");
 		output.section = section;
 	} else {
@@ -76,6 +78,10 @@ export function parseDeliveryResult(value: unknown): DeliveryResult {
 		deliveryString(source.id, "source ID");
 		deliveryString(source.projectId, "source project ID");
 		deliveryString(source.label, "source citation", 500);
+		if (source.description !== undefined)
+			deliveryString(source.description, "source description", 2000);
+		if (source.url !== undefined && !new RegExp(`^/api/delivery/documents/${encodeURIComponent(source.id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/passages\\?position=\\d+$`).test(source.url))
+			throw new Error("Invalid delivery passage URL.");
 		if (!["project", "task", "document", "decision", "discussion", "update", "person"].includes(source.type))
 			throw new Error("Invalid delivery source type.");
 	}
