@@ -1,15 +1,24 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tcc-tower",
+  "name": "brainee-org",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/server.ts",
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    // Temporary hackathon demo only: all selectable identities and data are synthetic.
+    "GRAPH_SERVICE_URL": "https://braineeorg-production.up.railway.app",
+    "OPENCODE_ENDPOINT": "https://opencode.ai/inference/go/openai/v1",
+    "OPENCODE_MODEL": "gpt-6-luna",
+    "TEST_AUTH_ENABLED": "true",
+    "PUBLIC_DEMO_AUTH_ENABLED": "true",
+  },
   "r2_buckets": [
     {
       "binding": "PROJECT_DOCS",
-      "bucket_name": "brainee-docs",
+      "bucket_name": "brainee-org-docs",
     }
   ],
   "observability": {
