@@ -23,17 +23,26 @@ const dependencyOptimizerOptions = {
 	},
 };
 
-const config = defineConfig({
+const config = defineConfig(({ command, isPreview }) => ({
 	resolve: { tsconfigPaths: true },
 	optimizeDeps: dependencyOptimizerOptions,
 	ssr: { optimizeDeps: dependencyOptimizerOptions },
 	plugins: [
 		devtools(),
-		cloudflare({ viteEnvironment: { name: "ssr" } }),
+		cloudflare({
+			viteEnvironment: { name: "ssr" },
+			config:
+				command === "serve" && !isPreview
+					? (workerConfig) => {
+							// Use the bundled runtime's default date during local development.
+							delete workerConfig.compatibility_date;
+						}
+					: undefined,
+		}),
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),
 	],
-});
+}));
 
 export default config;

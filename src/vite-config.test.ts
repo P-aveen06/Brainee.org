@@ -1,6 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import config from "../vite.config";
+import createConfig from "../vite.config";
+
+const config = createConfig({ command: "serve", mode: "development" });
 
 const expectedTanstackEntries = {
 	"#tanstack-router-entry": fileURLToPath(
