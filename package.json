@@ -27,7 +27,8 @@
     "graph:typecheck": "bun run --cwd services/graph typecheck",
     "graph:test:unit": "bun run --cwd services/graph test",
     "graph:test:recovery": "bun run scripts/graph.ts test:recovery",
-    "graph:seed": "bun run scripts/graph.ts seed"
+    "graph:seed": "bun run scripts/graph.ts seed",
+    "graph:enrich": "bun scripts/enrich-projects.ts"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.17",
