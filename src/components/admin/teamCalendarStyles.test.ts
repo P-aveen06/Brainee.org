@@ -9,7 +9,7 @@ describe("team calendar event presentation", () => {
 		const event = {
 			id: "leave-1",
 			type: "leave" as const,
-			date: "2026-07-21",
+			date: "2026-10-16",
 			status: "pending_cancellation",
 		};
 
@@ -24,7 +24,7 @@ describe("team calendar event presentation", () => {
 			getTeamCalendarEventLabel({
 				id: "timesheet-1",
 				type: "timesheet",
-				date: "2026-07-21",
+				date: "2026-10-16",
 				status: "re_entry",
 			}),
 		).toBe("Needs Correction — Returned for Editing & Resubmission");
@@ -35,7 +35,7 @@ describe("team calendar event presentation", () => {
 			getTeamCalendarEventLabel({
 				id: "wfh-1",
 				type: "wfh",
-				date: "2026-07-21",
+				date: "2026-10-16",
 				status: "approved",
 			}),
 		).toBe("WFH");
@@ -43,7 +43,7 @@ describe("team calendar event presentation", () => {
 			getTeamCalendarEventLabel({
 				id: "leave-2",
 				type: "leave",
-				date: "2026-07-21",
+				date: "2026-10-16",
 				status: "approved",
 			}),
 		).toBe("Leave");

@@ -127,7 +127,7 @@ export function getToolHandler(name: string): ToolHandler | undefined {
 /**
  * Built fresh per turn (not a static constant) because it embeds today's date — without this,
  * the model has no way to know the current year and will guess one when a user gives a partial
- * date like "sep 3rd", which is exactly the kind of invented fact this assistant must not produce.
+ * date like "Oct 16rd, 2026", which is exactly the kind of invented fact this assistant must not produce.
  */
 export function getAssistantSystemPrompt(
 	pageContext?: AssistantPageContext,
@@ -142,7 +142,7 @@ ${PITCH_PROMPT}
 
 ${user ? getCallerPrompt(user) : ""}
 
-TODAY'S DATE: ${getTodayIsoDate()} (Asia/Kolkata). When someone gives a partial or relative date — "sep 3rd", "next Monday", "tomorrow" — pass the phrase to the relevant tool so backend date resolution remains authoritative. Never guess a year.${contextBlock}`;
+TODAY'S DATE: ${getTodayIsoDate()} (Asia/Kolkata). When someone gives a partial or relative date — "Oct 16rd, 2026", "next Monday", "tomorrow" — pass the phrase to the relevant tool so backend date resolution remains authoritative. Never guess a year.${contextBlock}`;
 }
 
 const ASSISTANT_SYSTEM_PROMPT_BASE = `You are Company Brain — an ultra-responsive, proactive AI colleague embedded across Brainee.org workspace.
@@ -175,7 +175,7 @@ UNIVERSAL RESOLUTION MATRIX ACROSS ALL SCREENS & SCENARIOS:
      -> Call search_team_members (with query or role or leadName).
 3. Leaves, Time Off & WFH Attendance:
    - "apply for sick leave on tomorrow", "take leave on Friday", "apply for leave":
-     * NEVER ASK: "What is the date for tomorrow?" or "Please specify the full date". You have TODAY'S DATE right above! Calculate tomorrow's date YYYY-MM-DD immediately (e.g. if today is 2026-08-30, tomorrow is 2026-08-31).
+     * NEVER ASK: "What is the date for tomorrow?" or "Please specify the full date". You have TODAY'S DATE right above! Calculate tomorrow's date YYYY-MM-DD immediately (e.g. if today is 2026-10-16, tomorrow is 2026-10-16).
      * NEVER ASK: "Will it be for the whole day or part of it?". Default to a full day!
      * NEVER SAY: "'sick' isn't a configured leave type". Map "sick" to Sick Leave directly!
      * IMMEDIATELY CALL: propose_leave_request(leaveType="sick", startDate="<resolved-date>", endDate="<resolved-date>"). The tool emits an interactive card on screen with Approve/Reject buttons!
@@ -281,7 +281,7 @@ BEAUTIFUL RESPONSE FORMATTING:
   * Use 2-space or 4-space indentation for sub-points under parent items:
     - **Draft telemetry ingestion security specification**
       - Project: PRJ-003 Cummins
-      - Priority: High | Due: 4 Sep 2026
+      - Priority: High | Due: 16 Oct 2026
       - Status: In Progress (Carry-forward)
       - Next step: Pick up where you left off on this item.
 - DAY PLANS & WORK SCHEDULES:
@@ -290,13 +290,13 @@ BEAUTIFUL RESPONSE FORMATTING:
     ### In Progress
 
     - **Draft telemetry ingestion security specification**
-      - Project: PRJ-003 Cummins | Priority: High | Due: 4 Sep 2026
+      - Project: PRJ-003 Cummins | Priority: High | Due: 16 Oct 2026
       - Next step: Pick up where you left off on this item.
 
     ### Overdue Items
 
     - **Design RESTful API documentation using OpenAPI 3.1**
-      - Project: PRJ-001 Unilever | Due: 22 Aug 2026 (9 days overdue)
+      - Project: PRJ-001 Unilever | Due: 16 Oct 2026 (9 days overdue)
 
     ### Suggested Focus Order
 
@@ -311,9 +311,9 @@ BEAUTIFUL RESPONSE FORMATTING:
 - ELEGANT FORMATTING FOR LISTS & SUMMARIES:
   * For Leave & WFH lists: Group cleanly by section:
     ### Pending Requests
-    - **Sick Leave** - Aug 31, 2026 (1 day) - Reason: Sick Leave application
+    - **Sick Leave** - Oct 16, 2026 (1 day) - Reason: Sick Leave application
     ### Approved Leaves
-    - **Casual Leave** - Sep 5, 2026 (1 day)
+    - **Casual Leave** - Oct 16, 2026 (1 day)
   * For Tasks: Group by parent task or status:
     - **#12 Push notification engine** - In Progress - Assigned to Vikram
   * For Assets: Group identical models:

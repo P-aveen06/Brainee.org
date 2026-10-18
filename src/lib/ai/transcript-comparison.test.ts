@@ -5,7 +5,7 @@ const project = {
 	id: "project-1",
 	name: "Unilever",
 	status: "active",
-	targetEndDate: "2026-09-12",
+	targetEndDate: "2026-10-16",
 };
 const tasks = [
 	{
@@ -13,7 +13,7 @@ const tasks = [
 		taskNumber: 4,
 		title: "API migration",
 		status: "in_progress",
-		dueDate: "2026-09-10",
+		dueDate: "2026-10-16",
 		assigneeName: "Sneha",
 	},
 ];
@@ -23,18 +23,18 @@ describe("compareTranscriptClaims", () => {
 		const [finding] = compareTranscriptClaims({
 			project,
 			tasks,
-			referenceDateIso: "2026-08-30",
+			referenceDateIso: "2026-10-16",
 			claims: [
 				{
 					category: "deadline",
-					statement: "API migration is due Sep 18",
+					statement: "API migration is due Oct 20, 2026",
 					taskQuery: "API migration",
-					proposedDate: "Sep 18",
+					proposedDate: "Oct 20, 2026",
 				},
 			],
 		});
 		expect(finding.status).toBe("possible_contradiction");
-		expect(finding.reason).toContain("2026-09-10");
+		expect(finding.reason).toContain("2026-10-16");
 	});
 
 	it("flags ownership changes without declaring either source correct", () => {

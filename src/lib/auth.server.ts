@@ -168,7 +168,7 @@ export async function createSessionCookie(
 }
 
 export function createLogoutCookie(): string {
-	return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly;${securePart()} SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+	return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly;${securePart()} SameSite=Lax; Max-Age=0; Expires=Fri, 16 Oct 2026 00:00:00 GMT`;
 }
 
 export function setResponseCookieHeader(cookieValue: string) {

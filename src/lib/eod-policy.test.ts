@@ -86,7 +86,7 @@ describe("assembleEodSkeleton", () => {
 		const skeleton = assembleEodSkeleton({
 			projectCode: "PRJ-001",
 			projectName: "Apollo Core",
-			date: "2026-08-29",
+			date: "2026-10-16",
 			pocName: "Sarah",
 			updates: [
 				{
@@ -109,7 +109,7 @@ describe("assembleEodSkeleton", () => {
 					taskNumber: 12,
 					title: "Configure Apple Pay checkout",
 					status: "in_progress",
-					dueDate: "2026-09-05",
+					dueDate: "2026-10-16",
 				},
 			],
 			missingMembers: [{ userId: "u3", name: "Charlie" }],
@@ -117,7 +117,7 @@ describe("assembleEodSkeleton", () => {
 
 		expect(skeleton.contentDraft).toContain("Subject:");
 		expect(skeleton.contentDraft).toContain(
-			"[EOD Update] Apollo Core | 29 Aug 2026",
+			"[EOD Update] Apollo Core | 16 Oct 2026",
 		);
 		expect(skeleton.contentDraft).toContain("Hi Sarah,");
 		expect(skeleton.contentDraft).toContain("Progress completed today:");
@@ -129,7 +129,7 @@ describe("assembleEodSkeleton", () => {
 		expect(skeleton.contentDraft).not.toContain("Subtask #5");
 		expect(skeleton.contentDraft).toContain("Currently in progress:");
 		expect(skeleton.contentDraft).toContain(
-			"Configure Apple Pay checkout — Expected completion: 05 Sep 2026",
+			"Configure Apple Pay checkout — Expected completion: 16 Oct 2026",
 		);
 		expect(skeleton.contentDraft).toContain("Dependencies / support required:");
 		expect(skeleton.contentDraft).toContain(

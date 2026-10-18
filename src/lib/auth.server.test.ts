@@ -171,7 +171,7 @@ describe("local startup role authentication", () => {
 	it("clears the cookie on logout and treats the cleared cookie as signed out", async () => {
 		const cookie = createLogoutCookie();
 		expect(cookie).toContain("Max-Age=0");
-		expect(cookie).toContain("Expires=Thu, 01 Jan 1970");
+		expect(cookie).toContain("Expires=Fri, 16 Oct 2026");
 		request.cookie = cookie.split(";")[0];
 		expect(await getSessionFromRequest()).toBeNull();
 	});

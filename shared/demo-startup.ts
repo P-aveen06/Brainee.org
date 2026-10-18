@@ -45,7 +45,7 @@ export const demoPeople: DemoPerson[] = [
 		"Aditi Deshmukh",
 		"ceo",
 		"CEO & Co-founder",
-		"1990-01-10",
+		"2026-10-16",
 		null,
 	),
 	person(
@@ -53,7 +53,7 @@ export const demoPeople: DemoPerson[] = [
 		"Arjun Mehta",
 		"hr",
 		"People & Culture Manager",
-		"1992-03-12",
+		"2026-10-16",
 		"sample-admin",
 	),
 	person(
@@ -61,7 +61,7 @@ export const demoPeople: DemoPerson[] = [
 		"Maya Rao",
 		"lead",
 		"Product Engineering Lead",
-		"1988-01-15",
+		"2026-10-16",
 		"sample-admin",
 	),
 	person(
@@ -69,7 +69,7 @@ export const demoPeople: DemoPerson[] = [
 		"Vikram Menon",
 		"lead",
 		"Platform Engineering Lead",
-		"1989-05-23",
+		"2026-10-16",
 		"sample-admin",
 	),
 	person(
@@ -77,7 +77,7 @@ export const demoPeople: DemoPerson[] = [
 		"Priya Sen",
 		"lead",
 		"Delivery Engineering Lead",
-		"1991-07-06",
+		"2026-10-16",
 		"sample-admin",
 	),
 	person(
@@ -85,7 +85,7 @@ export const demoPeople: DemoPerson[] = [
 		"Dev Malhotra",
 		"architect",
 		"Solution Architect",
-		"1987-11-14",
+		"2026-10-16",
 		"sample-admin",
 	),
 	person(
@@ -93,7 +93,7 @@ export const demoPeople: DemoPerson[] = [
 		"Anika Shah",
 		"employee",
 		"Frontend Engineer",
-		"1995-02-20",
+		"2026-10-16",
 		"sample-lead",
 	),
 	person(
@@ -101,7 +101,7 @@ export const demoPeople: DemoPerson[] = [
 		"Rohan Nair",
 		"employee",
 		"Backend Engineer",
-		"1993-04-04",
+		"2026-10-16",
 		"sample-lead",
 	),
 	person(
@@ -109,7 +109,7 @@ export const demoPeople: DemoPerson[] = [
 		"Sara Thomas",
 		"employee",
 		"Product Designer",
-		"1996-12-08",
+		"2026-10-16",
 		"sample-lead",
 	),
 	person(
@@ -117,7 +117,7 @@ export const demoPeople: DemoPerson[] = [
 		"Leena Das",
 		"employee",
 		"Full Stack Engineer",
-		"1994-06-18",
+		"2026-10-16",
 		"sample-vikram",
 	),
 	person(
@@ -125,7 +125,7 @@ export const demoPeople: DemoPerson[] = [
 		"Kiran Patel",
 		"employee",
 		"Data Engineer",
-		"1996-08-09",
+		"2026-10-16",
 		"sample-vikram",
 	),
 	person(
@@ -133,7 +133,7 @@ export const demoPeople: DemoPerson[] = [
 		"Ishan Gupta",
 		"employee",
 		"DevOps Engineer",
-		"1994-10-28",
+		"2026-10-16",
 		"sample-vikram",
 	),
 	person(
@@ -141,7 +141,7 @@ export const demoPeople: DemoPerson[] = [
 		"Neha Iyer",
 		"employee",
 		"QA Engineer",
-		"1991-09-21",
+		"2026-10-16",
 		"sample-priya",
 	),
 	person(
@@ -149,7 +149,7 @@ export const demoPeople: DemoPerson[] = [
 		"Pooja Nambiar",
 		"employee",
 		"Full Stack Engineer",
-		"1995-05-17",
+		"2026-10-16",
 		"sample-priya",
 	),
 ];

@@ -63,6 +63,6 @@ describe("company policy review workflow", () => {
 		expect(parsePolicyEffectiveDate("2026-10-17").toISOString()).toBe(
 			"2026-10-17T00:00:00.000Z",
 		);
-		expect(() => parsePolicyEffectiveDate("2026-02-30")).toThrow();
+		expect(() => parsePolicyEffectiveDate("2026-11-31")).toThrow();
 	});
 });

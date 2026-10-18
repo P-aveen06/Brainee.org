@@ -73,7 +73,7 @@ export function ProjectCommercialFields({
 						id="clientProjectName"
 						value={clientProjectName}
 						onChange={(e) => onClientProjectNameChange(e.target.value)}
-						placeholder="e.g. UL-NA-2025-08"
+						placeholder="e.g. UL-NA-2026-10"
 					/>
 				</div>
 			</div>
