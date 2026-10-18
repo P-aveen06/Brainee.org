@@ -34,7 +34,7 @@ The Node package has its own npm lockfile; Docker builds type-check it and run H
 
 ## Samples
 
-`graph:seed` runs only against `brainee_dev`, only when explicitly invoked. It adds 8 fictional employees, 3 projects with different staffing levels, 18 tasks including nested follow-ups, 6 development checklist items, threaded project decisions, task-linked daily updates, 3 sample leave types, 24 balances, 5 leave requests, 3 WFH requests, 40 timesheets, 6 assets and 4 assignments. It also adds a sample client contact and project activity. Sample dates are anchored on first run; repeat runs leave edits intact. The test account is an administrator. Other fictional identities cannot sign in through the temporary shared login.
+`graph:seed` runs only against `brainee_dev`, only when explicitly invoked. The current Northstar Studio fixture contains 14 fictional people, 10 projects and 70 tasks including subtasks and architecture reviews, plus decisions, daily updates, timesheets, leave/WFH and equipment assignments. All seeded teammates are available through the local role picker. Sample dates are anchored on first run. The first upgrade of the original small fixture reconciles known sample identities, metadata and staffing once; later runs preserve edits and add missing records. Back up before seeding an existing graph. See the [startup roster and optional enrichment](STARTUP-DEMO.md) for details.
 
 The sample calendar uses a Monday–Friday workweek, 8 hours/day and Asia/Kolkata. Leave allowances and WFH limits are illustrative. Approve your real policy before using the app for team decisions. Uploaded policy files are not faked or seeded.
 
