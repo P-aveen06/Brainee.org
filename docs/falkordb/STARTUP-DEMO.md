@@ -57,3 +57,11 @@ The fixture connects 70 tasks (including subtasks and ten architecture reviews),
 ## Reseeding
 
 Run `bun run graph:backup` before `bun run graph:seed`. The first upgrade from the original small fixture reconciles known sample identities, project metadata, and staffing once, recorded by `SampleDataset:fictional-startup-v2`. It retains former membership history and unrelated records. Subsequent runs add missing fixture records without overwriting edits. Seeding is an explicit local CLI action and never runs on application startup.
+
+## Detailed project content
+
+After the startup fixture is seeded, run `bun run graph:backup` followed by `bun run graph:enrich` to enrich the ten existing local projects. This explicit operation uses only the loopback graph service and local R2 storage. It replaces known fixture boilerplate, preserves authored descriptions and existing task execution fields, and uses stable IDs so repeat runs do not add duplicates.
+
+The enriched portfolio has 170 tasks: 40 delivery work packages, 10 architecture reviews and 120 subtasks. Each project receives three downloadable Markdown documents (brief, solution design and delivery/acceptance plan), also indexed for Company Brain. The documents describe proposed fictional delivery requirements, not evidence of completed work or client approval. New subtasks start as todo; existing task statuses are preserved, including completed parents. Review new follow-up work before treating a completed parent's expanded acceptance scope as satisfied.
+
+Browse the [project documentation index](../projects/README.md) for all 30 source documents. They are generated from `scripts/project-content/`; edit that content and use a new document version for future revisions rather than changing an uploaded immutable version.
