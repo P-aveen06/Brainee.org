@@ -3,7 +3,9 @@ import {
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
+import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { getAiConversation, getAiConversations } from "@/api/ai-assistant";
 import { getProjectsPageData } from "@/api/projects";
@@ -20,11 +22,10 @@ const assistantSearchSchema = z.object({
 
 export const Route = createFileRoute("/_authenticated/assistant")({
 	validateSearch: (search) => assistantSearchSchema.parse(search),
-	loaderDeps: ({ search }) => ({ thread: search.thread }),
-	// Switching threads only changes the conversation data. Keep the chat mounted
-	// while that loader runs instead of flashing the app-wide pending skeleton.
+	// Keep thread selection in the mounted chat instead of creating a pending route
+	// match that can replace the whole page with the app-wide pending skeleton.
 	pendingMs: Infinity,
-	loader: async ({ deps, context }) => {
+	loader: async ({ context }) => {
 		const [convsRes, pageData] = await Promise.all([
 			getAiConversations(),
 			getProjectsPageData(),
@@ -33,53 +34,8 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 		const conversations =
 			"conversations" in convsRes ? convsRes.conversations : [];
 
-		// Always start on a fresh chat when entering the tab (unless an explicit thread is in URL)
-		const isExplicitThread =
-			deps.thread && !deps.thread.startsWith("new") ? deps.thread : undefined;
-		const activeId = isExplicitThread;
-
-		const activeConv = activeId
-			? await getAiConversation({ data: { conversationId: activeId } })
-			: null;
-		// A malformed payload row must not take down the whole page: the proposal card
-		// degrades to an empty payload instead of throwing out of the loader.
-		const parsePayload = (payload: unknown): Record<string, unknown> => {
-			if (typeof payload !== "string") {
-				return (payload as Record<string, unknown>) ?? {};
-			}
-			try {
-				return JSON.parse(payload);
-			} catch {
-				return {};
-			}
-		};
-
-		const activeMessages: InitialAssistantMessage[] =
-			activeConv && "messages" in activeConv
-				? (activeConv.messages || []).map((m) => ({
-						id: m.id,
-						role: m.role as "user" | "assistant",
-						content: m.content,
-						citations: m.citations,
-						charts: m.charts,
-						questions: m.questions,
-						proposals: m.proposals?.map(
-							(p): ProposedActionItem => ({
-								...p,
-								payload: parsePayload(p.payload),
-								status: p.status as ProposedActionItem["status"],
-							}),
-						),
-						modelId: m.modelId,
-						latencyMs: m.latencyMs,
-						createdAt: m.createdAt,
-					}))
-				: [];
-
 		return {
 			conversations,
-			activeId,
-			activeMessages,
 			projectCount: "projects" in pageData ? pageData.projects.length : 0,
 			userRole: context.user.role,
 		};
@@ -90,9 +46,20 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 function AssistantRoute() {
 	const data = Route.useLoaderData();
 	const { thread: requestedThread } = Route.useSearch();
+	const activeId =
+		requestedThread && !requestedThread.startsWith("new")
+			? requestedThread
+			: undefined;
 	const navigate = useNavigate();
 	const router = useRouter();
 	const liveHistory = useAssistantSessionHistory();
+	const hasActiveSession = activeId
+		? liveHistory.conversations.some((conversation) => conversation.id === activeId)
+		: false;
+	const [loadedConversation, setLoadedConversation] = useState<{
+		id: string;
+		messages: InitialAssistantMessage[];
+	}>();
 	const conversations = [
 		...liveHistory.conversations.filter(
 			(live) => !data.conversations.some((saved) => saved.id === live.id),
@@ -100,14 +67,63 @@ function AssistantRoute() {
 		...data.conversations,
 	];
 
-	const activeThread = conversations.find((c) => c.id === data.activeId);
+	const activeThread = conversations.find((c) => c.id === activeId);
+	const activeMessages =
+		activeId && loadedConversation?.id === activeId
+			? loadedConversation.messages
+			: EMPTY_MESSAGES;
+	const conversationReady =
+		!activeId || hasActiveSession || loadedConversation?.id === activeId;
+
+	useEffect(() => {
+		if (!activeId || hasActiveSession) return;
+		let cancelled = false;
+
+		void getAiConversation({ data: { conversationId: activeId } })
+			.then((conversation) => {
+				if (cancelled) return;
+				const messages: InitialAssistantMessage[] =
+					conversation && "messages" in conversation
+						? (conversation.messages || []).map((message) => ({
+								id: message.id,
+								role: message.role as "user" | "assistant",
+								content: message.content,
+								citations: message.citations,
+								charts: message.charts,
+								questions: message.questions,
+								proposals: message.proposals?.map(
+									(proposal): ProposedActionItem => ({
+										...proposal,
+										payload: parseProposalPayload(proposal.payload),
+										status: proposal.status as ProposedActionItem["status"],
+									}),
+								),
+								modelId: message.modelId,
+								latencyMs: message.latencyMs,
+								createdAt: message.createdAt,
+							}))
+						: [];
+				setLoadedConversation({ id: activeId, messages });
+			})
+			.catch((error: unknown) => {
+				if (cancelled) return;
+				setLoadedConversation({ id: activeId, messages: [] });
+				toast.error(
+					error instanceof Error ? error.message : "Failed to load conversation.",
+				);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [activeId, hasActiveSession]);
 
 	// Once the chat is opened, Ready status should disappear
 	useEffect(() => {
-		if (data.activeId && liveHistory.statuses[data.activeId] === "complete") {
-			liveHistory.clearStatus(data.activeId);
+		if (activeId && liveHistory.statuses[activeId] === "complete") {
+			liveHistory.clearStatus(activeId);
 		}
-	}, [data.activeId, liveHistory.statuses, liveHistory.clearStatus]);
+	}, [activeId, liveHistory.statuses, liveHistory.clearStatus]);
 
 	const goToThread = (threadId: string | undefined) => {
 		if (threadId) {
@@ -127,7 +143,7 @@ function AssistantRoute() {
 
 	const handleDeleted = (deletedId: string) => {
 		liveHistory.forgetConversation(deletedId);
-		if (deletedId === data.activeId) {
+		if (deletedId === activeId) {
 			handleNewChat();
 		} else {
 			router.invalidate();
@@ -163,7 +179,7 @@ function AssistantRoute() {
 				<ConversationList
 					conversations={conversations}
 					statuses={liveHistory.statuses}
-					activeId={data.activeId}
+					activeId={activeId}
 					onSelect={goToThread}
 					onNewChat={handleNewChat}
 					onDeleted={handleDeleted}
@@ -174,22 +190,42 @@ function AssistantRoute() {
 
 			{/* Main Full-Page Chat Area */}
 			<main className="relative flex flex-1 flex-col h-full min-w-0 bg-background overflow-hidden">
-				<AssistantPane
-					key={data.activeId || requestedThread || "new"}
-					sessionKey={data.activeId || requestedThread || draftKey}
-					conversationId={data.activeId}
-					initialMessages={data.activeMessages}
-					threadTitle={activeThread?.title || undefined}
-					showHeader={true}
-					onConversationCreated={handleConversationCreated}
-					onProposalResolved={() => router.invalidate()}
-					pageContext={deriveAssistantPageContext("/assistant")}
-					onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-					sidebarOpen={sidebarOpen}
-					userRole={data.userRole}
-					projectCount={data.projectCount}
-				/>
+				{conversationReady ? (
+					<AssistantPane
+						key={activeId || requestedThread || "new"}
+						sessionKey={activeId || requestedThread || draftKey}
+						conversationId={activeId}
+						initialMessages={activeMessages}
+						threadTitle={activeThread?.title || undefined}
+						showHeader={true}
+						onConversationCreated={handleConversationCreated}
+						onProposalResolved={() => router.invalidate()}
+						pageContext={deriveAssistantPageContext("/assistant")}
+						onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+						sidebarOpen={sidebarOpen}
+						userRole={data.userRole}
+						projectCount={data.projectCount}
+					/>
+				) : (
+					<div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+						<LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" />
+						Loading conversation…
+					</div>
+				)}
 			</main>
 		</div>
 	);
+}
+
+const EMPTY_MESSAGES: InitialAssistantMessage[] = [];
+
+function parseProposalPayload(payload: unknown): Record<string, unknown> {
+	if (typeof payload !== "string") {
+		return (payload as Record<string, unknown>) ?? {};
+	}
+	try {
+		return JSON.parse(payload);
+	} catch {
+		return {};
+	}
 }
