@@ -16,7 +16,18 @@ section{box-sizing:border-box;background:white;border:1px solid #ddd;border-radi
 h1{font-size:34px;line-height:1.25}h2{font-size:28px;line-height:1.3}p{white-space:pre-wrap}
 .meta,footer{font-size:12px;color:#65616e}.slide{min-height:500px}.slide>p{font-size:24px}
 .gap{font-size:14px;color:#815616}header{padding:16px 0}.appendix p{font-size:12px}
-@media(max-width:600px){section{padding:20px}h1{font-size:26px}.slide>p{font-size:18px}}
+@media(max-width:600px){
+body{font-size:14px;line-height:1.45}
+main{padding:12px}
+section{padding:16px;margin-bottom:12px;border-radius:10px}
+h1{font-size:24px;line-height:1.2}
+h2{font-size:20px;line-height:1.25}
+.meta,footer{font-size:10px;line-height:1.3}
+.slide{min-height:0}
+.slide>p{font-size:15px;line-height:1.4}
+.gap{font-size:12px}
+header{padding:8px 0}
+}
 @media print{
 body{background:white}main{max-width:none;padding:0}section{border:0;border-radius:0;margin:0}
 header{padding:20px}section h2{break-after:avoid}p{orphans:3;widows:3}

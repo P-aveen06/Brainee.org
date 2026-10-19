@@ -81,6 +81,7 @@ export const getProjectChecklistTool: ToolHandler = {
 		return {
 			success: true,
 			data: { projectId, stages },
+			scopeProjectIds: [canonicalId],
 			groundedRecordIds: items.map((i) => i.id),
 			groundedLabels: items.map((i) => ({ id: i.id, label: i.title })),
 		};
@@ -159,6 +160,7 @@ export const getProjectDocumentsTool: ToolHandler = {
 		return {
 			success: true,
 			data: docs,
+			scopeProjectIds: [canonicalId],
 			groundedRecordIds: docs.map((d) => d.id),
 			groundedLabels: docs.map((d) => ({ id: d.id, label: d.title })),
 		};
@@ -222,6 +224,7 @@ export const getProjectTimelineTool: ToolHandler = {
 				details: e.details ? JSON.parse(e.details) : null,
 				createdAt: e.createdAt,
 			})),
+			scopeProjectIds: [canonicalId],
 			groundedRecordIds: events.map((e) => e.id),
 			groundedLabels: events.map((e) => ({ id: e.id, label: e.eventType })),
 		};
@@ -305,6 +308,7 @@ export const getProjectDiscussionsTool: ToolHandler = {
 				stageKey: c.stageKey,
 				createdAt: c.createdAt,
 			})),
+			scopeProjectIds: [canonicalId],
 			groundedRecordIds: comments.map((c) => c.id),
 			groundedLabels: comments.map((c) => ({
 				id: c.id,

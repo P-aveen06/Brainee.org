@@ -27,10 +27,18 @@ export const STARTER_PROMPTS = [
 	},
 ];
 
+const CREATE_PITCH_PROMPT = {
+	title: "Create a pitch deck",
+	label: "Choose the audience, story, and project evidence",
+	prompt:
+		"Help me create a pitch deck. Ask me for the audience, goal, desired slide count, tone, and which projects or approved records to use. Shape the story around my instructions, ground claims about company work in retrieved evidence, and create a draft I can review and revise before exporting.",
+};
+
 export function getStarterPrompts(user: { role: string; authId?: string }) {
 	const persona = callerPersona(user);
 	if (persona === "employee")
 		return [
+			CREATE_PITCH_PROMPT,
 			{
 				title: "Start my day",
 				label: "Priorities across my projects",
@@ -74,6 +82,7 @@ export function getStarterPrompts(user: { role: string; authId?: string }) {
 	}[persona];
 	if (persona === "hr")
 		return [
+			CREATE_PITCH_PROMPT,
 			brief,
 			STARTER_PROMPTS[3],
 			{
@@ -85,6 +94,7 @@ export function getStarterPrompts(user: { role: string; authId?: string }) {
 		];
 	if (persona === "architect")
 		return [
+			CREATE_PITCH_PROMPT,
 			brief,
 			{
 				title: "My architecture reviews",
@@ -102,6 +112,7 @@ export function getStarterPrompts(user: { role: string; authId?: string }) {
 		];
 	if (persona === "lead")
 		return [
+			CREATE_PITCH_PROMPT,
 			brief,
 			{
 				title: "My approvals",
@@ -118,6 +129,7 @@ export function getStarterPrompts(user: { role: string; authId?: string }) {
 			STARTER_PROMPTS[3],
 		];
 	return [
+		CREATE_PITCH_PROMPT,
 		brief,
 		{
 			title: "Client commitments",

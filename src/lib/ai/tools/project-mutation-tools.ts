@@ -99,6 +99,7 @@ export const getProjectRisksTool: ToolHandler = {
 		return {
 			success: true,
 			data: { projectId: p.id, projectCode: p.code, risks },
+			scopeProjectIds: [p.id],
 			groundedRecordIds: [p.id, ...tasks.map((t) => t.id)],
 			groundedLabels: [
 				{ id: p.id, label: p.code },

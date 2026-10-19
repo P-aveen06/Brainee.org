@@ -7,7 +7,7 @@ import {
 import { pitchHtml } from "./pitch-html";
 import { pitchFixture } from "./pitch-test-fixture";
 import { createPitch, parsePitch } from "./pitch-types";
-import { presentPitchPackageTool } from "./tools/pitch-tools";
+import { PITCH_PROMPT, presentPitchPackageTool } from "./tools/pitch-tools";
 
 describe("pitch packages", () => {
 	it("keeps two representations tied to retrieved sources and saves successive revisions", () => {
@@ -63,6 +63,48 @@ describe("pitch packages", () => {
 		);
 		expect(state.evidence.has("leave-1")).toBe(false);
 	});
+	it("collects project-risk and checklist sources for pitch packages", () => {
+		const { state } = pitchFixture();
+		collectPitchEvidence(
+			state,
+			"get_project_risks",
+			{ projectId: "project-1" },
+			[{ id: "sample-detail-4-2-0", label: "#14" }],
+			["project-1"],
+		);
+		collectPitchEvidence(
+			state,
+			"get_project_checklist",
+			{},
+			[{ id: "checklist-1", label: "Privacy review" }],
+			["project-1"],
+		);
+
+		expect(state.evidence.get("sample-detail-4-2-0")).toMatchObject({
+			kind: "workspace",
+			projectIds: ["project-1"],
+		});
+		expect(state.evidence.get("checklist-1")).toMatchObject({
+			kind: "workspace",
+			projectIds: ["project-1"],
+		});
+	});
+	it("suggests retrieved evidence IDs when a draft cites an unknown source", async () => {
+		const { input, state } = pitchFixture();
+		const result = await presentPitchPackageTool.execute(
+			{
+				...input,
+				sections: [
+					{ ...input.sections[0], sourceIds: ["sample-detail-4-2-0"] },
+				],
+			},
+			{ pitchState: state, user: {} as never, db: {} as never },
+		);
+
+		expect(result.success).toBe(false);
+		expect(result.error).toContain("sample-detail-4-2-0");
+		expect(result.error).toContain("task-1 (ATLAS #1: Event ingestion)");
+	});
 	it("restores drafts only while their project sources are still accessible", () => {
 		const { pitch } = pitchFixture();
 		const rows = [
@@ -102,6 +144,13 @@ describe("pitch packages", () => {
 		expect(html).toContain("&lt;script&gt;");
 		expect(pitchHtml(pitch, "document")).toContain("currently in review");
 	});
+	it("uses compact mobile styling for presentation previews", () => {
+		const { pitch } = pitchFixture();
+		const html = pitchHtml(pitch, "presentation");
+		expect(html).toContain("@media(max-width:600px)");
+		expect(html).toContain(".slide{min-height:0}");
+		expect(html).toContain(".slide>p{font-size:15px;line-height:1.4}");
+	});
 	it("omits invented draft IDs on fresh pitch state and creates a package", async () => {
 		const { input, state } = pitchFixture();
 		const result = await presentPitchPackageTool.execute(
@@ -112,6 +161,33 @@ describe("pitch packages", () => {
 		expect(state.drafts).toHaveLength(1);
 		expect(state.drafts[0].draftId).not.toBe("pitch-20261018-invented");
 		expect(state.drafts[0].revision).toBe(1);
+		expect(result.data).toMatchObject({
+			availableDownloads: [
+				"Presentation · PowerPoint (.pptx)",
+				"Document · Word (.docx)",
+				"Slides · PDF (.pdf)",
+				"Written document · PDF (.pdf)",
+			],
+			exportsGeneratedOnDemand: true,
+		});
+	});
+	it("treats the literal omit placeholder as a new package when prior drafts exist", async () => {
+		const { input, state, pitch } = pitchFixture();
+		state.drafts.push(pitch);
+		const result = await presentPitchPackageTool.execute(
+			{ ...input, draftId: "omit" },
+			{ pitchState: state, user: {} as never, db: {} as never },
+		);
+
+		expect(result.success).toBe(true);
+		expect(state.drafts).toHaveLength(2);
+		expect(state.drafts[1].draftId).not.toBe(pitch.draftId);
+		expect(state.drafts[1].revision).toBe(1);
+	});
+	it("tells the assistant to describe available on-demand exports accurately", () => {
+		expect(PITCH_PROMPT).toContain("These files are generated when selected");
+		expect(PITCH_PROMPT).toContain("do not say exports are unavailable");
+		expect(PITCH_PROMPT).toContain("Re-inspect the latest revision");
 	});
 	it("rejects foreign draft IDs when revising across conversations", async () => {
 		const { input, state, pitch } = pitchFixture();

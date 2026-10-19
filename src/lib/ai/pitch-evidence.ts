@@ -9,6 +9,8 @@ const deliveryTools = new Set([
 	"list_projects",
 	"get_project",
 	"get_project_tasks",
+	"get_project_risks",
+	"get_project_checklist",
 	"get_portfolio_evidence",
 	"get_project_discussions",
 	"get_project_documents",

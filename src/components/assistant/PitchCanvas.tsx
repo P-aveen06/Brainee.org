@@ -1,8 +1,9 @@
-import { useAui } from "@assistant-ui/react";
+import { useAui, useAuiState } from "@assistant-ui/react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PillToggle } from "@/components/ui/pill-toggle";
+import { Textarea } from "@/components/ui/textarea";
 import { pitchHtml } from "@/lib/ai/pitch-html";
 import type { PitchPackage } from "@/lib/ai/pitch-types";
 import { PitchExports } from "./PitchExports";
@@ -16,7 +17,9 @@ export function PitchCanvas({
 }) {
 	const [mode, setMode] = useState<"presentation" | "document">("presentation");
 	const [page, setPage] = useState(0);
+	const [changeRequest, setChangeRequest] = useState("");
 	const aui = useAui();
+	const isRunning = useAuiState((state) => state.thread.isRunning);
 	const currentPage = Math.min(page, pitch.sections.length - 1);
 	const sections =
 		mode === "presentation" ? [pitch.sections[currentPage]] : pitch.sections;
@@ -31,6 +34,13 @@ export function PitchCanvas({
 			],
 			startRun: true,
 		});
+	};
+	const submitChange = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const request = changeRequest.trim();
+		if (!request || isRunning) return;
+		refine(request);
+		setChangeRequest("");
 	};
 	return (
 		<aside
@@ -96,32 +106,59 @@ export function PitchCanvas({
 					</Button>
 				</div>
 			)}
-			<footer className="flex flex-wrap gap-2 border-t border-border bg-background p-3">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => refine("Shorten the presentation")}
-				>
-					Shorten slides
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => refine("Expand the supporting case studies")}
-				>
-					Expand case studies
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() =>
-						refine(
-							"Use inspect_pitch_layout to check the layout and report issues",
-						)
-					}
-				>
-					Check layout
-				</Button>
+			<footer className="space-y-3 border-t border-border bg-background p-3">
+				<div className="flex flex-wrap gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => refine("Shorten the presentation")}
+					>
+						Shorten slides
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => refine("Expand the supporting case studies")}
+					>
+						Expand case studies
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() =>
+							refine(
+								"Use inspect_pitch_layout to check the layout and report issues",
+							)
+						}
+					>
+						Check layout
+					</Button>
+				</div>
+				<form onSubmit={submitChange} className="space-y-2">
+					<label
+						htmlFor="pitch-change-request"
+						className="text-xs font-medium text-foreground"
+					>
+						Make it yours
+					</label>
+					<div className="flex items-end gap-2">
+						<Textarea
+							id="pitch-change-request"
+							rows={2}
+							value={changeRequest}
+							onChange={(event) => setChangeRequest(event.target.value)}
+							placeholder="Describe a change to this deck…"
+							className="min-h-16 flex-1 resize-y"
+						/>
+						<Button
+							type="submit"
+							size="sm"
+							disabled={!changeRequest.trim() || isRunning}
+						>
+							Update draft
+						</Button>
+					</div>
+				</form>
 			</footer>
 		</aside>
 	);

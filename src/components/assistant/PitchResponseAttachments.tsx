@@ -68,7 +68,10 @@ export function PitchResponseAttachments({ pitch }: { pitch: PitchPackage }) {
 	return (
 		<div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1">
 			<span className="mr-0.5 text-[11px] font-medium text-muted-foreground">
-				Files
+				Exports
+			</span>
+			<span className="mr-1 text-[10px] text-muted-foreground">
+				Generated when selected
 			</span>
 			{exports.map((item) => (
 				<Button

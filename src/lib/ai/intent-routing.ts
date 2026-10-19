@@ -15,7 +15,7 @@ export function getForcedToolForIntent(
 		return "propose_leave_request";
 	}
 	if (
-		/\b(sales pitch|pitch package|capabilities presentation|case stud(?:y|ies)|client proposal)\b/i.test(
+		/\b(pitch deck|sales pitch|pitch package|capabilities presentation|case stud(?:y|ies)|client proposal)\b/i.test(
 			userMessage,
 		)
 	) {
